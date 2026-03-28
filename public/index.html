@@ -3,260 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersal Volunteer System | نظام مِرسال</title>
+    <title>نظام متطوعي مرسال | Mersal Volunteers</title>
+    
+    <!-- الخطوط والأيقونات -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --primary: #0056b3; --accent: #00a8ff; --dark: #1e272e; --light: #f1f2f6; --success: #2ed573; --danger: #ff4757; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--light); margin: 0; color: var(--dark); overflow-x: hidden; }
-        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        :root {
+            --primary: #0056b3;
+            --primary-dark: #003d80;
+            --accent: #e63946;
+            --success: #28a745;
+            --bg: #f8f9fa;
+            --text: #333;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+        /* الأنيميشن */
+        .page { display: none; animation: fadeIn 0.4s ease-out; }
+        .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Navigation */
-        .nav { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .nav-brand { font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px; }
-        .nav-tools { display: flex; gap: 10px; align-items: center; }
+        /* البطاقات (Cards) */
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
 
-        /* Container & Cards */
-        .container { padding: 30px 5%; max-width: 1200px; margin: auto; }
-        .card { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; transition: 0.3s; }
-        .hidden { display: none; }
+        .logo-area { text-align: center; margin-bottom: 30px; }
+        .logo-area img { width: 140px; }
 
-        /* Inputs & Buttons */
-        input, select { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; outline: none; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: var(--primary); }
-        .btn { padding: 12px 25px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 14px; display: inline-flex; gap: 8px; align-items: center; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #003d7a; transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 2px solid #ddd; color: #555; }
-        .btn-admin { background: var(--dark); color: white; }
-        
-        /* Dashboard Stats */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .stat-card { text-align: center; border-bottom: 5px solid var(--primary); }
-        .stat-card h2 { font-size: 40px; margin: 10px 0; color: var(--primary); }
-        .stat-card p { color: #777; text-transform: uppercase; font-size: 12px; font-weight: bold; }
+        /* المدخلات */
+        .field { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #666; }
+        input, select {
+            width: 100%; padding: 12px 15px; border-radius: 12px;
+            border: 2px solid #eee; font-family: inherit; font-size: 16px;
+            transition: 0.3s; outline: none;
+        }
+        input:focus { border-color: var(--primary); background: #fff; }
 
-        /* Timer Section */
-        #timer-box { text-align: center; padding: 40px; }
-        #display-time { font-size: 70px; font-weight: 900; color: var(--dark); margin: 20px 0; font-family: monospace; letter-spacing: -2px; }
+        /* الأزرار */
+        .btn {
+            width: 100%; padding: 14px; border-radius: 12px; border: none;
+            font-family: inherit; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid #eee; color: #666; }
+        .btn-danger { background: var(--accent); color: #fff; }
 
-        /* Table */
-        .table-container { overflow-x: auto; margin-top: 20px; border-radius: 15px; background: white; border: 1px solid #eee; }
+        /* التايمر */
+        #timer-display {
+            font-size: 56px; font-weight: 900; text-align: center;
+            color: var(--primary); margin: 20px 0; font-variant-numeric: tabular-nums;
+        }
+
+        /* الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .stat-card { background: #f0f7ff; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #d0e4ff; }
+        .stat-card span { display: block; font-size: 24px; font-weight: 800; color: var(--primary); }
+        .stat-card small { color: #666; font-weight: 600; }
+
+        /* جدول الإدارة */
+        .admin-table-wrapper { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #f8f9fa; padding: 15px; color: #666; font-size: 13px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 15px; }
+        th { background: #f4f4f4; padding: 12px; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div class="nav">
-    <div class="nav-brand">MERSAL <span style="font-weight: 300; font-size: 18px;">Volunteers</span></div>
-    <div id="nav-tools" class="nav-tools hidden">
-        <span id="welcome-msg" style="font-weight: 600; margin-left: 10px;"></span>
-        <button id="adm-btn" onclick="openAdmin()" class="btn btn-admin hidden">لوحة الإدارة</button>
-        <button id="vol-btn" onclick="openDash()" class="btn btn-primary hidden">ساعة التطوع</button>
-        <button onclick="location.reload()" class="btn btn-outline">خروج</button>
-    </div>
-</div>
-
 <div class="container">
-    <div id="view-login" class="card fade-in" style="max-width: 450px; margin: 50px auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://admin.mersal-egypt.org/static/images/logo.png" alt="Mersal Logo" style="width: 150px;">
-        </div>
-        <input type="text" id="log-id" placeholder="البريد الإلكتروني أو الهاتف">
-        <input type="password" id="log-pass" placeholder="كلمة المرور">
-        <div id="multi-box" class="hidden" style="background: #f0f7ff; padding: 10px; border-radius: 10px; margin-top: 10px;">
-            <p style="color: var(--primary); font-size: 13px;">تم العثور على أكثر من حساب، اختر اسمك:</p>
-            <select id="log-name-select"></select>
-        </div>
-        <button onclick="handleLogin()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">دخول</button>
-        <p style="text-align: center; margin-top: 20px; font-size: 14px;">ليس لديك حساب؟ <a href="javascript:void(0)" onclick="showRegister()" style="color: var(--primary); font-weight: bold;">سجل الآن</a></p>
-    </div>
 
-    <div id="view-dash" class="hidden fade-in">
-        <div class="grid">
-            <div class="card stat-card"><p>إجمالي ساعات مرسال</p><h2 id="u-total-h">0.0</h2></div>
-            <div class="card stat-card"><p>إجمالي الجلسات</p><h2 id="u-total-s">0</h2></div>
-        </div>
-        <div class="card" id="timer-box">
-            <h3>تسجيل ساعات العمل التطوعي</h3>
-            <select id="activity-type" style="max-width: 400px; margin: auto;">
-                <option value="فرز ملابس">فرز ملابس</option>
-                <option value="معرض خيري">معرض خيري</option>
-                <option value="تعبئة كراتين">تعبئة كراتين</option>
-                <option value="أخرى">نشاط أخر</option>
-            </select>
-            <div id="display-time">00:00:00</div>
-            <button id="timer-trigger" onclick="toggleTimer()" class="btn" style="background: var(--success); color: white; width: 250px; font-size: 18px;">ابدأ النشاط</button>
-        </div>
-    </div>
-
-    <div id="view-admin" class="hidden fade-in">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>لوحة الإدارة الشاملة</h2>
-            <button onclick="exportExcel()" class="btn btn-primary">تحميل تقرير Excel</button>
-        </div>
-        <div class="grid">
-            <div class="card stat-card"><h3>إجمالي المتطوعين</h3><h2 id="adm-v">0</h2></div>
-            <div class="card stat-card" style="border-color: var(--success);"><h3>إجمالي الساعات</h3><h2 id="adm-h">0</h2></div>
-            <div class="card stat-card" style="border-color: var(--danger);"><h3>نشط الآن</h3><h2 id="adm-a">0</h2></div>
-        </div>
+    <!-- 1. صفحة تسجيل الدخول -->
+    <div id="page-login" class="page active">
         <div class="card">
-            <h3>قائمة البيانات وإدارة المتطوعين</h3>
-            <div class="table-container">
-                <table>
-                    <thead><tr><th>الاسم</th><th>التواصل</th><th>الساعات</th><th>الصلاحية</th></tr></thead>
-                    <tbody id="adm-table"></tbody>
-                </table>
+            <div class="logo-area">
+                <img src="https://admin.mersal-egypt.org/static/images/logo.png" alt="Mersal">
+                <h2 style="margin-top:10px; color:var(--primary)">بوابة المتطوعين</h2>
+            </div>
+            
+            <div class="field">
+                <label>البريد الإلكتروني أو رقم الهاتف</label>
+                <input type="text" id="login-id" placeholder="أدخل بياناتك">
+            </div>
+            
+            <div class="field">
+                <label>كلمة المرور</label>
+                <input type="password" id="login-pass" placeholder="••••••••">
+            </div>
+
+            <div id="select-profile-area" class="field" style="display:none">
+                <label style="color:var(--accent)">تم العثور على أكثر من ملف، اختر اسمك:</label>
+                <select id="login-name-select"></select>
+            </div>
+
+            <button class="btn btn-primary" onclick="handleLogin()">تسجيل الدخول</button>
+            
+            <p style="text-align:center; margin-top:20px; font-size:14px">
+                متطوع جديد؟ <a href="javascript:void(0)" onclick="showPage('page-register')" style="color:var(--primary); font-weight:700; text-decoration:none">إنشاء حساب</a>
+            </p>
+        </div>
+        <button class="btn btn-outline" onclick="checkAdminAccess()">لوحة الإدارة (للمشرفين)</button>
+    </div>
+
+    <!-- 2. صفحة التسجيل -->
+    <div id="page-register" class="page">
+        <div class="card">
+            <h2>انضم لفريق مرسال</h2>
+            <p style="color:#666; margin-bottom:20px">سجل بياناتك للبدء في توثيق ساعاتك التطوعية.</p>
+            
+            <div class="field"><label>الاسم بالكامل</label><input type="text" id="reg-name"></div>
+            <div class="field"><label>البريد الإلكتروني</label><input type="email" id="reg-email"></div>
+            <div class="field"><label>رقم الهاتف</label><input type="text" id="reg-phone"></div>
+            <div class="field"><label>كلمة المرور</label><input type="password" id="reg-pass"></div>
+            
+            <button class="btn btn-primary" onclick="handleRegister()">إتمام التسجيل</button>
+            <button class="btn btn-outline" onclick="showPage('page-login')">العودة للدخول</button>
+        </div>
+    </div>
+
+    <!-- 3. لوحة المتطوع -->
+    <div id="page-dash" class="page">
+        <div class="card" style="text-align:center">
+            <h2 id="user-welcome">أهلاً بك يا بطل</h2>
+            <div class="stats-grid">
+                <div class="stat-card"><span id="u-total-hours">0.0</span><small>إجمالي الساعات</small></div>
+                <div class="stat-card"><span id="u-total-sessions">0</span><small>عدد الجلسات</small></div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="field">
+                <label>النشاط الحالي</label>
+                <select id="dash-activity">
+                    <option>فرز ملابس</option>
+                    <option>تعبئة كراتين</option>
+                    <option>المعرض الخيري</option>
+                    <option>أعمال مكتبية</option>
+                    <option>أخرى</option>
+                </select>
+            </div>
+            
+            <div id="timer-display">00:00:00</div>
+            
+            <button id="timer-btn" class="btn btn-primary" style="background:#28a745; height:70px; font-size:20px" onclick="toggleTimer()">
+                ابدأ الجلسة الآن
+            </button>
+            <button class="btn btn-outline" onclick="location.reload()" style="margin-top:20px">تسجيل الخروج</button>
+        </div>
     </div>
+
+    <!-- 4. لوحة المشرف (Admin) -->
+    <div id="page-admin" class="page">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+                <h3>إدارة المتطوعين</h3>
+                <button class="btn btn-primary" onclick="downloadExcel()" style="width:auto; margin:0; padding:8px 15px; font-size:14px">تحميل Excel</button>
+            </div>
+
+            <div class="admin-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الساعات</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        <!-- البيانات ستظهر هنا -->
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-danger" onclick="showPage('page-login')" style="margin-top:20px">خروج المشرف</button>
+        </div>
+    </div>
+
 </div>
 
 <script>
     const API = "http://localhost:3000/api";
     let user = null;
-    let timerRef = null;
+    let timerInterval = null;
     let seconds = 0;
 
-    // --- Navigation ---
-    function openDash() { hideAll(); document.getElementById('view-dash').classList.remove('hidden'); refreshUserStats(); }
-    function openAdmin() { hideAll(); document.getElementById('view-admin').classList.remove('hidden'); loadAdminData(); }
-    function hideAll() { document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden')); }
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
 
-    // --- Auth Logic ---
+    // --- تسجيل الدخول ---
     async function handleLogin() {
-        const identifier = document.getElementById('log-id').value;
-        const password = document.getElementById('log-pass').value;
-        const name = document.getElementById('log-name-select').value;
+        const identifier = document.getElementById('login-id').value;
+        const password = document.getElementById('login-pass').value;
+        const name = document.getElementById('login-name-select').value;
 
-        const res = await fetch(`${API}/login`, {
+        try {
+            const res = await fetch(`${API}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ identifier, password, name })
+            });
+            const data = await res.json();
+
+            if (data.needName) {
+                const select = document.getElementById('login-name-select');
+                select.innerHTML = data.profiles.map(p => `<option value="${p}">${p}</option>`).join('');
+                document.getElementById('select-profile-area').style.display = 'block';
+                Swal.fire("تنبيه", "تم العثور على حسابات متعددة، اختر اسمك واضغط دخول مرة أخرى", "info");
+                return;
+            }
+
+            if (res.ok) {
+                user = data;
+                setupDashboard();
+                showPage('page-dash');
+            } else {
+                Swal.fire("فشل الدخول", data.error || "تأكد من بياناتك", "error");
+            }
+        } catch (e) { Swal.fire("خطأ", "السيرفر غير متصل", "error"); }
+    }
+
+    // --- التسجيل ---
+    async function handleRegister() {
+        const payload = {
+            name: document.getElementById('reg-name').value,
+            email: document.getElementById('reg-email').value,
+            phone: document.getElementById('reg-phone').value,
+            password: document.getElementById('reg-pass').value
+        };
+
+        if(!payload.name || !payload.password) return Swal.fire("تنبيه", "الاسم والباسورد مطلوبين", "warning");
+
+        const res = await fetch(`${API}/register`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ identifier, password, name })
+            body: JSON.stringify(payload)
         });
-        const data = await res.json();
-
-        if (data.multi) {
-            document.getElementById('multi-box').classList.remove('hidden');
-            const sel = document.getElementById('log-name-select');
-            sel.innerHTML = data.profiles.map(p => `<option value="${p}">${p}</option>`).join('');
-            return;
-        }
 
         if (res.ok) {
-            user = data;
-            document.getElementById('nav-tools').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerText = "أهلاً، " + user.name.split(' ')[0];
-            
-            if (user.role === 'admin') {
-                document.getElementById('adm-btn').classList.remove('hidden');
-                document.getElementById('vol-btn').classList.remove('hidden');
-                openAdmin();
-            } else {
-                openDash();
-            }
+            Swal.fire("تم بنجاح", "تم إنشاء حسابك، يمكنك الدخول الآن", "success");
+            showPage('page-login');
         } else {
-            Swal.fire("خطأ", "بيانات الدخول غير صحيحة", "error");
+            const err = await res.json();
+            Swal.fire("خطأ", err.error, "error");
         }
     }
 
-    async function showRegister() {
-        const { value: v } = await Swal.fire({
-            title: 'تسجيل متطوع جديد',
-            html:
-                '<input id="sw-name" class="swal2-input" placeholder="الاسم بالكامل">' +
-                '<input id="sw-email" class="swal2-input" placeholder="البريد الإلكتروني">' +
-                '<input id="sw-phone" class="swal2-input" placeholder="رقم الهاتف">' +
-                '<input id="sw-pass" type="password" class="swal2-input" placeholder="كلمة المرور">',
-            preConfirm: () => {
-                return {
-                    name: document.getElementById('sw-name').value,
-                    email: document.getElementById('sw-email').value,
-                    phone: document.getElementById('sw-phone').value,
-                    password: document.getElementById('sw-pass').value
-                }
-            }
-        });
+    // --- لوحة التحكم والتايمر ---
+    function setupDashboard() {
+        document.getElementById('user-welcome').innerText = `أهلاً، ${user.name}`;
+        document.getElementById('u-total-hours').innerText = user.totalHours.toFixed(1);
+        document.getElementById('u-total-sessions').innerText = user.totalSessions;
+    }
 
-        if (v) {
-            const res = await fetch(`${API}/register`, {
+    async function toggleTimer() {
+        const btn = document.getElementById('timer-btn');
+        if (!timerInterval) {
+            // Check-in (ارسال للسيرفر فوراً)
+            const act = document.getElementById('dash-activity').value;
+            await fetch(`${API}/checkin`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(v)
+                body: JSON.stringify({ volunteerId: user.id, activity: act })
             });
-            if (res.ok) Swal.fire("تم بنجاح", "يمكنك الآن تسجيل الدخول", "success");
-            else Swal.fire("خطأ", "هذا الحساب موجود بالفعل", "error");
-        }
-    }
 
-    // --- Timer Logic (Mersal Tracker) ---
-    function toggleTimer() {
-        const btn = document.getElementById('timer-trigger');
-        if (!timerRef) {
-            timerRef = setInterval(() => { seconds++; updateTimerUI(); }, 1000);
-            btn.innerText = "إنهاء Activity"; btn.style.background = "var(--danger)";
-            fetch(`${API}/checkin`, {
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+            btn.innerText = "إنهاء الجلسة وحفظ الساعات";
+            btn.style.background = "var(--accent)";
+        } else {
+            // Check-out
+            clearInterval(timerInterval);
+            const { value: notes } = await Swal.fire({
+                title: 'انتهيت؟',
+                text: "أدخل أي ملاحظات عن إنجازك اليوم (اختياري):",
+                input: 'text',
+                confirmButtonText: 'حفظ وخروج'
+            });
+
+            await fetch(`${API}/checkout`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ vId: user.id, activity: document.getElementById('activity-type').value })
+                body: JSON.stringify({ vId: user.id, notes })
             });
-        } else {
-            clearInterval(timerRef);
-            timerRef = null;
-            handleCheckout();
+
+            Swal.fire("عاش!", "تم تسجيل ساعاتك بنجاح.", "success").then(() => location.reload());
         }
     }
 
-    function updateTimerUI() {
-        const h = Math.floor(seconds / 3600).toString().padStart(2,'0');
-        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2,'0');
-        const s = (seconds % 60).toString().padStart(2,'0');
-        document.getElementById('display-time').innerText = `${h}:${m}:${s}`;
+    function updateTimerDisplay() {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        document.getElementById('timer-display').innerText = 
+            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
-    async function handleCheckout() {
-        await fetch(`${API}/checkout`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ vId: user.id })
+    // --- الإدارة ---
+    async function checkAdminAccess() {
+        const { value: pin } = await Swal.fire({
+            title: 'دخول المشرفين',
+            input: 'password',
+            inputPlaceholder: 'أدخل رقم PIN السري',
+            confirmButtonText: 'دخول'
         });
-        Swal.fire("عمل رائع!", "تم حفظ ساعاتك في قاعدة مِرسال بنجاح", "success").then(() => location.reload());
+
+        if (pin === "1234") { // يمكنك تغييره من السيرفر
+            showPage('page-admin');
+            loadAdminData();
+        } else if (pin) {
+            Swal.fire("خطأ", "رقم PIN غير صحيح", "error");
+        }
     }
 
-    // --- Admin Control Panel Data ---
     async function loadAdminData() {
-        const res = await fetch(`${API}/admin/stats`);
+        const res = await fetch(`${API}/admin/data`);
         const data = await res.json();
-        document.getElementById('adm-v').innerText = data.totalV;
-        document.getElementById('adm-h').innerText = data.totalH;
-        document.getElementById('adm-a').innerText = data.active;
-
-        const table = document.getElementById('adm-table');
-        table.innerHTML = data.vols.map(v => `
+        const tbody = document.getElementById('admin-table-body');
+        
+        tbody.innerHTML = data.vols.map(v => `
             <tr>
                 <td><b>${v.name}</b></td>
-                <td>${v.email || v.phone}</td>
                 <td>${v.h.toFixed(1)} ساعة</td>
-                <td><span style="background: ${v.role==='admin'?'#eee':'#f1f2f6'}; padding: 5px 10px; border-radius: 5px; font-size: 11px;">${v.role==='admin'?'مدير':'متطوع'}</span></td>
+                <td><span style="color:${v.h > 0 ? 'green' : 'orange'}">${v.h > 0 ? 'نشط' : 'جديد'}</span></td>
             </tr>
         `).join('');
     }
 
-    function exportExcel() { window.location.href = `${API}/export`; }
-
-    async function refreshUserStats() {
-        const res = await fetch(`${API}/login`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ identifier: user.email || user.phone, password: user.password, name: user.name })
-        });
-        const d = await res.json();
-        document.getElementById('u-total-h').innerText = d.totalH;
-        document.getElementById('u-total-s').innerText = d.sessions;
+    function downloadExcel() {
+        window.location.href = `${API}/export`;
     }
 </script>
+
 </body>
 </html>
