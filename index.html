@@ -3,25 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مرسال</title>
+<title>مرسال | تتبع ساعات التطوع</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
 :root{
---p:#0d9488;--bg:#f1f5f9;--card:#fff;--txt:#0f172a;--border:#e2e8f0;
---danger:#dc2626;--success:#16a34a;
+--primary:#0ea5a4;
+--primary-dark:#0f766e;
+--accent:#f59e0b;
+--bg:#f8fafc;
+--card:#ffffff;
+--text:#0f172a;
+--sub:#64748b;
+--border:#e2e8f0;
+--danger:#dc2626;
+--success:#16a34a;
 }
-body{font-family:Cairo;background:var(--bg);margin:0}
-.app{max-width:420px;margin:auto;padding:20px}
-.card{background:var(--card);padding:20px;border-radius:16px;border:1px solid var(--border)}
-.form-input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);margin-top:5px}
-.btn{width:100%;padding:12px;border:none;border-radius:10px;margin-top:10px;cursor:pointer;font-weight:bold}
-.btn-p{background:var(--p);color:#fff}
-.btn-admin{background:#111;color:#fff}
+
+body{
+margin:0;
+font-family:Cairo;
+background:linear-gradient(135deg,#ecfeff,#f8fafc);
+}
+
+.app{
+max-width:420px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+background:var(--card);
+border-radius:18px;
+padding:22px;
+box-shadow:0 10px 30px rgba(0,0,0,.05);
+margin-top:20px;
+}
+
+.logo{
+text-align:center;
+margin-top:20px;
+}
+.logo img{
+width:80px;
+}
+.logo h1{
+margin:10px 0 0;
+color:var(--primary);
+}
+
+.form-input{
+width:100%;
+padding:13px;
+border-radius:12px;
+border:1px solid var(--border);
+margin-top:8px;
+font-size:14px;
+}
+
+.btn{
+width:100%;
+padding:13px;
+border:none;
+border-radius:12px;
+font-weight:700;
+cursor:pointer;
+margin-top:12px;
+}
+
+.btn-primary{
+background:var(--primary);
+color:#fff;
+}
+
+.btn-primary:hover{
+background:var(--primary-dark);
+}
+
+.btn-outline{
+background:#fff;
+border:1px solid var(--border);
+}
+
 .hidden{display:none}
-.timer{font-size:40px;text-align:center;margin:20px 0}
+
+.timer{
+font-size:48px;
+text-align:center;
+margin:20px 0;
+font-weight:800;
+color:var(--primary);
+}
+
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+}
+
+.badge{
+padding:5px 10px;
+border-radius:10px;
+font-size:12px;
+background:#e0f2fe;
+}
+
+.admin{background:#fee2e2;color:#b91c1c}
+
+.stat{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+font-size:14px;
+}
+
+.nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+max-width:420px;
+margin:auto;
+display:flex;
+background:#fff;
+border-top:1px solid var(--border);
+}
+
+.nav button{
+flex:1;
+padding:12px;
+border:none;
+background:none;
+cursor:pointer;
+}
+
+.active{color:var(--primary)}
+
 </style>
 </head>
 
@@ -29,63 +149,87 @@ body{font-family:Cairo;background:var(--bg);margin:0}
 
 <div class="app">
 
-<!-- LOGIN -->
-<div id="p-login">
-<div class="card">
-
-<h2 style="text-align:center">مرسال</h2>
-
-<input id="l-email" class="form-input" placeholder="Email">
-<input id="l-pass" type="password" class="form-input" placeholder="Password">
-
-<button class="btn btn-p" onclick="login()">تسجيل الدخول</button>
-
-<!-- 🔥 ADMIN QUICK LOGIN -->
-<button class="btn btn-admin" onclick="adminLogin()">
-<i class="fa-solid fa-shield-halved"></i>
-دخول الأدمن السريع
-</button>
-
-<p style="text-align:center;margin-top:10px">
-<span onclick="showPage('p-reg')" style="cursor:pointer;color:var(--p)">إنشاء حساب</span>
-</p>
-
+<!-- LOGO -->
+<div class="logo">
+<img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+<h1>مرسال</h1>
+<p style="color:var(--sub)">نظام تتبع ساعات التطوع</p>
 </div>
+
+<!-- LOGIN -->
+<div id="loginPage" class="card">
+
+<input id="l-email" class="form-input" placeholder="البريد الإلكتروني">
+<input id="l-pass" type="password" class="form-input" placeholder="كلمة المرور">
+
+<select id="l-role" class="form-input">
+<option value="user">متطوع</option>
+<option value="admin">مدير</option>
+</select>
+
+<button class="btn btn-primary" onclick="login()">تسجيل الدخول</button>
+
+<button class="btn btn-outline" onclick="show('registerPage')">إنشاء حساب</button>
+
 </div>
 
 <!-- REGISTER -->
-<div id="p-reg" class="hidden">
-<div class="card">
-
-<h3>تسجيل</h3>
+<div id="registerPage" class="card hidden">
 
 <input id="r-name" class="form-input" placeholder="الاسم">
-<input id="r-email" class="form-input" placeholder="Email">
-<input id="r-pass" class="form-input" placeholder="Password">
+<input id="r-email" class="form-input" placeholder="البريد">
+<input id="r-pass" class="form-input" placeholder="كلمة المرور">
 
 <select id="r-role" class="form-input">
-<option value="user">user</option>
-<option value="admin">admin</option>
+<option value="user">متطوع</option>
+<option value="admin">مدير</option>
 </select>
 
-<button class="btn btn-p" onclick="register()">إنشاء</button>
-<button class="btn" onclick="showPage('p-login')">رجوع</button>
+<button class="btn btn-primary" onclick="register()">إنشاء</button>
+<button class="btn btn-outline" onclick="show('loginPage')">رجوع</button>
 
-</div>
 </div>
 
 <!-- MAIN -->
-<div id="main" class="hidden">
+<div id="appPage" class="hidden">
 
+<div class="card">
+
+<div class="top-bar">
 <h3 id="u-name"></h3>
+<span id="u-role" class="badge"></span>
+</div>
 
 <div class="timer" id="timer">00:00:00</div>
 
-<button class="btn btn-p" onclick="toggleTimer()" id="timer-btn">
-Start
+<button class="btn btn-primary" onclick="toggleTimer()" id="timerBtn">
+بدء
 </button>
 
-<button class="btn" onclick="logout()">Logout</button>
+<div class="stat">
+<span>الساعات:</span>
+<span id="u-hours">0</span>
+</div>
+
+<div class="stat">
+<span>الجلسات:</span>
+<span id="u-sessions">0</span>
+</div>
+
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="card hidden">
+
+<h3>لوحة الإدارة</h3>
+
+<button class="btn btn-primary" onclick="downloadExcel()">
+تحميل Excel
+</button>
+
+</div>
+
+<button class="btn btn-outline" onclick="logout()">تسجيل خروج</button>
 
 </div>
 
@@ -93,14 +237,15 @@ Start
 
 <script>
 
-const $ = id=>document.getElementById(id)
+// ================= STATE =================
+const $=id=>document.getElementById(id)
 
 let state={
 token:localStorage.getItem('t'),
 user:null,
-interval:null,
 time:0,
-running:false
+running:false,
+interval:null
 }
 
 // ================= API =================
@@ -118,19 +263,19 @@ if(!res.ok) throw new Error(data.message)
 return data
 }
 
-// ================= UI =================
-function showPage(id){
-['p-login','p-reg','main'].forEach(p=>$(p).classList.add('hidden'))
+// ================= NAV =================
+function show(id){
+['loginPage','registerPage','appPage'].forEach(p=>$(p).classList.add('hidden'))
 $(id).classList.remove('hidden')
 }
 
 // ================= LOGIN =================
 async function login(){
-const email=$('l-email').value
-const password=$('l-pass').value
-
 try{
-const data=await api('POST','/auth/login',{email,password})
+const data=await api('POST','/auth/login',{
+email:$('l-email').value,
+password:$('l-pass').value
+})
 
 state.token=data.token
 state.user=data.user
@@ -139,13 +284,6 @@ localStorage.setItem('t',data.token)
 enterApp()
 
 }catch(e){alert(e.message)}
-}
-
-// 🔥 ADMIN LOGIN BUTTON
-async function adminLogin(){
-$('l-email').value='admin@mersal.org'
-$('l-pass').value='admin123'
-login()
 }
 
 // ================= REGISTER =================
@@ -157,52 +295,64 @@ email:$('r-email').value,
 password:$('r-pass').value,
 role:$('r-role').value
 })
-alert('done')
-showPage('p-login')
+alert('تم')
+show('loginPage')
 }catch(e){alert(e.message)}
 }
 
-// ================= APP =================
+// ================= ENTER =================
 function enterApp(){
-showPage('main')
+show('appPage')
+
 $('u-name').innerText=state.user.name
+$('u-role').innerText=state.user.role
+
+$('u-hours').innerText=state.user.hours||0
+$('u-sessions').innerText=state.user.sessions||0
+
+if(state.user.role==='admin'){
+$('adminPanel').classList.remove('hidden')
+$('u-role').classList.add('admin')
+}
 }
 
 // ================= TIMER =================
 function toggleTimer(){
-
 if(!state.running){
 state.running=true
-$('timer-btn').innerText='Stop'
-
+$('timerBtn').innerText='إيقاف'
 state.interval=setInterval(()=>{
 state.time++
 $('timer').innerText=format(state.time)
 },1000)
-
 }else{
 state.running=false
 clearInterval(state.interval)
-$('timer-btn').innerText='Start'
-alert('session saved')
+$('timerBtn').innerText='بدء'
+alert('تم حفظ الجلسة')
 state.time=0
 $('timer').innerText='00:00:00'
 }
 }
 
 function format(s){
-const h=Math.floor(s/3600)
-const m=Math.floor(s%3600/60)
-const sec=s%60
+let h=Math.floor(s/3600)
+let m=Math.floor(s%3600/60)
+let sec=s%60
 return `${pad(h)}:${pad(m)}:${pad(sec)}`
 }
 function pad(n){return n<10?'0'+n:n}
+
+// ================= ADMIN =================
+async function downloadExcel(){
+window.open('/api/admin/download')
+}
 
 // ================= LOGOUT =================
 function logout(){
 localStorage.removeItem('t')
 state.token=null
-showPage('p-login')
+show('loginPage')
 }
 
 // ================= INIT =================
