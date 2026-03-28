@@ -7,23 +7,24 @@ const compression = require('compression');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🆔 معرف الشيت (استبدله بمعرف الشيت الخاص بك أو اتركه كمتغير بيئة)
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1TMDiMSAtyjk4iPAsLsMoo-uf7nUeJuOwKeOtPZ3o3xw';
 
-// ═══ Middleware ═══
-app.use(helmet({ contentSecurityPolicy: false })); // للسماح بتحميل الخطوط الخارجية
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 app.use(express.json());
-app.use(express.static(__dirname)); // يقدم ملف index.html من نفس المجلد
+app.use(express.static(__dirname));
 
-// ═══ Google Auth ═══
 let credentials;
 try {
-  credentials = process.env.GOOGLE_CREDENTIALS 
-    ? JSON.parse(process.env.GOOGLE_CREDENTIALS) 
-    : require('./service-account.json');
+  // أولاً نحاول القراءة من متغيرات البيئة (Railway Environment Variables)
+  if (process.env.GOOGLE_CREDENTIALS) {
+    credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  } else {
+    // إذا لم يوجد، نبحث عن الملف المحلي
+    credentials = require('./service-account.json');
+  }
 } catch (e) {
-  console.error('❌ Google Credentials missing!');
+  console.error('❌ Google Credentials missing or invalid!', e.message);
 }
 
 const auth = new google.auth.GoogleAuth({
@@ -32,7 +33,6 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
-// ═══ Helper Functions ═══
 async function getSheetData(range) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -41,21 +41,19 @@ async function getSheetData(range) {
   return response.data.values || [];
 }
 
-// ═══ API Endpoints ═══
-
-// 1. جلب كافة البيانات عند تحميل التطبيق
+// --- Endpoints ---
 app.get('/api/init', async (req, res) => {
   try {
-    const volunteers = await getSheetData('Volunteers!A2:G'); // ID, Name, Email, Phone, Pass, Hours, Sessions
-    const settings = await getSheetData('Settings!A2:B20'); // Target, Activities...
+    const volunteers = await getSheetData('Volunteers!A2:G');
+    const settings = await getSheetData('Settings!A2:B20');
     
     const formattedVolunteers = volunteers.map(v => ({
       id: v[0], name: v[1], email: v[2], phone: v[3], password: v[4], 
       hours: parseFloat(v[5] || 0), sessions: parseInt(v[6] || 0)
     }));
 
-    const activities = settings.map(row => row[1]).filter(a => a); // العمود B في Settings للنشاطات
-    const target = settings[0] ? settings[0][0] : 130; // الخلية A2 للهدف
+    const activities = settings.map(row => row[1]).filter(a => a);
+    const target = settings[0] ? settings[0][0] : 130;
 
     res.json({ success: true, volunteers: formattedVolunteers, activities, target });
   } catch (e) {
@@ -63,10 +61,9 @@ app.get('/api/init', async (req, res) => {
   }
 });
 
-// 2. تحديث بيانات متطوع (بعد إنهاء جلسة أو تعديل بروفايل)
 app.post('/api/update-volunteer', async (req, res) => {
   try {
-    const { id, hours, sessions, name, email, phone } = req.body;
+    const { id, hours, sessions, name, email, phone, password } = req.body;
     const rows = await getSheetData('Volunteers!A:A');
     const rowIndex = rows.findIndex(r => r[0] === String(id)) + 1;
 
@@ -77,17 +74,15 @@ app.post('/api/update-volunteer', async (req, res) => {
       range: `Volunteers!B${rowIndex}:G${rowIndex}`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [[name, email, phone, req.body.password, hours, sessions]]
+        values: [[name, email, phone, password, hours, sessions]]
       }
     });
-
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, message: e.message });
   }
 });
 
-// 3. إضافة متطوع جديد (تسجيل)
 app.post('/api/register', async (req, res) => {
   try {
     const { id, name, email, phone, password } = req.body;
@@ -105,11 +100,9 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// 4. تحديث الإعدادات (Admin)
 app.post('/api/update-settings', async (req, res) => {
   try {
     const { target, activities } = req.body;
-    // تحديث الهدف في A2
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Settings!A2',
@@ -117,7 +110,6 @@ app.post('/api/update-settings', async (req, res) => {
       requestBody: { values: [[target]] }
     });
     
-    // تحديث قائمة النشاطات في العمود B
     const actValues = activities.map(a => [a]);
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
@@ -125,14 +117,12 @@ app.post('/api/update-settings', async (req, res) => {
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: actValues }
     });
-
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, message: e.message });
   }
 });
 
-// توجيه أي طلب آخر لملف الـ HTML
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
