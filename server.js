@@ -1,181 +1,190 @@
-const express = require('express');
-const { google } = require('googleapis');
-const bcrypt = require('bcryptjs');
-const path = require('path');
+// ================= GLOBAL STATE =================
+let users = [];
+let currentUser = null;
+let intervalId = null;
+let startTime = null;
+let target = 130;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1TMDiMSAtyjk4iPAsLsMoo-uf7nUeJuOwKeOtPZ3o3xw';
-
-let sheets;
-
-// ================= INIT GOOGLE =================
-async function initGoogle() {
-    if (!process.env.GOOGLE_CREDENTIALS) {
-        throw new Error("Missing GOOGLE_CREDENTIALS");
-    }
-
-    const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-
-    const auth = new google.auth.GoogleAuth({
-        credentials: creds,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets']
-    });
-
-    sheets = google.sheets({ version: 'v4', auth });
-}
-
-initGoogle().catch(err => {
-    console.error("❌ Google Init Error:", err.message);
-    process.exit(1);
-});
-
-// ================= HELPERS =================
-async function fetchSheet(range) {
-    const res = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range
-    });
-    return res.data.values || [];
-}
-
-async function getSheetId(sheetName) {
-    const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-    const sheet = meta.data.sheets.find(s => s.properties.title === sheetName);
-    return sheet.properties.sheetId;
-}
-
-// ================= APIs =================
-
-// INIT
-app.get('/api/init', async (req, res) => {
+// ================= INIT =================
+async function init() {
     try {
-        const volunteers = await fetchSheet('Volunteers!A2:G');
-        const settings = await fetchSheet('Settings!A2:B20');
+        const res = await fetch('/api/init');
+        const data = await res.json();
 
-        const data = volunteers.map(row => ({
-            id: row[0],
-            name: row[1],
-            email: row[2],
-            phone: row[3],
-            password: row[4], // موجود داخلي فقط
-            hours: Number(row[5]) || 0,
-            sessions: Number(row[6]) || 0
-        }));
-
-        res.json({
-            success: true,
-            volunteers: data, // هنستخدمه للـ login فقط
-            activities: settings.map(r => r[1]).filter(Boolean),
-            target: settings?.[0]?.[0] || 130
-        });
-
+        if (data.success) {
+            users = data.volunteers || [];
+            target = data.target || 130;
+        } else {
+            alert("فشل تحميل البيانات");
+        }
     } catch (e) {
         console.error(e);
-        res.status(500).json({ success: false, error: e.message });
+        alert("خطأ في الاتصال بالسيرفر");
     }
-});
+}
 
-// REGISTER
-app.post('/api/register', async (req, res) => {
+init();
+
+// ================= NAVIGATION =================
+function go(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// ================= LOGIN =================
+async function doLogin() {
+    const loginId = document.getElementById('l-user').value.trim().toLowerCase();
+    const pass = document.getElementById('l-pass').value;
+
+    if (!loginId || !pass) {
+        alert("من فضلك أدخل كل البيانات");
+        return;
+    }
+
+    const user = users.find(u =>
+        (u.email && u.email.toLowerCase() === loginId) ||
+        u.phone === loginId
+    );
+
+    if (!user) {
+        alert("المستخدم غير موجود");
+        return;
+    }
+
     try {
-        const { id, name, email, phone, password } = req.body;
+        const res = await fetch('/api/verify-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: user.id, password: pass })
+        });
 
-        if (!id || !name || !email || !password) {
-            return res.status(400).json({ success: false, error: "Missing fields" });
+        const data = await res.json();
+
+        if (data.success) {
+            currentUser = user;
+            updateUI();
+            go('p-dash');
+        } else {
+            alert("كلمة المرور غير صحيحة");
         }
 
-        const hashed = await bcrypt.hash(password, 10);
-
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Volunteers!A:G',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[id, name, email, phone, hashed, 0, 0]]
-            }
-        });
-
-        res.json({ success: true });
-
     } catch (e) {
         console.error(e);
-        res.status(500).json({ success: false, error: e.message });
+        alert("خطأ في السيرفر");
     }
-});
+}
 
-// UPDATE
-app.post('/api/update-volunteer', async (req, res) => {
+// ================= REGISTER =================
+async function doRegister() {
+    const name = document.getElementById('r-name').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const phone = document.getElementById('r-phone').value.trim();
+    const password = document.getElementById('r-pass').value;
+
+    if (!name || !email || !password) {
+        alert("املأ جميع البيانات المطلوبة");
+        return;
+    }
+
+    const user = {
+        id: Date.now().toString(),
+        name,
+        email,
+        phone,
+        password
+    };
+
     try {
-        const { id, name, email, phone, password, hours, sessions } = req.body;
-
-        const rows = await fetchSheet('Volunteers!A:A');
-        const index = rows.findIndex(r => r[0] == id);
-
-        if (index === -1) return res.json({ success: false });
-
-        const rowIndex = index + 2;
-
-        await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `Volunteers!B${rowIndex}:G${rowIndex}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[name, email, phone, password, hours, sessions]]
-            }
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
         });
 
-        res.json({ success: true });
+        const data = await res.json();
+
+        if (data.success) {
+            alert("تم التسجيل بنجاح");
+            location.reload();
+        } else {
+            alert("فشل التسجيل");
+        }
 
     } catch (e) {
         console.error(e);
-        res.status(500).json({ success: false });
+        alert("خطأ في السيرفر");
     }
-});
+}
 
-// DELETE
-app.post('/api/delete-volunteer', async (req, res) => {
+// ================= UI UPDATE =================
+function updateUI() {
+    document.getElementById('u-name').innerText = `مرحباً ${currentUser.name}`;
+
+    const percent = Math.min((currentUser.hours / target) * 100, 100);
+    document.getElementById('u-prog').style.width = percent + "%";
+
+    document.getElementById('u-stats').innerText =
+        `${currentUser.hours.toFixed(1)} / ${target} ساعة | جلسات: ${currentUser.sessions}`;
+}
+
+// ================= TIMER =================
+function toggleTimer() {
+    const btn = document.getElementById('btn-timer');
+    const display = document.getElementById('timer-display');
+
+    // START
+    if (!startTime) {
+        startTime = new Date();
+
+        btn.innerText = "إنهاء الجلسة";
+        btn.style.background = "var(--danger)";
+
+        intervalId = setInterval(() => {
+            const diff = Math.floor((new Date() - startTime) / 1000);
+
+            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+
+            display.innerText = `${h}:${m}:${s}`;
+        }, 1000);
+
+    } else {
+        // STOP
+        const hours = (new Date() - startTime) / 3600000;
+
+        currentUser.hours += hours;
+        currentUser.sessions += 1;
+
+        saveUser(currentUser);
+
+        clearInterval(intervalId);
+        startTime = null;
+
+        display.innerText = "00:00:00";
+
+        btn.innerText = "بدء الجلسة";
+        btn.style.background = "var(--p)";
+
+        updateUI();
+    }
+}
+
+// ================= SAVE =================
+async function saveUser(user) {
     try {
-        const { id } = req.body;
-
-        const rows = await fetchSheet('Volunteers!A:A');
-        const index = rows.findIndex(r => r[0] == id);
-
-        if (index === -1) return res.json({ success: false });
-
-        const sheetId = await getSheetId("Volunteers");
-
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: SPREADSHEET_ID,
-            requestBody: {
-                requests: [{
-                    deleteDimension: {
-                        range: {
-                            sheetId,
-                            dimension: 'ROWS',
-                            startIndex: index + 1,
-                            endIndex: index + 2
-                        }
-                    }
-                }]
-            }
+        await fetch('/api/update-volunteer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
         });
-
-        res.json({ success: true });
-
     } catch (e) {
         console.error(e);
-        res.status(500).json({ success: false });
+        alert("فشل حفظ البيانات");
     }
-});
+}
 
-// ================= FRONT =================
-app.get('*', (req, res) =>
-    res.sendFile(path.join(__dirname, 'public', 'index.html'))
-);
-
-app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
+// ================= LOGOUT =================
+function logout() {
+    location.reload();
+}
