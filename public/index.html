@@ -1,289 +1,232 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مرسال - نظام تتبع الساعات</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرسال | نظام تتبع الساعات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0061ff;
+            --primary-gradient: linear-gradient(135deg, #0061ff, #60efff);
+            --bg: #f4f7fe;
+            --white: #ffffff;
+            --text-main: #1b2559;
+            --text-secondary: #a3aed0;
+            --danger: #e31a1a;
+            --success: #05cd99;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; transition: all 0.3s ease; }
+        body { margin: 0; background: var(--bg); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
+        
+        .app { width: 100%; max-width: 450px; padding: 20px; }
+        .card { background: var(--white); border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: var(--shadow); }
+        
+        h2, h3 { margin-top: 0; color: var(--text-main); font-weight: 800; }
+        p { color: var(--text-secondary); font-size: 0.9rem; }
 
-<style>
-:root {
-    --p:#0061ff;
-    --bg:#f4f7fe;
-    --white:#fff;
-    --text:#1b2559;
-    --danger:#e31a1a;
-}
+        .input-group { margin-bottom: 15px; }
+        .input-field { 
+            width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #e0e5f2; 
+            outline: none; font-size: 1rem; margin-top: 5px;
+        }
+        .input-field:focus { border-color: var(--primary); }
 
-*{box-sizing:border-box;font-family:'Tajawal',sans-serif}
+        .btn { 
+            width: 100%; padding: 15px; border: none; border-radius: 12px; 
+            font-weight: 700; cursor: pointer; font-size: 1rem; margin-top: 10px;
+        }
+        .btn-p { background: var(--primary); color: #fff; }
+        .btn-p:hover { background: #004ecc; transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid #e0e5f2; color: var(--text-secondary); }
+        .btn-outline:hover { background: #f4f7fe; }
 
-body{margin:0;background:var(--bg)}
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .active { display: block; }
 
-.app{max-width:500px;margin:auto;padding:20px}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.card{
-    background:var(--white);
-    border-radius:20px;
-    padding:25px;
-    margin-bottom:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.05)
-}
-
-.btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    font-weight:bold;
-    cursor:pointer;
-    margin-top:10px
-}
-
-.btn-p{background:var(--p);color:#fff}
-.btn-outline{background:transparent;border:2px solid #ddd}
-
-.input-field{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:2px solid #ddd;
-    margin:10px 0
-}
-
-.page{display:none}
-.active{display:block}
-
-.progress-container{
-    height:10px;
-    background:#eee;
-    border-radius:10px;
-    overflow:hidden
-}
-
-.progress-bar{
-    height:100%;
-    background:linear-gradient(90deg,#0061ff,#60efff)
-}
-</style>
+        .progress-container { height: 12px; background: #eee; border-radius: 10px; margin: 20px 0 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--primary-gradient); width: 0%; border-radius: 10px; }
+        
+        .timer-val { font-size: 2.5rem; font-weight: 900; color: var(--text-main); margin: 20px 0; font-variant-numeric: tabular-nums; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-item { background: #f8faff; padding: 10px; border-radius: 12px; text-align: center; }
+    </style>
 </head>
-
 <body>
 
 <div class="app">
-
-<!-- LOGIN -->
-<div id="p-login" class="page active">
-    <div class="card">
-        <h2>تسجيل الدخول</h2>
-        <input id="l-user" class="input-field" placeholder="البريد أو الهاتف">
-        <input id="l-pass" type="password" class="input-field" placeholder="كلمة المرور">
-        <button class="btn btn-p" onclick="doLogin()">دخول</button>
-        <button class="btn btn-outline" onclick="go('p-reg')">إنشاء حساب</button>
+    <!-- LOGIN -->
+    <div id="p-login" class="page active">
+        <div class="card">
+            <h2>تسجيل الدخول</h2>
+            <p>مرحباً بك مجدداً في مرسال</p>
+            <input id="l-user" class="input-field" placeholder="البريد الإلكتروني أو الهاتف">
+            <input id="l-pass" type="password" class="input-field" placeholder="كلمة المرور">
+            <button class="btn btn-p" onclick="doLogin()">دخول للنظام</button>
+            <button class="btn btn-outline" onclick="go('p-reg')">إنشاء حساب جديد</button>
+        </div>
     </div>
-</div>
 
-<!-- REGISTER -->
-<div id="p-reg" class="page">
-    <div class="card">
-        <h2>تسجيل جديد</h2>
-        <input id="r-name" class="input-field" placeholder="الاسم">
-        <input id="r-email" class="input-field" placeholder="الإيميل">
-        <input id="r-phone" class="input-field" placeholder="الهاتف">
-        <input id="r-pass" type="password" class="input-field" placeholder="كلمة المرور">
-        <button class="btn btn-p" onclick="doRegister()">تسجيل</button>
-        <button class="btn btn-outline" onclick="go('p-login')">رجوع</button>
+    <!-- REGISTER -->
+    <div id="p-reg" class="page">
+        <div class="card">
+            <h2>حساب جديد</h2>
+            <input id="r-name" class="input-field" placeholder="الاسم الكامل">
+            <input id="r-email" class="input-field" placeholder="البريد الإلكتروني">
+            <input id="r-phone" class="input-field" placeholder="رقم الهاتف">
+            <input id="r-pass" type="password" class="input-field" placeholder="كلمة المرور">
+            <button class="btn btn-p" onclick="doRegister()">تأكيد التسجيل</button>
+            <button class="btn btn-outline" onclick="go('p-login')">لديك حساب؟ سجل دخول</button>
+        </div>
     </div>
-</div>
 
-<!-- DASHBOARD -->
-<div id="p-dash" class="page">
-    <div class="card">
-        <h3 id="u-name"></h3>
-
-        <div class="progress-container">
-            <div id="u-prog" class="progress-bar"></div>
+    <!-- DASHBOARD -->
+    <div id="p-dash" class="page">
+        <div class="card">
+            <h3 id="u-name">...</h3>
+            <div class="progress-container">
+                <div id="u-prog" class="progress-bar"></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <small>الساعات</small>
+                    <div id="stat-hours" style="font-weight:bold">0</div>
+                </div>
+                <div class="stat-item">
+                    <small>الجلسات</small>
+                    <div id="stat-sess" style="font-weight:bold">0</div>
+                </div>
+            </div>
         </div>
 
-        <p id="u-stats"></p>
+        <div class="card" style="text-align:center">
+            <div id="timer-display" class="timer-val">00:00:00</div>
+            <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء الجلسة الآن</button>
+            <button class="btn btn-outline" onclick="logout()">تسجيل الخروج</button>
+        </div>
     </div>
-
-    <div class="card" style="text-align:center">
-        <div id="timer-display" style="font-size:32px;font-weight:bold">00:00:00</div>
-
-        <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء الجلسة</button>
-        <button class="btn btn-outline" onclick="logout()">تسجيل خروج</button>
-    </div>
-</div>
-
 </div>
 
 <script>
-let users = [];
-let currentUser = null;
-let intervalId = null;
-let startTime = null;
-let target = 130;
+    let users = [];
+    let currentUser = null;
+    let intervalId = null;
+    let startTime = null;
+    let targetHours = 130;
 
-// ================= INIT =================
-async function init(){
-    try{
-        const res = await fetch('/api/init').then(r=>r.json());
-        if(res.success){
-            users = res.volunteers || [];
-            target = res.target || 130;
+    // --- Core Functions ---
+    async function apiFetch(endpoint, options = {}) {
+        try {
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...options.headers }
+            });
+            return await res.json();
+        } catch (e) {
+            console.error("API Error:", e);
+            return { success: false };
         }
-    }catch(e){
-        alert("خطأ في الاتصال بالسيرفر");
-    }
-}
-init();
-
-// ================= NAV =================
-function go(id){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-
-// ================= LOGIN =================
-async function doLogin(){
-    const loginId = document.getElementById('l-user').value.trim().toLowerCase();
-    const pass = document.getElementById('l-pass').value;
-
-    if(!loginId || !pass){
-        return alert("أدخل البيانات كاملة");
     }
 
-    const user = users.find(u =>
-        (u.email && u.email.toLowerCase() === loginId) ||
-        u.phone === loginId
-    );
+    async function init() {
+        const data = await apiFetch('/api/init');
+        if (data.success) {
+            users = data.volunteers || [];
+            targetHours = data.target || 130;
+        }
+    }
+    init();
 
-    if(!user) return alert("المستخدم غير موجود");
+    function go(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
 
-    try{
-        const res = await fetch('/api/verify-login',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({id:user.id,password:pass})
-        }).then(r=>r.json());
+    async function doLogin() {
+        const loginId = document.getElementById('l-user').value.trim().toLowerCase();
+        const pass = document.getElementById('l-pass').value;
 
-        if(res.success){
+        const user = users.find(u => u.email?.toLowerCase() === loginId || u.phone === loginId);
+        if (!user) return alert("المستخدم غير موجود");
+
+        const res = await apiFetch('/api/verify-login', {
+            method: 'POST',
+            body: JSON.stringify({ id: user.id, password: pass })
+        });
+
+        if (res.success) {
             currentUser = user;
             updateUI();
             go('p-dash');
-        }else{
-            alert("كلمة المرور غير صحيحة");
+        } else {
+            alert("كلمة المرور خاطئة");
         }
-    }catch{
-        alert("خطأ في السيرفر");
-    }
-}
-
-// ================= REGISTER =================
-async function doRegister(){
-    const name = r-name.value.trim();
-    const email = r-email.value.trim();
-    const phone = r-phone.value.trim();
-    const password = r-pass.value;
-
-    if(!name || !email || !password){
-        return alert("املأ كل البيانات");
     }
 
-    const user = {
-        id: Date.now().toString(),
-        name, email, phone, password
-    };
+    async function doRegister() {
+        const name = document.getElementById('r-name').value.trim();
+        const email = document.getElementById('r-email').value.trim();
+        const phone = document.getElementById('r-phone').value.trim();
+        const password = document.getElementById('r-pass').value;
 
-    try{
-        const res = await fetch('/api/register',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(user)
-        }).then(r=>r.json());
+        if (!name || !email || !password) return alert("يرجى ملء البيانات الأساسية");
 
-        if(res.success){
+        const newUser = { id: Date.now().toString(), name, email, phone, password, hours: 0, sessions: 0 };
+        const res = await apiFetch('/api/register', { method: 'POST', body: JSON.stringify(newUser) });
+
+        if (res.success) {
             alert("تم التسجيل بنجاح");
             location.reload();
-        }else{
-            alert("فشل التسجيل");
         }
-    }catch{
-        alert("خطأ في السيرفر");
     }
-}
 
-// ================= UI =================
-function updateUI(){
-    u-name.innerText = "مرحباً " + currentUser.name;
-
-    const percent = Math.min((currentUser.hours / target) * 100,100);
-    u-prog.style.width = percent + "%";
-
-    u-stats.innerText =
-        `${currentUser.hours.toFixed(1)} / ${target} ساعة | جلسات: ${currentUser.sessions}`;
-}
-
-// ================= TIMER =================
-function toggleTimer(){
-    const btn = document.getElementById('btn-timer');
-    const display = document.getElementById('timer-display');
-
-    if(!startTime){
-        startTime = new Date();
-
-        btn.innerText = "إنهاء الجلسة";
-        btn.style.background = "var(--danger)";
-
-        intervalId = setInterval(()=>{
-            const diff = Math.floor((new Date() - startTime)/1000);
-
-            const h = String(Math.floor(diff/3600)).padStart(2,'0');
-            const m = String(Math.floor((diff%3600)/60)).padStart(2,'0');
-            const s = String(diff%60).padStart(2,'0');
-
-            display.innerText = `${h}:${m}:${s}`;
-        },1000);
-
-    }else{
-        const hours = (new Date() - startTime) / 3600000;
-
-        currentUser.hours += hours;
-        currentUser.sessions += 1;
-
-        saveUser(currentUser);
-
-        clearInterval(intervalId);
-        startTime = null;
-
-        display.innerText = "00:00:00";
-
-        btn.innerText = "بدء الجلسة";
-        btn.style.background = "var(--p)";
-
-        updateUI();
+    function updateUI() {
+        document.getElementById('u-name').innerText = `أهلاً، ${currentUser.name}`;
+        const percent = Math.min((currentUser.hours / targetHours) * 100, 100);
+        document.getElementById('u-prog').style.width = percent + "%";
+        document.getElementById('stat-hours').innerText = currentUser.hours.toFixed(1);
+        document.getElementById('stat-sess').innerText = currentUser.sessions;
     }
-}
 
-// ================= SAVE =================
-async function saveUser(u){
-    try{
-        await fetch('/api/update-volunteer',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(u)
-        });
-    }catch(e){
-        alert("فشل حفظ البيانات");
+    function toggleTimer() {
+        const btn = document.getElementById('btn-timer');
+        const display = document.getElementById('timer-display');
+
+        if (!startTime) {
+            startTime = new Date();
+            btn.innerText = "إنهاء الجلسة";
+            btn.style.background = "var(--danger)";
+            intervalId = setInterval(() => {
+                const diff = Math.floor((new Date() - startTime) / 1000);
+                const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                const s = String(diff % 60).padStart(2, '0');
+                display.innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        } else {
+            const addedHours = (new Date() - startTime) / 3600000;
+            currentUser.hours += addedHours;
+            currentUser.sessions += 1;
+
+            saveUser(currentUser);
+            clearInterval(intervalId);
+            startTime = null;
+            display.innerText = "00:00:00";
+            btn.innerText = "بدء الجلسة الآن";
+            btn.style.background = "var(--primary)";
+            updateUI();
+        }
     }
-}
 
-// ================= LOGOUT =================
-function logout(){
-    location.reload();
-}
+    async function saveUser(u) {
+        await apiFetch('/api/update-volunteer', { method: 'POST', body: JSON.stringify(u) });
+    }
+
+    function logout() { location.reload(); }
 </script>
-
 </body>
 </html>
