@@ -3,453 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersal Tracker - المتطوعين</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>مرسال - نظام تتبع الساعات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b;
-            --primary: #2563eb; --primary-dark: #1d4ed8; --success: #059669; --danger: #dc2626;
-            --border: #e2e8f0; --radius: 16px;
-        }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334151; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-        
-        .app-container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        :root { --p: #0061ff; --s: #2b333e; --bg: #f4f7fe; --white: #ffffff; --text: #1b2559; --danger: #e31a1a; }
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background: var(--bg); margin: 0; }
+
+        .app { max-width: 500px; margin: auto; padding: 20px; }
+
+        .card { background: var(--white); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
+
+        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-outline { background: transparent; border: 2px solid #ddd; }
+
+        .input-field { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #ddd; margin: 10px 0; }
+
         .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .active { display: block; }
 
-        .card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
-        .btn:active { transform: scale(0.98); }
-        
-        .input-group { margin-bottom: 16px; text-align: right; }
-        .input-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-        .input-field { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 15px; transition: 0.2s; text-align: right; }
-        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .progress-container { height: 10px; background: #eee; border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg,#0061ff,#60efff); }
 
-        .header-box { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 25px; color: white; margin-bottom: 20px; position: relative; overflow: hidden; }
-        .user-row { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; flex-direction: row-reverse; }
-        .user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; flex-direction: row-reverse; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid rgba(255,255,255,0.8); overflow: hidden; color: white; font-size: 20px; }
-        .progress-bg { height: 8px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .progress-fill { height: 100%; background: #34d399; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        .timer-display { font-size: 48px; font-weight: 800; text-align: center; color: var(--primary); margin: 10px 0; letter-spacing: -1px; }
-        .status-badge { text-align: center; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 20px; display: inline-block; margin-bottom: 15px; text-transform: uppercase; }
-        .status-active { background: #d1fae5; color: #065f46; }
-        .status-inactive { background: #fee2e2; color: #991b1b; }
-
-        .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--card); padding: 30px; border-radius: var(--radius); width: 100%; max-width: 400px; position: relative; text-align: right; }
-        
-        .admin-tabs { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .admin-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 13px; }
-        .admin-tab.active { background: var(--primary); color: white; }
-        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: right; }
-        .admin-table th { padding: 12px 10px; border-bottom: 2px solid var(--border); color: var(--muted); }
-        .admin-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
-        .stat-card { border-radius: 12px; padding: 15px; text-align: center; color: white; }
+        .admin-item { display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    
-    <!-- Login Page -->
-    <div id="page-login" class="page active">
-        <div style="min-height: 90vh; display: flex; flex-direction: column; justify-content: center;">
-            <div class="card" style="text-align: center;">
-                <h1 style="font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">Mersal</h1>
-                <p style="color: var(--muted); margin-bottom: 30px;">نظام تتبع ساعات المتطوعين</p>
-                <div class="input-group"><input type="text" id="login-id" class="input-field" placeholder="البريد الإلكتروني أو الهاتف"></div>
-                <div class="input-group"><input type="password" id="login-pass" class="input-field" placeholder="كلمة المرور"></div>
-                <button class="btn btn-primary" onclick="login()">دخول</button>
-                <button class="btn btn-outline" style="margin-top:12px;" onclick="showPage('page-register')">إنشاء حساب جديد</button>
-                <p style="margin-top:20px; font-size:13px; color:var(--muted); cursor:pointer" onclick="showPage('page-admin-login')">بوابة الإدارة</p>
-            </div>
-        </div>
-    </div>
+<div class="app">
 
-    <!-- Register Page -->
-    <div id="page-register" class="page">
-        <div class="card">
-            <h2 style="text-align: center; margin-bottom: 20px;">انضم إلى مرسال</h2>
-            <div class="input-group"><label class="input-label">الاسم الكامل</label><input type="text" id="reg-name" class="input-field"></div>
-            <div class="input-group"><label class="input-label">البريد الإلكتروني</label><input type="email" id="reg-email" class="input-field"></div>
-            <div class="input-group"><label class="input-label">رقم الهاتف</label><input type="tel" id="reg-phone" class="input-field"></div>
-            <div class="input-group"><label class="input-label">كلمة المرور</label><input type="password" id="reg-pass" class="input-field"></div>
-            <button class="btn btn-primary" onclick="register()">إنشاء الحساب</button>
-            <button class="btn btn-outline" style="margin-top:12px;" onclick="showPage('page-login')">العودة لتسجيل الدخول</button>
-        </div>
-    </div>
-
-    <!-- Activity Selection -->
-    <div id="page-activity-select" class="page">
-        <div class="card">
-            <h2 style="text-align: center;">تسجيل دخول اليوم</h2>
-            <p id="welcome-msg" style="text-align:center; color:var(--muted); margin-bottom:20px;"></p>
-            <div class="input-group">
-                <label class="input-label">ما الذي ستعمل عليه اليوم؟</label>
-                <select id="select-activity" class="input-field" onchange="handleActivityChange(this)"></select>
-            </div>
-            <div class="input-group" id="manual-activity-group" style="display:none;">
-                <input type="text" id="manual-activity-input" class="input-field" placeholder="أدخل اسم النشاط">
-            </div>
-            <button class="btn btn-success" onclick="startSessionWithActivity()">بدء الجلسة الآن</button>
-        </div>
-    </div>
-
-    <!-- Dashboard -->
-    <div id="page-dash" class="page">
-        <div class="header-box">
-            <div class="user-row">
-                <div class="user-info" onclick="openProfileModal()">
-                    <div class="avatar"><span id="dash-avatar-letter">M</span></div>
-                    <div><h2 id="dash-name" style="font-size: 18px;">اسم المستخدم</h2></div>
-                </div>
-                <button onclick="logout()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">خروج</button>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 20px; flex-direction: row-reverse;">
-                <span id="prog-text">0 / 130 ساعة</span>
-                <span>التقدم الإجمالي</span>
-            </div>
-            <div class="progress-bg"><div class="progress-fill" id="prog-fill" style="width: 0%"></div></div>
-        </div>
-
-        <div class="card">
-            <div style="text-align: center;">
-                <span class="status-badge status-inactive" id="status-badge">جاهز</span>
-                <div class="timer-display" id="timer">00:00:00</div>
-                <div id="current-activity-display" style="margin-bottom:15px; font-weight:600; color:var(--primary);">لا يوجد نشاط</div>
-            </div>
-            <button id="main-action-btn" class="btn btn-success" onclick="handleMainAction()">بدء التوقيت</button>
-            <div style="display: flex; justify-content: space-around; margin-top: 20px; flex-direction: row-reverse;">
-                <div style="text-align:center;">
-                    <small>إجمالي الساعات</small><div id="total-hours" style="font-size:20px; font-weight:800;">0.00</div>
-                </div>
-                <div style="text-align:center;">
-                    <small>الجلسات</small><div id="total-sessions" style="font-size:20px; font-weight:800;">0</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Admin Panel -->
-    <div id="page-admin-login" class="page">
-        <div class="card">
-            <h2 style="text-align: center;">لوحة الإدارة</h2>
-            <input type="password" id="admin-pass" class="input-field" placeholder="كلمة مرور الإدارة" style="margin-bottom:15px;">
-            <button class="btn btn-primary" onclick="adminLogin()">دخول</button>
-            <button class="btn btn-outline" style="margin-top:10px;" onclick="showPage('page-login')">العودة</button>
-        </div>
-    </div>
-
-    <div id="page-admin" class="page">
-        <div class="admin-tabs">
-            <button class="admin-tab active" onclick="switchTab('dashboard', this)">الإحصائيات</button>
-            <button class="admin-tab" onclick="switchTab('users', this)">المتطوعين</button>
-            <button class="admin-tab" onclick="switchTab('activities', this)">الإعدادات</button>
-        </div>
-
-        <div id="tab-dashboard" class="admin-section">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom:20px;">
-                <div class="stat-card" style="background:var(--primary);"><div id="adm-vol">0</div><small>متطوع</small></div>
-                <div class="stat-card" style="background:var(--success);"><div id="adm-hrs">0</div><small>ساعة</small></div>
-                <div class="stat-card" style="background:var(--danger);"><div id="adm-active">0</div><small>نشط</small></div>
-            </div>
-        </div>
-
-        <div id="tab-users" class="admin-section" style="display:none;">
-            <div class="card" style="padding:10px; overflow-x:auto;">
-                <table class="admin-table">
-                    <thead><tr><th>الاسم</th><th>البيانات</th><th>الساعات</th><th>إجراء</th></tr></thead>
-                    <tbody id="admin-users-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-activities" class="admin-section" style="display:none;">
-            <div class="card">
-                <h3>الهدف الإجمالي (ساعة)</h3>
-                <input type="number" id="global-target-input" class="input-field" placeholder="130">
-                <button class="btn btn-primary" style="margin-top:10px;" onclick="updateGlobalTarget()">حفظ الهدف</button>
-            </div>
-            <div class="card">
-                <h3>إدارة الأنشطة</h3>
-                <div style="display:flex; gap:5px; margin-bottom:15px; flex-direction: row-reverse;">
-                    <input type="text" id="new-act-name" class="input-field" placeholder="نشاط جديد">
-                    <button class="btn btn-primary" style="width:auto;" onclick="addActivity()">إضافة</button>
-                </div>
-                <div id="admin-act-list"></div>
-            </div>
-        </div>
-        <button class="btn btn-outline" onclick="logout()">الخروج من الإدارة</button>
+<!-- LOGIN -->
+<div id="p-login" class="page active">
+    <div class="card">
+        <h2>تسجيل الدخول</h2>
+        <input id="l-user" class="input-field" placeholder="البريد أو الهاتف">
+        <input id="l-pass" type="password" class="input-field" placeholder="كلمة المرور">
+        <button class="btn btn-p" onclick="doLogin()">دخول</button>
+        <button class="btn btn-outline" onclick="go('p-reg')">إنشاء حساب</button>
     </div>
 </div>
 
-<!-- Profile Modal -->
-<div class="modal" id="modal-profile">
-    <div class="modal-content">
-        <h3 id="modal-title" style="margin-bottom: 20px;">تعديل الملف الشخصي</h3>
-        <div class="input-group"><label class="input-label">الاسم</label><input type="text" id="edit-name" class="input-field"></div>
-        <div class="input-group"><label class="input-label">البريد الإلكتروني</label><input type="email" id="edit-email" class="input-field"></div>
-        <div class="input-group"><label class="input-label">الهاتف</label><input type="tel" id="edit-phone" class="input-field"></div>
-        <div id="admin-only-edit" style="display:none;">
-            <div class="input-group"><label class="input-label">تعديل يدوي للساعات</label><input type="number" id="edit-hours" class="input-field"></div>
-        </div>
-        <button class="btn btn-success" onclick="saveProfileChanges()">حفظ التغييرات</button>
-        <button class="btn btn-outline" style="margin-top:8px;" onclick="closeModal('modal-profile')">إلغاء</button>
+<!-- REGISTER -->
+<div id="p-reg" class="page">
+    <div class="card">
+        <h2>تسجيل</h2>
+        <input id="r-name" class="input-field" placeholder="الاسم">
+        <input id="r-email" class="input-field" placeholder="الإيميل">
+        <input id="r-phone" class="input-field" placeholder="الهاتف">
+        <input id="r-pass" type="password" class="input-field" placeholder="كلمة المرور">
+        <button class="btn btn-p" onclick="doRegister()">تسجيل</button>
+        <button class="btn btn-outline" onclick="go('p-login')">رجوع</button>
     </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="p-dash" class="page">
+    <div class="card">
+        <h3 id="u-name"></h3>
+        <div class="progress-container">
+            <div id="u-prog" class="progress-bar"></div>
+        </div>
+        <p id="u-stats"></p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+        <div id="timer" style="font-size:30px;">00:00:00</div>
+        <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء</button>
+        <button class="btn btn-outline" onclick="logout()">خروج</button>
+    </div>
+</div>
+
+<!-- ADMIN -->
+<div id="p-admin" class="page">
+    <div class="card">
+        <h3>الإدارة</h3>
+        <div id="admin-list"></div>
+        <button class="btn btn-outline" onclick="logout()">خروج</button>
+    </div>
+</div>
+
 </div>
 
 <script>
-    const $ = id => document.getElementById(id);
-    const showPage = id => { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); $(id).classList.add('active'); };
+let users = [], currentUser = null, timer = null, startTime = null, target = 130;
 
-    let allVolunteers = [];
-    let activitiesList = [];
-    let globalHoursTarget = 130;
-    let currentUser = null;
-    let timerInterval = null;
-    let sessionStart = null;
-
-    async function init() {
-        try {
-            const res = await fetch('/api/init');
-            const data = await res.json();
-            if(data.success) {
-                allVolunteers = data.volunteers;
-                activitiesList = data.activities;
-                globalHoursTarget = data.target;
-                loadActivityOptions();
-            }
-        } catch (e) { console.error("Error loading data from server"); }
+// INIT
+async function init() {
+    const res = await fetch('/api/init').then(r=>r.json());
+    if(res.success){
+        users = res.volunteers;
+        target = res.target;
     }
+}
+init();
 
-    async function serverUpdateUser(user) {
-        try {
-            await fetch('/api/update-volunteer', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(user)
-            });
-        } catch (e) { console.error("Update failed"); }
-    }
+// NAVIGATION
+function go(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
 
-    function login() {
-        const idVal = $('login-id').value.trim();
-        const passVal = $('login-pass').value;
-        const user = allVolunteers.find(u => (u.email === idVal || u.phone === idVal) && u.password === passVal);
-        
-        if (user) {
-            currentUser = user;
-            $('welcome-msg').textContent = `أهلاً بك مجدداً، ${user.name}!`;
-            loadActivityOptions();
-            showPage('page-activity-select');
-        } else { alert('بيانات الدخول غير صحيحة'); }
-    }
+// LOGIN (secure)
+async function doLogin(){
+    const loginId = l-user.value.trim().toLowerCase();
+    const pass = l-pass.value;
 
-    async function register() {
-        const name = $('reg-name').value.trim();
-        const email = $('reg-email').value.trim();
-        const phone = $('reg-phone').value.trim();
-        const password = $('reg-pass').value;
-        if(!name || !email || !password) return alert('يرجى ملء كافة الخانات المطلوبة');
+    if(!loginId || !pass) return alert("املأ البيانات");
 
-        const newUser = { id: Date.now().toString(), name, email, phone, password, hours: 0, sessions: 0 };
-        
-        try {
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(newUser)
-            });
-            const data = await res.json();
-            if(data.success) {
-                allVolunteers.push(newUser);
-                currentUser = newUser;
-                loadActivityOptions();
-                showPage('page-activity-select');
-            }
-        } catch (e) { alert("فشل التسجيل"); }
-    }
+    const user = users.find(u =>
+        u.email.toLowerCase() === loginId || u.phone === loginId
+    );
 
-    function loadActivityOptions() {
-        const select = $('select-activity');
-        select.innerHTML = activitiesList.map(a => `<option value="${a}">${a}</option>`).join('') + `<option value="other">نشاط آخر...</option>`;
-    }
+    if(!user) return alert("الحساب غير موجود");
 
-    function handleActivityChange(el) {
-        $('manual-activity-group').style.display = el.value === 'other' ? 'block' : 'none';
-    }
+    const res = await fetch('/api/verify-login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:user.id,password:pass})
+    }).then(r=>r.json());
 
-    function startSessionWithActivity() {
-        const sel = $('select-activity').value;
-        const finalAct = sel === 'other' ? $('manual-activity-input').value : sel;
-        if(!finalAct) return alert('يرجى تحديد النشاط');
-        $('current-activity-display').textContent = finalAct;
+    if(res.success){
+        currentUser = user;
         updateUI();
-        showPage('page-dash');
+        go('p-dash');
+    }else{
+        alert("كلمة المرور خطأ");
+    }
+}
+
+// REGISTER
+async function doRegister(){
+    const user = {
+        id: Date.now().toString(),
+        name: r-name.value,
+        email: r-email.value,
+        phone: r-phone.value,
+        password: r-pass.value
+    };
+
+    if(!user.name || !user.email || !user.password){
+        return alert("املأ كل البيانات");
     }
 
-    function handleMainAction() {
-        if(!sessionStart) {
-            sessionStart = new Date();
-            timerInterval = setInterval(updateTimer, 1000);
-            $('status-badge').className = 'status-badge status-active';
-            $('status-badge').textContent = 'نشط الآن';
-            $('main-action-btn').textContent = 'إيقاف وحفظ';
-            $('main-action-btn').className = 'btn btn-danger';
-        } else {
-            const diff = (new Date() - sessionStart) / 3600000;
-            currentUser.hours += diff;
-            currentUser.sessions++;
-            
-            serverUpdateUser(currentUser);
-            
-            clearInterval(timerInterval);
-            sessionStart = null;
-            $('timer').textContent = '00:00:00';
-            $('status-badge').className = 'status-badge status-inactive';
-            $('status-badge').textContent = 'جاهز';
-            $('main-action-btn').textContent = 'بدء التوقيت';
-            $('main-action-btn').className = 'btn btn-success';
-            updateUI();
-        }
+    const res = await fetch('/api/register',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(user)
+    }).then(r=>r.json());
+
+    if(res.success){
+        alert("تم التسجيل");
+        location.reload();
     }
+}
 
-    function updateTimer() {
-        const diff = new Date() - sessionStart;
-        const h = String(Math.floor(diff/3600000)).padStart(2,'0');
-        const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
-        const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-        $('timer').textContent = `${h}:${m}:${s}`;
+// UI
+function updateUI(){
+    u-name.innerText = "مرحباً " + currentUser.name;
+
+    const percent = (currentUser.hours / target) * 100;
+    u-prog.style.width = percent + "%";
+
+    u-stats.innerText = `${currentUser.hours.toFixed(1)} / ${target} ساعة`;
+}
+
+// TIMER
+function toggleTimer(){
+    const btn = document.getElementById('btn-timer');
+
+    if(!startTime){
+        startTime = new Date();
+        btn.innerText = "إنهاء";
+        btn.style.background = "red";
+
+        timer = setInterval(()=>{
+            const diff = Math.floor((new Date()-startTime)/1000);
+            const h = Math.floor(diff/3600);
+            const m = Math.floor((diff%3600)/60);
+            const s = diff%60;
+            timer.innerText = `${h}:${m}:${s}`;
+        },1000);
+
+    }else{
+        const hours = (new Date()-startTime)/3600000;
+        currentUser.hours += hours;
+        currentUser.sessions++;
+
+        saveUser(currentUser);
+
+        clearInterval(timer);
+        startTime = null;
+        btn.innerText = "بدء";
+        btn.style.background = "var(--p)";
+        updateUI();
     }
+}
 
-    function updateUI() {
-        $('dash-name').textContent = currentUser.name;
-        $('dash-avatar-letter').textContent = currentUser.name.charAt(0).toUpperCase();
-        $('total-hours').textContent = currentUser.hours.toFixed(2);
-        $('total-sessions').textContent = currentUser.sessions;
-        const prog = (currentUser.hours / globalHoursTarget) * 100;
-        $('prog-fill').style.width = Math.min(prog, 100) + '%';
-        $('prog-text').textContent = `${Math.floor(currentUser.hours)} / ${globalHoursTarget} ساعة`;
-    }
+// SAVE
+async function saveUser(u){
+    await fetch('/api/update-volunteer',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(u)
+    });
+}
 
-    function logout() { currentUser = null; clearInterval(timerInterval); showPage('page-login'); }
-
-    function adminLogin() {
-        if($('admin-pass').value === 'admin123') {
-            loadAdminDashboard();
-            showPage('page-admin');
-        } else alert('كلمة مرور الإدارة خاطئة');
-    }
-
-    function loadAdminDashboard() {
-        $('adm-vol').textContent = allVolunteers.length;
-        $('adm-hrs').textContent = allVolunteers.reduce((s, v) => s + (v.hours || 0), 0).toFixed(1);
-        $('admin-users-body').innerHTML = allVolunteers.map(v => `
-            <tr>
-                <td><b>${v.name}</b></td>
-                <td style="font-size:10px; color:var(--muted)">${v.phone || ''}<br>${v.email}</td>
-                <td>${(v.hours || 0).toFixed(1)}h</td>
-                <td><button onclick="adminEditUser('${v.id}')" style="color:var(--primary); background:none; border:none; cursor:pointer; font-weight:700;">تعديل</button></td>
-            </tr>`).join('');
-        renderAdminActivities();
-    }
-
-    function renderAdminActivities() {
-        $('admin-act-list').innerHTML = activitiesList.map((a, i) => `
-            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border); flex-direction: row-reverse;">
-                <span>${a}</span>
-                <span style="color:var(--danger); cursor:pointer;" onclick="removeActivity(${i})">حذف</span>
-            </div>`).join('');
-    }
-
-    async function saveAdminSettings() {
-        await fetch('/api/update-settings', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ target: globalHoursTarget, activities: activitiesList })
-        });
-    }
-
-    function addActivity() {
-        const name = $('new-act-name').value.trim();
-        if(name) {
-            activitiesList.push(name);
-            $('new-act-name').value = '';
-            renderAdminActivities();
-            saveAdminSettings();
-        }
-    }
-
-    function removeActivity(index) {
-        activitiesList.splice(index, 1);
-        renderAdminActivities();
-        saveAdminSettings();
-    }
-
-    function updateGlobalTarget() {
-        globalHoursTarget = parseInt($('global-target-input').value) || 130;
-        saveAdminSettings();
-        alert('تم تحديث الهدف بنجاح');
-    }
-
-    let editingUserId = null;
-    function adminEditUser(id) {
-        editingUserId = id;
-        const user = allVolunteers.find(v => v.id === id);
-        $('modal-title').textContent = "إدارة: تعديل بيانات المتطوع";
-        $('edit-name').value = user.name;
-        $('edit-email').value = user.email;
-        $('edit-phone').value = user.phone || '';
-        $('edit-hours').value = (user.hours || 0).toFixed(1);
-        $('admin-only-edit').style.display = 'block';
-        $('modal-profile').classList.add('active');
-    }
-
-    function openProfileModal() {
-        editingUserId = null;
-        $('modal-title').textContent = "تعديل ملفي الشخصي";
-        $('edit-name').value = currentUser.name;
-        $('edit-email').value = currentUser.email;
-        $('edit-phone').value = currentUser.phone || '';
-        $('admin-only-edit').style.display = 'none';
-        $('modal-profile').classList.add('active');
-    }
-
-    async function saveProfileChanges() {
-        const targetUser = editingUserId ? allVolunteers.find(v => v.id === editingUserId) : currentUser;
-        targetUser.name = $('edit-name').value;
-        targetUser.email = $('edit-email').value;
-        targetUser.phone = $('edit-phone').value;
-        
-        if(editingUserId) {
-            targetUser.hours = parseFloat($('edit-hours').value) || 0;
-            loadAdminDashboard();
-        } else { updateUI(); }
-        
-        await serverUpdateUser(targetUser);
-        closeModal('modal-profile');
-    }
-
-    function closeModal(id) { $(id).classList.remove('active'); }
-    function switchTab(tab, btn) {
-        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
-        btn.classList.add('active');
-        $('tab-' + tab).style.display = 'block';
-    }
-
-    init();
+// LOGOUT
+function logout(){
+    location.reload();
+}
 </script>
+
 </body>
 </html>
