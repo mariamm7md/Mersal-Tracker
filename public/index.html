@@ -1,1635 +1,466 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersal - Volunteer Time Tracking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Mersal Time Keeper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f8fafc;
-            --bg-secondary: #ffffff;
-            --fg: #0f172a;
-            --fg-muted: #64748b;
-            --accent: #0066cc;
-            --accent-hover: #0052a3;
-            --accent-light: #e0f2fe;
-            --card: #ffffff;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gradient-1: #0066cc;
-            --gradient-2: #0099ff;
+            --bg: #f3f4f6; --card: #ffffff; --text: #111827; --muted: #6b7280;
+            --primary: #0056b3; --primary-dark: #003d80; --primary-light: #dbeafe;
+            --success: #10b981; --danger: #ef4444; --border: #e5e7eb;
         }
+        [data-theme="dark"] { --bg: #111827; --card: #1f2937; --text: #f9fafb; --muted: #9ca3af"; --border: #374151"; }
 
-        [data-theme="dark"] {
-            --bg: #0a0f1a;
-            --bg-secondary: #111827;
-            --fg: #f1f5f9;
-            --fg-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-            --accent-light: #1e3a5f;
-            --card: #1e293b;
-            --border: #334155;
-            --gradient-1: #1e40af;
-            --gradient-2: #3b82f6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: var(--fg);
-            min-height: 100vh;
-            transition: background 0.4s ease, color 0.4s ease;
-        }
-
-        .font-display {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .bg-pattern {
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(0, 102, 204, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(0, 153, 255, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 102, 204, 0.03) 0%, transparent 70%);
-        }
-
-        [data-theme="dark"] .bg-pattern {
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
-        }
-
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 32px rgba(0, 102, 204, 0.12);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 102, 204, 0.35);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--fg);
-            border: 2px solid var(--border);
-            padding: 12px 28px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 16px;
-            background: var(--bg-secondary);
-            color: var(--fg);
-            transition: all 0.3s ease;
-            font-family: 'Cairo', sans-serif;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--accent-light);
-        }
-
-        .input-field::placeholder {
-            color: var(--fg-muted);
-        }
-
-        .logo-container {
-            animation: logoFloat 4s ease-in-out infinite;
-        }
-
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease forwards;
-        }
-
-        .slide-up {
-            animation: slideUp 0.5s ease forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { 
-                opacity: 0; 
-                transform: translateY(30px); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-        }
-
-        .stagger-1 { animation-delay: 0.1s; }
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.3s; }
-        .stagger-4 { animation-delay: 0.4s; }
-
-        .theme-toggle {
-            width: 56px;
-            height: 28px;
-            background: var(--border);
-            border-radius: 14px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle::after {
-            content: '';
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            top: 3px;
-            right: 3px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        [data-theme="dark"] .theme-toggle {
-            background: var(--accent);
-        }
-
-        [data-theme="dark"] .theme-toggle::after {
-            right: 31px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--card), var(--bg-secondary));
-            border: 1px solid var(--border);
-            border-radius: 16px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .container { width: 100%; max-width: 420px; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Welcome Header (Blue Box) */
+        .welcome-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 24px;
             padding: 24px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 86, 179, 0.3);
             position: relative;
             overflow: hidden;
         }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--accent), transparent);
-            opacity: 0.1;
-            border-radius: 0 0 0 100%;
+        .welcome-header::after {
+            content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
         }
+        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: relative; z-index: 1; }
+        .user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 700; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-text h2 { font-size: 18px; font-weight: 700; }
+        .user-text p { font-size: 12px; opacity: 0.8; }
+        .settings-btn { background: rgba(255,255,255,0.15); border: none; color: white; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .activity-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
+        /* Progress Bar */
+        .progress-box { position: relative; z-index: 1; }
+        .progress-title { font-size: 13px; opacity: 0.9; margin-bottom: 8px; font-weight: 500; }
+        .progress-stats { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: 600; }
+        .progress-bg { height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #34d399; border-radius: 10px; transition: width 0.5s ease; }
 
-        .activity-medical { background: #fef3c7; color: #92400e; }
-        .activity-education { background: #dbeafe; color: #1e40af; }
-        .activity-social { background: #dcfce7; color: #166534; }
-        .activity-events { background: #fce7f3; color: #9d174d; }
+        /* Cards */
+        .card { background: var(--card); border-radius: 24px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Form Elements */
+        .input-group { margin-bottom: 16px; }
+        .input-label { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+        .input-field { width: 100%; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); color: var(--text); font-family: 'Inter'; font-size: 14px; transition: 0.2s; }
+        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        
+        /* Buttons */
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-family: 'Inter'; font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; transform: translateY(-1px); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+        .btn-danger { background: var(--danger); color: white; }
 
-        [data-theme="dark"] .activity-medical { background: #78350f; color: #fef3c7; }
-        [data-theme="dark"] .activity-education { background: #1e3a8a; color: #dbeafe; }
-        [data-theme="dark"] .activity-social { background: #14532d; color: #dcfce7; }
-        [data-theme="dark"] .activity-events { background: #831843; color: #fce7f3; }
+        /* Timer Display */
+        .timer-display { font-size: 40px; font-weight: 800; text-align: center; margin: 10px 0; color: var(--primary); font-variant-numeric: tabular-nums; }
+        .status-text { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 15px; }
 
-        .nav-link {
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
+        /* Total Hours */
+        .total-hours-box { text-align: center; padding: 10px 0; }
+        .total-hours-value { font-size: 24px; font-weight: 800; color: var(--text); }
+        .total-hours-label { font-size: 12px; color: var(--muted); }
 
-        .nav-link:hover, .nav-link.active {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
+        /* Grid for Time Inputs */
+        .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
+        /* Page Transitions */
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 16px;
-            text-align: right;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background: var(--bg-secondary);
-            font-weight: 700;
-            color: var(--fg-muted);
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        tr:hover td {
-            background: var(--accent-light);
-        }
-
-        .check-in-btn {
-            background: var(--success);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .check-in-btn:hover {
-            background: #059669;
-            transform: scale(1.02);
-        }
-
-        .check-out-btn {
-            background: var(--danger);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .check-out-btn:hover {
-            background: #dc2626;
-            transform: scale(1.02);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 480px;
-            width: 90%;
-            transform: scale(0.9);
-            transition: all 0.3s ease;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .timer-display {
-            font-size: 48px;
-            font-weight: 800;
-            font-family: 'Space Grotesk', monospace;
-            color: var(--accent);
-            text-align: center;
-            padding: 20px;
-            background: var(--accent-light);
-            border-radius: 16px;
-            margin: 20px 0;
-        }
-
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: block;
-            }
-            .desktop-nav {
-                display: none;
-            }
-            .stat-grid {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.4s ease;
-            z-index: 1001;
-        }
-
-        .notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .notification.success { background: var(--success); }
-        .notification.error { background: var(--danger); }
-        .notification.warning { background: var(--warning); }
-
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring circle {
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .mersal-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 800;
-            font-size: 28px;
-            color: white;
-            box-shadow: 0 8px 32px rgba(0, 102, 204, 0.3);
-        }
-
-        .hidden { display: none !important; }
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: var(--card); padding: 30px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; }
+        .modal-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 15px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 30px; position: relative; overflow: hidden; cursor: pointer; border: 3px solid var(--border); }
+        .modal-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-avatar-edit { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 9px; padding: 3px; }
     </style>
 </head>
-<body class="bg-pattern">
-    <!-- Notification -->
-    <div id="notification" class="notification"></div>
+<body>
 
-    <!-- Login Page -->
-    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
-        <div class="card p-8 md:p-12 w-full max-w-md fade-in">
-            <!-- Theme Toggle -->
-            <div class="flex justify-between items-center mb-8">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--fg-muted)">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()"></div>
+<div class="container">
+    
+    <!-- LOGIN PAGE -->
+    <div id="page-login" class="page active">
+        <div style="display: flex; flex-direction: column; justify-content: center; height: 90vh;">
+            <div class="card" style="text-align: center;">
+                <div style="width: 60px; height: 60px; background: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 24px; margin: 0 auto 20px;">M</div>
+                <h1 style="font-size: 24px; margin-bottom: 5px;">Mersal</h1>
+                <p style="color: var(--muted); margin-bottom: 25px;">Time Keeper</p>
+                
+                <div class="input-group">
+                    <input type="tel" id="login-phone" class="input-field" placeholder="Enter Phone Number">
                 </div>
-                <button onclick="toggleLanguage()" class="text-sm font-semibold px-3 py-1 rounded-lg" style="background: var(--accent-light); color: var(--accent);">
-                    <span id="langText">EN</span>
-                </button>
+                
+                <button class="btn btn-primary" onclick="login()">Continue</button>
+                <div style="margin: 20px 0; border-top: 1px solid var(--border);"></div>
+                <button class="btn btn-outline" onclick="showPage('page-admin-login')">Admin Access</button>
             </div>
-
-            <!-- Logo -->
-            <div class="text-center mb-10 slide-up stagger-1">
-                <div class="logo-container mersal-logo mx-auto mb-6">M</div>
-                <h1 class="font-display text-3xl font-bold mb-2" style="color: var(--fg)">Mersal</h1>
-                <p class="text-sm" style="color: var(--fg-muted)" data-translate="volunteerTracking">Volunteer Time Tracking</p>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="space-y-6 slide-up stagger-2">
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="enterPhone">Enter Phone Number</label>
-                    <input type="tel" id="phoneInput" class="input-field" placeholder="01xxxxxxxxx" maxlength="11" required>
-                </div>
-                <button type="submit" class="btn-primary w-full justify-center">
-                    <span data-translate="continue">Continue</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                    </svg>
-                </button>
-            </form>
-
-            <p class="text-center text-sm mt-6" style="color: var(--fg-muted)" data-translate="loginHint">
-                Enter your registered phone to continue. New volunteers will be registered.
-            </p>
-
-            <!-- Admin Access -->
-            <button onclick="showAdminModal()" class="w-full mt-6 text-sm font-medium py-3 rounded-lg transition-all hover:bg-opacity-80" style="background: var(--accent-light); color: var(--accent);" data-translate="adminAccess">
-                Admin Access
-            </button>
         </div>
     </div>
 
-    <!-- Registration Page -->
-    <div id="registerPage" class="min-h-screen flex items-center justify-center p-4 hidden">
-        <div class="card p-8 w-full max-w-md fade-in">
-            <button onclick="goBack()" class="flex items-center gap-2 mb-6" style="color: var(--fg-muted)">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                <span data-translate="back">Back</span>
-            </button>
-
-            <h2 class="text-xl font-bold mb-2" style="color: var(--fg)" data-translate="welcomeTitle">Welcome to Mersal!</h2>
-            <p class="text-sm mb-6" style="color: var(--fg-muted)" data-translate="completeReg">Please complete your registration</p>
-
-            <form id="registerForm" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="fullNameAr">Full Name (in Arabic)</label>
-                    <input type="text" id="nameInput" class="input-field" placeholder="الاسم بالكامل" required>
+    <!-- REGISTER PAGE -->
+    <div id="page-register" class="page">
+        <div style="display: flex; flex-direction: column; justify-content: center; height: 90vh;">
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 20px;">New Volunteer</h2>
+                <div class="input-group">
+                    <label class="input-label">Full Name</label>
+                    <input type="text" id="reg-name" class="input-field" placeholder="Name in Arabic">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="phoneNum">Phone Number</label>
-                    <input type="tel" id="phoneDisplay" class="input-field" readonly style="background: var(--bg); opacity: 0.7">
+                <div class="input-group">
+                    <input type="tel" id="reg-phone" class="input-field" readonly style="opacity:0.6">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="activityName">Activity Name</label>
-                    <select id="activitySelect" class="input-field" required>
-                        <option value="" data-translate="selectActivity">Select your activity</option>
-                        <option value="medical">الخدمات الطبية / Medical Services</option>
-                        <option value="education">التعليم والتدريب / Education & Training</option>
-                        <option value="social">الخدمات الاجتماعية / Social Services</option>
-                        <option value="events">الفعاليات والأنشطة / Events & Activities</option>
-                        <option value="other">أخرى / Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="customActivity">Or enter custom activity</label>
-                    <input type="text" id="customActivity" class="input-field" placeholder="Enter your activity">
-                </div>
-                <button type="submit" class="btn-primary w-full justify-center" data-translate="completeRegBtn">
-                    Complete Registration
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- User Dashboard -->
-    <div id="userDashboard" class="min-h-screen hidden">
-        <!-- Header -->
-        <header class="sticky top-0 z-50" style="background: var(--card); border-bottom: 1px solid var(--border);">
-            <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="mersal-logo" style="width: 40px; height: 40px; font-size: 18px; border-radius: 10px;">M</div>
-                    <span class="font-display font-bold text-lg">Mersal</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="theme-toggle" onclick="toggleTheme()"></div>
-                    <button onclick="logout()" class="btn-secondary text-sm py-2 px-4" data-translate="logout">Logout</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="max-w-6xl mx-auto px-4 py-8">
-            <!-- Welcome Section -->
-            <div class="mb-8 fade-in">
-                <h1 class="text-2xl md:text-3xl font-bold mb-2" data-translate="welcomeUser">Welcome back,</h1>
-                <h2 class="text-xl font-bold" style="color: var(--accent)" id="userNameDisplay">User Name</h2>
-                <p class="mt-2" style="color: var(--fg-muted)" id="userActivityDisplay">Activity: Medical Services</p>
-            </div>
-
-            <!-- Check In/Out Section -->
-            <div class="card p-6 mb-8 slide-up">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div class="text-center md:text-right">
-                        <h3 class="text-lg font-bold mb-2" data-translate="todayStatus">Today's Status</h3>
-                        <div id="checkStatusText" class="text-sm" style="color: var(--fg-muted)">Not checked in yet</div>
-                    </div>
-                    <div class="timer-display w-full md:w-auto" id="timerDisplay">00:00:00</div>
-                    <div class="flex gap-3">
-                        <button id="checkInBtn" onclick="checkIn()" class="check-in-btn">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                                </svg>
-                                <span data-translate="checkIn">Check In</span>
-                            </span>
-                        </button>
-                        <button id="checkOutBtn" onclick="checkOut()" class="check-out-btn hidden">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                </svg>
-                                <span data-translate="checkOut">Check Out</span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="stat-grid grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="stat-card slide-up stagger-1">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm font-semibold" style="color: var(--fg-muted)" data-translate="totalHours">Total Hours</span>
-                        <svg class="w-6 h-6" style="color: var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold font-display" id="totalHoursDisplay">0.0</div>
-                </div>
-                <div class="stat-card slide-up stagger-2">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm font-semibold" style="color: var(--fg-muted)" data-translate="daysAttended">Days Attended</span>
-                        <svg class="w-6 h-6" style="color: var(--success)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold font-display" id="daysAttendedDisplay">0</div>
-                </div>
-                <div class="stat-card slide-up stagger-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm font-semibold" style="color: var(--fg-muted)" data-translate="avgHours">Avg Hours/Day</span>
-                        <svg class="w-6 h-6" style="color: var(--warning)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold font-display" id="avgHoursDisplay">0.0</div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="card p-6 slide-up stagger-4">
-                <h3 class="text-lg font-bold mb-4" data-translate="recentActivity">Recent Activity</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th data-translate="date">Date</th>
-                                <th data-translate="checkInTime">Check In</th>
-                                <th data-translate="checkOutTime">Check Out</th>
-                                <th data-translate="duration">Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activityTable">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="noActivityMsg" class="text-center py-8" style="color: var(--fg-muted)" data-translate="noActivity">
-                    No activity recorded yet. Start by checking in!
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Admin Dashboard -->
-    <div id="adminDashboard" class="min-h-screen hidden">
-        <!-- Header -->
-        <header class="sticky top-0 z-50" style="background: var(--card); border-bottom: 1px solid var(--border);">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="mersal-logo" style="width: 40px; height: 40px; font-size: 18px; border-radius: 10px;">M</div>
-                    <span class="font-display font-bold text-lg">Mersal Admin</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button onclick="exportToExcel()" class="btn-primary text-sm py-2 px-4">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span data-translate="exportExcel">Export Excel</span>
-                    </button>
-                    <div class="theme-toggle" onclick="toggleTheme()"></div>
-                    <button onclick="logout()" class="btn-secondary text-sm py-2 px-4" data-translate="logout">Logout</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            <!-- Stats Overview -->
-            <div class="stat-grid grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="stat-card">
-                    <div class="text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="totalVolunteers">Total Volunteers</div>
-                    <div class="text-3xl font-bold font-display" id="adminTotalVolunteers">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="totalHoursAll">Total Hours</div>
-                    <div class="text-3xl font-bold font-display" id="adminTotalHours">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="activeToday">Active Today</div>
-                    <div class="text-3xl font-bold font-display" id="adminActiveToday">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="totalDaysAll">Total Days</div>
-                    <div class="text-3xl font-bold font-display" id="adminTotalDays">0</div>
-                </div>
-            </div>
-
-            <!-- Filter Section -->
-            <div class="card p-6 mb-6">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <div class="flex-1 min-w-[200px]">
-                        <input type="text" id="searchInput" class="input-field" placeholder="Search by name or phone..." oninput="filterVolunteers()">
-                    </div>
-                    <select id="activityFilter" class="input-field" style="width: auto; min-width: 180px;" onchange="filterVolunteers()">
-                        <option value="">All Activities</option>
+                <div class="input-group">
+                    <select id="reg-activity" class="input-field">
                         <option value="medical">Medical Services</option>
-                        <option value="education">Education & Training</option>
+                        <option value="education">Education</option>
                         <option value="social">Social Services</option>
-                        <option value="events">Events & Activities</option>
-                        <option value="other">Other</option>
-                    </select>
-                    <select id="dateFilter" class="input-field" style="width: auto; min-width: 150px;" onchange="filterVolunteers()">
-                        <option value="">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
                     </select>
                 </div>
+                <button class="btn btn-primary" onclick="register()">Create Account</button>
             </div>
-
-            <!-- Volunteers Table -->
-            <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4" data-translate="volunteersList">Volunteers List</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th data-translate="name">Name</th>
-                                <th data-translate="phone">Phone</th>
-                                <th data-translate="activity">Activity</th>
-                                <th data-translate="totalHours">Total Hours</th>
-                                <th data-translate="daysAttended">Days</th>
-                                <th data-translate="lastActive">Last Active</th>
-                                <th data-translate="actions">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="volunteersTable">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Activities Management -->
-            <div class="card p-6 mt-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-bold" data-translate="manageActivities">Manage Activities</h3>
-                    <button onclick="showAddActivityModal()" class="btn-secondary text-sm">
-                        <span class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span data-translate="addActivity">Add Activity</span>
-                        </span>
-                    </button>
-                </div>
-                <div id="activitiesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Admin Login Modal -->
-    <div id="adminModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4" data-translate="adminLogin">Admin Login</h3>
-            <p class="text-sm mb-6" style="color: var(--fg-muted)" data-translate="enterPassword">Enter admin password to continue</p>
-            <form id="adminLoginForm" class="space-y-4">
-                <input type="password" id="adminPassword" class="input-field" placeholder="Admin Password" required>
-                <div class="flex gap-3">
-                    <button type="button" onclick="hideAdminModal()" class="btn-secondary flex-1" data-translate="cancel">Cancel</button>
-                    <button type="submit" class="btn-primary flex-1 justify-center" data-translate="login">Login</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <!-- Volunteer Details Modal -->
-    <div id="volunteerModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold" id="volunteerModalName">Volunteer Details</h3>
-                <button onclick="hideVolunteerModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+    <!-- MAIN DASHBOARD -->
+    <div id="page-dash" class="page">
+        
+        <!-- Header Blue Section -->
+        <div class="welcome-header">
+            <div class="top-row">
+                <div class="user-info" onclick="openProfile()">
+                    <div class="avatar">
+                        <img id="dash-avatar" style="display:none;">
+                        <span id="dash-avatar-letter">U</span>
+                    </div>
+                    <div class="user-text">
+                        <div style="font-size: 12px; opacity: 0.8;">Welcome back,</div>
+                        <h2 id="dash-name">User</h2>
+                    </div>
+                </div>
+                <button class="settings-btn" onclick="logout()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 </button>
             </div>
-            <div id="volunteerDetails" class="space-y-4">
-                <!-- Populated by JS -->
+
+            <div class="progress-box">
+                <div class="progress-title">Verified Hours</div>
+                <div class="progress-stats">
+                    <span id="prog-text">0 / 130h</span>
+                    <span id="prog-percent">0%</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clock In Card -->
+        <div class="card">
+            <div class="status-text" id="status-text">Ready to start</div>
+            <div class="timer-display" id="timer">00:00:00</div>
+
+            <div class="input-group">
+                <label class="input-label">Activity Name (Manual Entry)</label>
+                <input type="text" id="activity-name" class="input-field" placeholder="What are you working on?">
+            </div>
+
+            <button id="clock-btn" class="btn btn-success" onclick="toggleClock()">Clock In</button>
+
+            <div class="total-hours-box">
+                <div class="total-hours-label">Total Hours</div>
+                <div class="total-hours-value" id="total-hours">0.00</div>
+            </div>
+        </div>
+
+        <!-- Log Missed Shift Card -->
+        <div class="card" style="background: var(--bg); border: 2px dashed var(--border); box-shadow: none;">
+            <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--muted);">Log Missed Shift</h3>
+            
+            <div class="input-group">
+                <input type="date" id="miss-date" class="input-field">
+            </div>
+            
+            <div class="time-grid">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <input type="time" id="miss-start" class="input-field">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <input type="time" id="miss-end" class="input-field">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" style="margin-top: 15px;" onclick="addMissed()">Add Missed Shift</button>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN -->
+    <div id="page-admin-login" class="page">
+        <div style="display: flex; flex-direction: column; justify-content: center; height: 90vh;">
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 20px;">Admin Login</h2>
+                <input type="password" id="admin-pass" class="input-field" placeholder="Password" style="margin-bottom: 15px;">
+                <button class="btn btn-primary" onclick="adminLogin()">Login</button>
+                <button class="btn btn-outline" style="margin-top: 10px;" onclick="showPage('page-login')">Back</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Activity Modal -->
-    <div id="addActivityModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4" data-translate="addNewActivity">Add New Activity</h3>
-            <form id="addActivityForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="activityNameAr">Activity Name (Arabic)</label>
-                    <input type="text" id="newActivityNameAr" class="input-field" placeholder="اسم النشاط" required>
+    <!-- ADMIN DASHBOARD -->
+    <div id="page-admin" class="page">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>Admin Panel</h2>
+                <button class="btn btn-outline" style="width:auto; padding:5px 10px; font-size:12px;" onclick="logout()">Exit</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div class="card" style="background:var(--bg); margin:0;">
+                    <div style="font-size:28px; font-weight:700; color:var(--primary);" id="adm-vol">0</div>
+                    <div style="font-size:12px; color:var(--muted);">Volunteers</div>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--fg-muted)" data-translate="activityNameEn">Activity Name (English)</label>
-                    <input type="text" id="newActivityNameEn" class="input-field" placeholder="Activity Name" required>
+                <div class="card" style="background:var(--bg); margin:0;">
+                    <div style="font-size:28px; font-weight:700; color:var(--success);" id="adm-hrs">0</div>
+                    <div style="font-size:12px; color:var(--muted);">Total Hours</div>
                 </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="hideAddActivityModal()" class="btn-secondary flex-1" data-translate="cancel">Cancel</button>
-                    <button type="submit" class="btn-primary flex-1 justify-center" data-translate="add">Add</button>
-                </div>
-            </form>
+            </div>
+            <button class="btn btn-success" onclick="downloadExcel()">Download Excel</button>
+            <div style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
+                <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                    <thead><tr style="border-bottom: 1px solid var(--border);"><th style="text-align:left; padding: 8px;">Name</th><th style="text-align:left;">Activity</th><th style="text-align:right;">Hours</th></tr></thead>
+                    <tbody id="adm-list"></tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // ===============================
-        // DATA & STATE INITIALIZATION
-        // ===============================
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal">
+    <div class="modal-content">
+        <div class="modal-avatar" onclick="document.getElementById('file-input').click()">
+            <img id="modal-avatar-img" style="display:none;">
+            <span id="modal-avatar-letter">U</span>
+            <div class="modal-avatar-edit">Edit Photo</div>
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
         
-        const ADMIN_PASSWORD = "mersal2024admin";
+        <div class="input-group" style="margin-top: 20px;">
+            <label class="input-label">Name</label>
+            <input type="text" id="edit-name" class="input-field">
+        </div>
+        <div class="input-group">
+            <label class="input-label">Activity</label>
+            <select id="edit-activity" class="input-field">
+                <option value="medical">Medical</option>
+                <option value="education">Education</option>
+                <option value="social">Social</option>
+            </select>
+        </div>
         
-        let currentLang = 'ar';
-        let currentUser = null;
-        let checkInTime = null;
-        let timerInterval = null;
+        <button class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
+        <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeProfile()">Cancel</button>
+        <button class="btn btn-danger" style="margin-top: 10px; opacity: 0.6;" onclick="deleteAccount()">Delete My Account</button>
+    </div>
+</div>
+
+<script>
+    const $ = id => document.getElementById(id);
+    const showPage = id => { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); $(id).classList.add('active'); };
+    const post = (url, data) => fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}).then(r => r.json());
+    const get = url => fetch(url).then(r => r.json());
+
+    let user = null;
+    let timerInterval = null;
+    let sessionStart = null;
+
+    // Theme
+    if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+
+    // Auth
+    async function login() {
+        const phone = $('login-phone').value;
+        if(!phone) return;
+        const res = await post('/api/login', { phone });
+        if(res) { user = res; loadDash(); } 
+        else { $('reg-phone').value = phone; showPage('page-register'); }
+    }
+
+    async function register() {
+        const name = $('reg-name').value;
+        if(!name) return alert('Enter name');
+        user = await post('/api/register', { name, phone: $('reg-phone').value, activity: $('reg-activity').value });
+        loadDash();
+    }
+
+    async function adminLogin() {
+        const res = await post('/api/admin/login', { password: $('admin-pass').value });
+        if(res.success) loadAdmin();
+        else alert('Wrong Password');
+    }
+
+    function logout() { user = null; clearInterval(timerInterval); showPage('page-login'); $('login-phone').value = ''; }
+
+    // Dashboard
+    async function loadDash() {
+        showPage('page-dash');
+        updateAvatars();
         
-        // Initialize data from localStorage or set defaults
-        let volunteers = JSON.parse(localStorage.getItem('mersal_volunteers')) || [];
-        let activities = JSON.parse(localStorage.getItem('mersal_activities')) || [
-            { id: 'medical', nameAr: 'الخدمات الطبية', nameEn: 'Medical Services', color: 'medical' },
-            { id: 'education', nameAr: 'التعليم والتدريب', nameEn: 'Education & Training', color: 'education' },
-            { id: 'social', nameAr: 'الخدمات الاجتماعية', nameEn: 'Social Services', color: 'social' },
-            { id: 'events', nameAr: 'الفعاليات والأنشطة', nameEn: 'Events & Activities', color: 'events' }
-        ];
-        let attendanceRecords = JSON.parse(localStorage.getItem('mersal_attendance')) || [];
+        const logs = await get(`/api/attendance/${user.id}`);
+        const settings = await get('/api/settings');
         
-        // Theme initialization
-        let isDark = localStorage.getItem('mersal_theme') === 'dark';
-        
-        // Translations
-        const translations = {
-            ar: {
-                volunteerTracking: 'تتبع وقت التطوع',
-                enterPhone: 'أدخل رقم الهاتف',
-                continue: 'متابعة',
-                loginHint: 'أدخل رقم هاتفك المسجل للمتابعة. المتطوعون الجدد سيتم تسجيلهم.',
-                adminAccess: 'دخول المدير',
-                back: 'رجوع',
-                welcomeTitle: 'مرحباً بك في مرسال!',
-                completeReg: 'يرجى استكمال تسجيلك',
-                fullNameAr: 'الاسم الكامل (بالعربية)',
-                phoneNum: 'رقم الهاتف',
-                activityName: 'اسم النشاط',
-                selectActivity: 'اختر نشاطك',
-                customActivity: 'أو أدخل نشاط مخصص',
-                completeRegBtn: 'استكمال التسجيل',
-                logout: 'تسجيل خروج',
-                welcomeUser: 'مرحباً مجدداً،',
-                todayStatus: 'حالة اليوم',
-                checkIn: 'تسجيل حضور',
-                checkOut: 'تسجيل انصراف',
-                totalHours: 'إجمالي الساعات',
-                daysAttended: 'أيام الحضور',
-                avgHours: 'متوسط الساعات/يوم',
-                recentActivity: 'النشاط الأخير',
-                date: 'التاريخ',
-                checkInTime: 'وقت الحضور',
-                checkOutTime: 'وقت الانصراف',
-                duration: 'المدة',
-                noActivity: 'لا يوجد نشاط مسجل بعد. ابدأ بتسجيل الحضور!',
-                exportExcel: 'تصدير Excel',
-                totalVolunteers: 'إجمالي المتطوعين',
-                totalHoursAll: 'إجمالي الساعات',
-                activeToday: 'النشطون اليوم',
-                totalDaysAll: 'إجمالي الأيام',
-                volunteersList: 'قائمة المتطوعين',
-                name: 'الاسم',
-                phone: 'الهاتف',
-                activity: 'النشاط',
-                lastActive: 'آخر نشاط',
-                actions: 'الإجراءات',
-                manageActivities: 'إدارة الأنشطة',
-                addActivity: 'إضافة نشاط',
-                adminLogin: 'تسجيل دخول المدير',
-                enterPassword: 'أدخل كلمة مرور المدير للمتابعة',
-                cancel: 'إلغاء',
-                login: 'دخول',
-                addNewActivity: 'إضافة نشاط جديد',
-                activityNameAr: 'اسم النشاط (بالعربية)',
-                activityNameEn: 'اسم النشاط (بالإنجليزية)',
-                add: 'إضافة',
-                viewDetails: 'عرض التفاصيل',
-                delete: 'حذف',
-                checkedIn: 'تم تسجيل الحضور',
-                checkedOut: 'تم تسجيل الانصراف',
-                registrationComplete: 'تم التسجيل بنجاح!',
-                invalidPassword: 'كلمة المرور غير صحيحة',
-                volunteerNotFound: 'رقم الهاتف غير مسجل',
-                exportSuccess: 'تم تصدير البيانات بنجاح!'
-            },
-            en: {
-                volunteerTracking: 'Volunteer Time Tracking',
-                enterPhone: 'Enter Phone Number',
-                continue: 'Continue',
-                loginHint: 'Enter your registered phone to continue. New volunteers will be registered.',
-                adminAccess: 'Admin Access',
-                back: 'Back',
-                welcomeTitle: 'Welcome to Mersal!',
-                completeReg: 'Please complete your registration',
-                fullNameAr: 'Full Name (in Arabic)',
-                phoneNum: 'Phone Number',
-                activityName: 'Activity Name',
-                selectActivity: 'Select your activity',
-                customActivity: 'Or enter custom activity',
-                completeRegBtn: 'Complete Registration',
-                logout: 'Logout',
-                welcomeUser: 'Welcome back,',
-                todayStatus: "Today's Status",
-                checkIn: 'Check In',
-                checkOut: 'Check Out',
-                totalHours: 'Total Hours',
-                daysAttended: 'Days Attended',
-                avgHours: 'Avg Hours/Day',
-                recentActivity: 'Recent Activity',
-                date: 'Date',
-                checkInTime: 'Check In',
-                checkOutTime: 'Check Out',
-                duration: 'Duration',
-                noActivity: 'No activity recorded yet. Start by checking in!',
-                exportExcel: 'Export Excel',
-                totalVolunteers: 'Total Volunteers',
-                totalHoursAll: 'Total Hours',
-                activeToday: 'Active Today',
-                totalDaysAll: 'Total Days',
-                volunteersList: 'Volunteers List',
-                name: 'Name',
-                phone: 'Phone',
-                activity: 'Activity',
-                lastActive: 'Last Active',
-                actions: 'Actions',
-                manageActivities: 'Manage Activities',
-                addActivity: 'Add Activity',
-                adminLogin: 'Admin Login',
-                enterPassword: 'Enter admin password to continue',
-                cancel: 'Cancel',
-                login: 'Login',
-                addNewActivity: 'Add New Activity',
-                activityNameAr: 'Activity Name (Arabic)',
-                activityNameEn: 'Activity Name (English)',
-                add: 'Add',
-                viewDetails: 'View Details',
-                delete: 'Delete',
-                checkedIn: 'Checked in successfully',
-                checkedOut: 'Checked out successfully',
-                registrationComplete: 'Registration completed successfully!',
-                invalidPassword: 'Invalid password',
-                volunteerNotFound: 'Phone number not registered',
-                exportSuccess: 'Data exported successfully!'
-            }
-        };
-
-        // ===============================
-        // THEME & LANGUAGE FUNCTIONS
-        // ===============================
-        
-        function initTheme() {
-            if (isDark) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
-        }
-
-        function toggleTheme() {
-            isDark = !isDark;
-            localStorage.setItem('mersal_theme', isDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        }
-
-        function toggleLanguage() {
-            currentLang = currentLang === 'ar' ? 'en' : 'ar';
-            document.getElementById('langText').textContent = currentLang === 'ar' ? 'EN' : 'AR';
-            document.documentElement.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
-            document.documentElement.setAttribute('lang', currentLang);
-            updateTranslations();
-        }
-
-        function updateTranslations() {
-            document.querySelectorAll('[data-translate]').forEach(el => {
-                const key = el.getAttribute('data-translate');
-                if (translations[currentLang] && translations[currentLang][key]) {
-                    el.textContent = translations[currentLang][key];
-                }
-            });
-        }
-
-        // ===============================
-        // NAVIGATION FUNCTIONS
-        // ===============================
-        
-        function showPage(pageId) {
-            document.querySelectorAll('#loginPage, #registerPage, #userDashboard, #adminDashboard').forEach(page => {
-                page.classList.add('hidden');
-            });
-            document.getElementById(pageId).classList.remove('hidden');
-        }
-
-        function goBack() {
-            showPage('loginPage');
-        }
-
-        function logout() {
-            currentUser = null;
-            stopTimer();
-            showPage('loginPage');
-            document.getElementById('phoneInput').value = '';
-        }
-
-        // ===============================
-        // MODAL FUNCTIONS
-        // ===============================
-        
-        function showAdminModal() {
-            document.getElementById('adminModal').classList.add('active');
-        }
-
-        function hideAdminModal() {
-            document.getElementById('adminModal').classList.remove('active');
-            document.getElementById('adminPassword').value = '';
-        }
-
-        function showVolunteerModal(volunteerId) {
-            const volunteer = volunteers.find(v => v.id === volunteerId);
-            if (!volunteer) return;
-            
-            const records = attendanceRecords.filter(r => r.volunteerId === volunteerId);
-            const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-            const totalDays = records.length;
-            
-            document.getElementById('volunteerModalName').textContent = volunteer.name;
-            document.getElementById('volunteerDetails').innerHTML = `
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="stat-card p-4">
-                        <div class="text-sm" style="color: var(--fg-muted)">Phone</div>
-                        <div class="font-bold">${volunteer.phone}</div>
-                    </div>
-                    <div class="stat-card p-4">
-                        <div class="text-sm" style="color: var(--fg-muted)">Activity</div>
-                        <div class="font-bold">${getActivityName(volunteer.activity)}</div>
-                    </div>
-                    <div class="stat-card p-4">
-                        <div class="text-sm" style="color: var(--fg-muted)">Total Hours</div>
-                        <div class="font-bold text-2xl">${totalHours.toFixed(1)}</div>
-                    </div>
-                    <div class="stat-card p-4">
-                        <div class="text-sm" style="color: var(--fg-muted)">Days Attended</div>
-                        <div class="font-bold text-2xl">${totalDays}</div>
-                    </div>
-                </div>
-                <h4 class="font-bold mb-3">Recent Records</h4>
-                <div class="table-container max-h-60 overflow-y-auto">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Check In</th>
-                                <th>Check Out</th>
-                                <th>Hours</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${records.slice(-10).reverse().map(r => `
-                                <tr>
-                                    <td>${formatDate(r.date)}</td>
-                                    <td>${r.checkIn}</td>
-                                    <td>${r.checkOut || '-'}</td>
-                                    <td>${(r.duration || 0).toFixed(1)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('volunteerModal').classList.add('active');
-        }
-
-        function hideVolunteerModal() {
-            document.getElementById('volunteerModal').classList.remove('active');
-        }
-
-        function showAddActivityModal() {
-            document.getElementById('addActivityModal').classList.add('active');
-        }
-
-        function hideAddActivityModal() {
-            document.getElementById('addActivityModal').classList.remove('active');
-            document.getElementById('newActivityNameAr').value = '';
-            document.getElementById('newActivityNameEn').value = '';
-        }
-
-        // ===============================
-        // NOTIFICATION FUNCTION
-        // ===============================
-        
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // ===============================
-        // AUTHENTICATION FUNCTIONS
-        // ===============================
-        
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const phone = document.getElementById('phoneInput').value.trim();
-            
-            if (!phone || phone.length < 10) {
-                showNotification('Please enter a valid phone number', 'error');
-                return;
-            }
-            
-            const existingUser = volunteers.find(v => v.phone === phone);
-            
-            if (existingUser) {
-                currentUser = existingUser;
-                loadUserDashboard();
-                showPage('userDashboard');
-            } else {
-                document.getElementById('phoneDisplay').value = phone;
-                showPage('registerPage');
-            }
-        });
-
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('nameInput').value.trim();
-            const phone = document.getElementById('phoneDisplay').value;
-            const activity = document.getElementById('activitySelect').value || document.getElementById('customActivity').value.trim();
-            
-            if (!name || !activity) {
-                showNotification('Please fill all required fields', 'error');
-                return;
-            }
-            
-            const newUser = {
-                id: Date.now().toString(),
-                name: name,
-                phone: phone,
-                activity: activity,
-                createdAt: new Date().toISOString()
-            };
-            
-            volunteers.push(newUser);
-            saveData();
-            
-            currentUser = newUser;
-            showNotification(translations[currentLang].registrationComplete);
-            loadUserDashboard();
-            showPage('userDashboard');
-        });
-
-        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const password = document.getElementById('adminPassword').value;
-            
-            if (password === ADMIN_PASSWORD) {
-                hideAdminModal();
-                loadAdminDashboard();
-                showPage('adminDashboard');
-            } else {
-                showNotification(translations[currentLang].invalidPassword, 'error');
-            }
-        });
-
-        // ===============================
-        // USER DASHBOARD FUNCTIONS
-        // ===============================
-        
-        function loadUserDashboard() {
-            if (!currentUser) return;
-            
-            document.getElementById('userNameDisplay').textContent = currentUser.name;
-            document.getElementById('userActivityDisplay').textContent = 
-                `${translations[currentLang].activity}: ${getActivityName(currentUser.activity)}`;
-            
-            updateUserStats();
-            loadUserActivity();
-            checkTodayStatus();
-        }
-
-        function updateUserStats() {
-            if (!currentUser) return;
-            
-            const records = attendanceRecords.filter(r => r.volunteerId === currentUser.id);
-            const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-            const totalDays = records.length;
-            const avgHours = totalDays > 0 ? totalHours / totalDays : 0;
-            
-            document.getElementById('totalHoursDisplay').textContent = totalHours.toFixed(1);
-            document.getElementById('daysAttendedDisplay').textContent = totalDays;
-            document.getElementById('avgHoursDisplay').textContent = avgHours.toFixed(1);
-        }
-
-        function loadUserActivity() {
-            if (!currentUser) return;
-            
-            const records = attendanceRecords.filter(r => r.volunteerId === currentUser.id);
-            const tableBody = document.getElementById('activityTable');
-            const noActivityMsg = document.getElementById('noActivityMsg');
-            
-            if (records.length === 0) {
-                tableBody.innerHTML = '';
-                noActivityMsg.classList.remove('hidden');
-                return;
-            }
-            
-            noActivityMsg.classList.add('hidden');
-            tableBody.innerHTML = records.slice(-10).reverse().map(r => `
-                <tr>
-                    <td>${formatDate(r.date)}</td>
-                    <td>${r.checkIn}</td>
-                    <td>${r.checkOut || '-'}</td>
-                    <td>${(r.duration || 0).toFixed(1)} ${currentLang === 'ar' ? 'ساعة' : 'hours'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function checkTodayStatus() {
-            if (!currentUser) return;
-            
-            const today = new Date().toDateString();
-            const todayRecord = attendanceRecords.find(r => 
-                r.volunteerId === currentUser.id && 
-                new Date(r.date).toDateString() === today
-            );
-            
-            if (todayRecord && !todayRecord.checkOut) {
-                checkInTime = new Date(todayRecord.checkInTime);
-                startTimer();
-                document.getElementById('checkInBtn').classList.add('hidden');
-                document.getElementById('checkOutBtn').classList.remove('hidden');
-                document.getElementById('checkStatusText').textContent = 
-                    currentLang === 'ar' ? 'تم تسجيل الحضور' : 'Currently checked in';
-            } else {
-                stopTimer();
-                document.getElementById('checkInBtn').classList.remove('hidden');
-                document.getElementById('checkOutBtn').classList.add('hidden');
-                document.getElementById('checkStatusText').textContent = 
-                    currentLang === 'ar' ? 'لم يتم تسجيل الحضور بعد' : 'Not checked in yet';
-            }
-        }
-
-        function checkIn() {
-            if (!currentUser) return;
-            
-            const now = new Date();
-            const record = {
-                id: Date.now().toString(),
-                volunteerId: currentUser.id,
-                date: now.toISOString(),
-                checkIn: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                checkInTime: now.toISOString(),
-                checkOut: null,
-                duration: 0
-            };
-            
-            attendanceRecords.push(record);
-            saveData();
-            
-            checkInTime = now;
+        // Check Active
+        const todayStr = new Date().toISOString().split('T')[0];
+        const active = logs.find(l => l.dateStr === todayStr && !l.checkOut);
+        if(active) {
+            sessionStart = new Date(active.checkInTime);
             startTimer();
-            
-            document.getElementById('checkInBtn').classList.add('hidden');
-            document.getElementById('checkOutBtn').classList.remove('hidden');
-            document.getElementById('checkStatusText').textContent = 
-                currentLang === 'ar' ? 'تم تسجيل الحضور' : 'Currently checked in';
-            
-            showNotification(translations[currentLang].checkedIn);
+            setUIState(true);
+        } else {
+            setUIState(false);
         }
 
-        function checkOut() {
-            if (!currentUser || !checkInTime) return;
-            
+        // Stats
+        const total = logs.reduce((s, l) => s + (l.duration || 0), 0);
+        const percent = Math.min(100, Math.round((total/settings.hoursTarget)*100));
+        
+        $('total-hours').textContent = total.toFixed(2);
+        $('prog-text').textContent = `${total.toFixed(0)} / ${settings.hoursTarget}h`;
+        $('prog-percent').textContent = `${percent}%`;
+        $('prog-fill').style.width = percent + '%';
+
+        renderHistory(logs); // Optional: History list can be added back if needed
+    }
+
+    function updateAvatars() {
+        const setAvatar = (imgId, letterId) => {
+            const img = $(imgId); const letter = $(letterId);
+            if(user.avatar) { img.src = user.avatar; img.style.display = 'block'; letter.style.display = 'none'; }
+            else { img.style.display = 'none'; letter.style.display = 'block'; letter.textContent = user.name.charAt(0); }
+        };
+        setAvatar('dash-avatar', 'dash-avatar-letter');
+        setAvatar('modal-avatar-img', 'modal-avatar-letter');
+        $('dash-name').textContent = user.name;
+        $('edit-name').value = user.name;
+        $('edit-activity').value = user.activity;
+    }
+
+    function setUIState(isActive) {
+        const btn = $('clock-btn');
+        if(isActive) {
+            btn.className = 'btn btn-danger';
+            btn.textContent = 'Clock Out';
+            $('status-text').textContent = 'Session Active';
+        } else {
+            btn.className = 'btn btn-success';
+            btn.textContent = 'Clock In';
+            $('status-text').textContent = 'Ready to start';
+            $('timer').textContent = '00:00:00';
+        }
+    }
+
+    async function toggleClock() {
+        const activity = $('activity-name').value || 'General';
+        if(sessionStart) {
+            clearInterval(timerInterval);
+            await post('/api/attendance/checkout', { volunteerId: user.id });
+            sessionStart = null;
+            setUIState(false);
+            loadDash(); // Refresh stats
+        } else {
+            const res = await post('/api/attendance/checkin', { volunteerId: user.id, activityName: activity });
+            sessionStart = new Date(res.checkInTime);
+            startTimer();
+            setUIState(true);
+        }
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
             const now = new Date();
-            const today = now.toDateString();
-            const record = attendanceRecords.find(r => 
-                r.volunteerId === currentUser.id && 
-                new Date(r.date).toDateString() === today &&
-                !r.checkOut
-            );
-            
-            if (record) {
-                record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                record.duration = Math.round((now - new Date(record.checkInTime)) / 3600000 * 10) / 10;
-                saveData();
-            }
-            
-            stopTimer();
-            checkInTime = null;
-            
-            document.getElementById('checkInBtn').classList.remove('hidden');
-            document.getElementById('checkOutBtn').classList.add('hidden');
-            document.getElementById('checkStatusText').textContent = 
-                currentLang === 'ar' ? 'تم تسجيل الانصراف' : 'Checked out';
-            
-            updateUserStats();
-            loadUserActivity();
-            
-            showNotification(translations[currentLang].checkedOut);
-        }
+            const diff = now - sessionStart;
+            const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+            const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+            const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+            $('timer').textContent = `${h}:${m}:${s}`;
+        }, 1000);
+    }
 
-        // ===============================
-        // TIMER FUNCTIONS
-        // ===============================
+    async function addMissed() {
+        const date = $('miss-date').value;
+        const start = $('miss-start').value;
+        const end = $('miss-end').value;
+        if(!date || !start || !end) return alert('Fill all fields');
         
-        function startTimer() {
-            updateTimerDisplay();
-            timerInterval = setInterval(updateTimerDisplay, 1000);
-        }
+        await post('/api/attendance/manual', { volunteerId: user.id, date, checkIn: start, checkOut: end, activityName: 'Missed Shift' });
+        alert('Shift Added!');
+        loadDash();
+    }
 
-        function stopTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            document.getElementById('timerDisplay').textContent = '00:00:00';
-        }
+    // Profile
+    function openProfile() { $('profile-modal').classList.add('active'); }
+    function closeProfile() { $('profile-modal').classList.remove('active'); }
 
-        function updateTimerDisplay() {
-            if (!checkInTime) return;
-            
-            const now = new Date();
-            const diff = now - checkInTime;
-            
-            const hours = Math.floor(diff / 3600000);
-            const minutes = Math.floor((diff % 3600000) / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            
-            document.getElementById('timerDisplay').textContent = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // ===============================
-        // ADMIN DASHBOARD FUNCTIONS
-        // ===============================
-        
-        function loadAdminDashboard() {
-            updateAdminStats();
-            loadVolunteersTable();
-            loadActivitiesList();
-        }
-
-        function updateAdminStats() {
-            const totalVolunteers = volunteers.length;
-            const totalHours = attendanceRecords.reduce((sum, r) => sum + (r.duration || 0), 0);
-            const totalDays = attendanceRecords.length;
-            
-            const today = new Date().toDateString();
-            const activeToday = attendanceRecords.filter(r => 
-                new Date(r.date).toDateString() === today
-            ).length;
-            
-            document.getElementById('adminTotalVolunteers').textContent = totalVolunteers;
-            document.getElementById('adminTotalHours').textContent = totalHours.toFixed(0);
-            document.getElementById('adminActiveToday').textContent = activeToday;
-            document.getElementById('adminTotalDays').textContent = totalDays;
-        }
-
-        function loadVolunteersTable() {
-            const tableBody = document.getElementById('volunteersTable');
-            
-            if (volunteers.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-8" style="color: var(--fg-muted)">
-                            No volunteers registered yet
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tableBody.innerHTML = volunteers.map(v => {
-                const records = attendanceRecords.filter(r => r.volunteerId === v.id);
-                const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-                const totalDays = records.length;
-                const lastRecord = records[records.length - 1];
-                const lastActive = lastRecord ? formatDate(lastRecord.date) : '-';
-                
-                return `
-                    <tr>
-                        <td class="font-semibold">${v.name}</td>
-                        <td>${v.phone}</td>
-                        <td>
-                            <span class="activity-badge activity-${getActivityColor(v.activity)}">
-                                ${getActivityName(v.activity)}
-                            </span>
-                        </td>
-                        <td class="font-bold">${totalHours.toFixed(1)}</td>
-                        <td>${totalDays}</td>
-                        <td>${lastActive}</td>
-                        <td>
-                            <button onclick="showVolunteerModal('${v.id}')" class="btn-secondary text-sm py-2 px-3">
-                                ${translations[currentLang].viewDetails}
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function loadActivitiesList() {
-            const listContainer = document.getElementById('activitiesList');
-            
-            listContainer.innerHTML = activities.map(a => `
-                <div class="card p-4 flex items-center justify-between">
-                    <div>
-                        <div class="font-bold">${a.nameAr}</div>
-                        <div class="text-sm" style="color: var(--fg-muted)">${a.nameEn}</div>
-                    </div>
-                    <span class="activity-badge activity-${a.color}">${a.nameEn}</span>
-                </div>
-            `).join('');
-        }
-
-        function filterVolunteers() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const activityFilter = document.getElementById('activityFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-            
-            let filtered = [...volunteers];
-            
-            if (search) {
-                filtered = filtered.filter(v => 
-                    v.name.toLowerCase().includes(search) || 
-                    v.phone.includes(search)
-                );
-            }
-            
-            if (activityFilter) {
-                filtered = filtered.filter(v => v.activity === activityFilter);
-            }
-            
-            // Update table with filtered results
-            const tableBody = document.getElementById('volunteersTable');
-            
-            if (filtered.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-8" style="color: var(--fg-muted)">
-                            No volunteers found
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tableBody.innerHTML = filtered.map(v => {
-                const records = attendanceRecords.filter(r => r.volunteerId === v.id);
-                const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-                const totalDays = records.length;
-                const lastRecord = records[records.length - 1];
-                const lastActive = lastRecord ? formatDate(lastRecord.date) : '-';
-                
-                return `
-                    <tr>
-                        <td class="font-semibold">${v.name}</td>
-                        <td>${v.phone}</td>
-                        <td>
-                            <span class="activity-badge activity-${getActivityColor(v.activity)}">
-                                ${getActivityName(v.activity)}
-                            </span>
-                        </td>
-                        <td class="font-bold">${totalHours.toFixed(1)}</td>
-                        <td>${totalDays}</td>
-                        <td>${lastActive}</td>
-                        <td>
-                            <button onclick="showVolunteerModal('${v.id}')" class="btn-secondary text-sm py-2 px-3">
-                                ${translations[currentLang].viewDetails}
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // ===============================
-        // ADD ACTIVITY FORM
-        // ===============================
-        
-        document.getElementById('addActivityForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const nameAr = document.getElementById('newActivityNameAr').value.trim();
-            const nameEn = document.getElementById('newActivityNameEn').value.trim();
-            
-            if (!nameAr || !nameEn) return;
-            
-            const newActivity = {
-                id: nameEn.toLowerCase().replace(/\s+/g, '_'),
-                nameAr: nameAr,
-                nameEn: nameEn,
-                color: 'other'
+    function uploadAvatar(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = async function (e) {
+                await post('/api/user/avatar', { userId: user.id, avatar: e.target.result });
+                user.avatar = e.target.result;
+                updateAvatars();
             };
-            
-            activities.push(newActivity);
-            localStorage.setItem('mersal_activities', JSON.stringify(activities));
-            
-            loadActivitiesList();
-            hideAddActivityModal();
-            showNotification('Activity added successfully');
-        });
-
-        // ===============================
-        // EXCEL EXPORT FUNCTION
-        // ===============================
-        
-        function exportToExcel() {
-            const data = [];
-            
-            volunteers.forEach(v => {
-                const records = attendanceRecords.filter(r => r.volunteerId === v.id);
-                const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-                const totalDays = records.length;
-                
-                data.push({
-                    'Name / الاسم': v.name,
-                    'Phone / الهاتف': v.phone,
-                    'Activity / النشاط': getActivityName(v.activity),
-                    'Total Hours / إجمالي الساعات': totalHours.toFixed(1),
-                    'Days Attended / أيام الحضور': totalDays,
-                    'Registration Date / تاريخ التسجيل': formatDate(v.createdAt)
-                });
-            });
-            
-            // Add attendance records
-            const attendanceData = attendanceRecords.map(r => {
-                const volunteer = volunteers.find(v => v.id === r.volunteerId);
-                return {
-                    'Volunteer Name / اسم المتطوع': volunteer ? volunteer.name : 'Unknown',
-                    'Phone / الهاتف': volunteer ? volunteer.phone : '-',
-                    'Date / التاريخ': formatDate(r.date),
-                    'Check In / الحضور': r.checkIn,
-                    'Check Out / الانصراف': r.checkOut || '-',
-                    'Duration (Hours) / المدة (ساعات)': (r.duration || 0).toFixed(1)
-                };
-            });
-            
-            const wb = XLSX.utils.book_new();
-            
-            // Volunteers Summary Sheet
-            const ws1 = XLSX.utils.json_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws1, 'Volunteers Summary');
-            
-            // Attendance Records Sheet
-            const ws2 = XLSX.utils.json_to_sheet(attendanceData);
-            XLSX.utils.book_append_sheet(wb, ws2, 'Attendance Records');
-            
-            // Generate and download
-            const fileName = `Mersal_Volunteers_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            
-            showNotification(translations[currentLang].exportSuccess);
+            reader.readAsDataURL(input.files[0]);
         }
+    }
 
-        // ===============================
-        // HELPER FUNCTIONS
-        // ===============================
-        
-        function saveData() {
-            localStorage.setItem('mersal_volunteers', JSON.stringify(volunteers));
-            localStorage.setItem('mersal_attendance', JSON.stringify(attendanceRecords));
+    async function updateProfile() {
+        const res = await post('/api/user/update', { userId: user.id, name: $('edit-name').value, activity: $('edit-activity').value });
+        user = res;
+        updateAvatars();
+        closeProfile();
+        loadDash();
+    }
+
+    async function deleteAccount() {
+        if(confirm('Are you sure?')) {
+            await fetch('/api/user/delete', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: user.id }) });
+            logout();
         }
+    }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-GB');
-        }
+    // Admin
+    async function loadAdmin() {
+        showPage('page-admin');
+        const stats = await get('/api/admin/stats');
+        const data = await get('/api/admin/all');
+        $('adm-vol').textContent = stats.totalVolunteers;
+        $('adm-hrs').textContent = stats.totalHours;
+        $('adm-list').innerHTML = data.volunteers.map(v => {
+            const hrs = data.attendance.filter(a => a.volunteerId === v.id).reduce((s, a) => s + (a.duration||0), 0);
+            return `<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px;">${v.name}</td><td>${v.activity}</td><td style="text-align:right; font-weight:600;">${hrs.toFixed(1)}</td></tr>`;
+        }).join('');
+    }
 
-        function getActivityName(activityId) {
-            if (!activityId) return '-';
-            const activity = activities.find(a => a.id === activityId);
-            if (activity) {
-                return currentLang === 'ar' ? activity.nameAr : activity.nameEn;
-            }
-            return activityId;
-        }
+    function downloadExcel() { window.location.href = '/api/export'; }
 
-        function getActivityColor(activityId) {
-            const colorMap = {
-                'medical': 'medical',
-                'education': 'education',
-                'social': 'social',
-                'events': 'events'
-            };
-            return colorMap[activityId] || 'education';
-        }
-
-        // ===============================
-        // INITIALIZATION
-        // ===============================
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            updateTranslations();
-            
-            // Animate elements on load
-            setTimeout(() => {
-                document.querySelectorAll('.slide-up').forEach(el => {
-                    el.style.opacity = '1';
-                });
-            }, 100);
-        });
-    </script>
+    // Set default date
+    $('miss-date').valueAsDate = new Date();
+</script>
 </body>
 </html>

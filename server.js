@@ -1,338 +1,198 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // لدعم رفع الصور
 app.use(express.static('public'));
 
-// Data paths
+// --- Configuration ---
+const ADMIN_PASSWORD = "mersal2026admin";
+const HOURS_TARGET = 130;
+
 const DATA_DIR = path.join(__dirname, 'data');
-const VOLUNTEERS_FILE = path.join(DATA_DIR, 'volunteers.json');
-const ATTENDANCE_FILE = path.join(DATA_DIR, 'attendance.json');
-const ACTIVITIES_FILE = path.join(DATA_DIR, 'activities.json');
+const FILES = {
+    volunteers: path.join(DATA_DIR, 'volunteers.json'),
+    attendance: path.join(DATA_DIR, 'attendance.json'),
+    settings: path.join(DATA_DIR, 'settings.json')
+};
 
-// Admin password
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'mersal2024admin';
+// --- Helpers ---
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const readJSON = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
+const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+if (!fs.existsSync(FILES.settings)) writeJSON(FILES.settings, { hoursTarget: HOURS_TARGET });
 
-// Helper functions
-function readJSON(filePath, defaultValue = []) {
-    try {
-        if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf8');
-            return JSON.parse(data);
-        }
-        return defaultValue;
-    } catch (error) {
-        console.error(`Error reading ${filePath}:`, error);
-        return defaultValue;
-    }
-}
-
-function writeJSON(filePath, data) {
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error(`Error writing ${filePath}:`, error);
-        return false;
-    }
-}
-
-// Initialize default activities
-function initActivities() {
-    if (!fs.existsSync(ACTIVITIES_FILE)) {
-        const defaultActivities = [
-            { id: 'medical', nameAr: 'الخدمات الطبية', nameEn: 'Medical Services', color: 'medical' },
-            { id: 'education', nameAr: 'التعليم والتدريب', nameEn: 'Education & Training', color: 'education' },
-            { id: 'social', nameAr: 'الخدمات الاجتماعية', nameEn: 'Social Services', color: 'social' },
-            { id: 'events', nameAr: 'الفعاليات والأنشطة', nameEn: 'Events & Activities', color: 'events' }
-        ];
-        writeJSON(ACTIVITIES_FILE, defaultActivities);
-    }
-}
-
-initActivities();
-
-// ===============================
-// API ROUTES
-// ===============================
-
-// Volunteers
-app.get('/api/volunteers', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    res.json(volunteers);
+// --- Auth Routes ---
+app.post('/api/login', (req, res) => {
+    const { phone } = req.body;
+    const volunteers = readJSON(FILES.volunteers);
+    const user = volunteers.find(u => u.phone === phone);
+    res.json(user || null);
 });
 
-app.get('/api/volunteers/:id', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    const volunteer = volunteers.find(v => v.id === req.params.id);
-    
-    if (!volunteer) {
-        return res.status(404).json({ error: 'Volunteer not found' });
-    }
-    
-    res.json(volunteer);
-});
-
-app.post('/api/volunteers', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
+app.post('/api/register', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
     const { name, phone, activity } = req.body;
-    
-    // Check if phone already exists
-    const existing = volunteers.find(v => v.phone === phone);
-    if (existing) {
-        return res.status(400).json({ error: 'Phone number already registered' });
-    }
-    
-    const newVolunteer = {
-        id: Date.now().toString(),
-        name,
-        phone,
-        activity,
-        createdAt: new Date().toISOString()
+    let user = volunteers.find(u => u.phone === phone);
+    if (user) return res.json(user);
+
+    user = { 
+        id: Date.now().toString(), 
+        name, 
+        phone, 
+        activity, 
+        avatar: null, 
+        createdAt: new Date().toISOString() 
     };
-    
-    volunteers.push(newVolunteer);
-    writeJSON(VOLUNTEERS_FILE, volunteers);
-    
-    res.status(201).json(newVolunteer);
+    volunteers.push(user);
+    writeJSON(FILES.volunteers, volunteers);
+    res.json(user);
 });
 
-app.put('/api/volunteers/:id', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    const index = volunteers.findIndex(v => v.id === req.params.id);
-    
-    if (index === -1) {
-        return res.status(404).json({ error: 'Volunteer not found' });
+// --- Profile Routes ---
+app.post('/api/user/update', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const { userId, name, activity } = req.body;
+    const index = volunteers.findIndex(v => v.id === userId);
+    if (index !== -1) {
+        volunteers[index].name = name || volunteers[index].name;
+        volunteers[index].activity = activity || volunteers[index].activity;
+        writeJSON(FILES.volunteers, volunteers);
+        res.json(volunteers[index]);
+    } else {
+        res.status(404).json({ error: 'User not found' });
     }
-    
-    volunteers[index] = { ...volunteers[index], ...req.body };
-    writeJSON(VOLUNTEERS_FILE, volunteers);
-    
-    res.json(volunteers[index]);
 });
 
-app.delete('/api/volunteers/:id', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    const filtered = volunteers.filter(v => v.id !== req.params.id);
-    
-    writeJSON(VOLUNTEERS_FILE, filtered);
-    res.json({ message: 'Volunteer deleted' });
+app.post('/api/user/avatar', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const { userId, avatar } = req.body;
+    const index = volunteers.findIndex(v => v.id === userId);
+    if (index !== -1) {
+        volunteers[index].avatar = avatar;
+        writeJSON(FILES.volunteers, volunteers);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'User not found' });
+    }
 });
 
-// Attendance
-app.get('/api/attendance', (req, res) => {
-    const attendance = readJSON(ATTENDANCE_FILE);
-    res.json(attendance);
+app.delete('/api/user/delete', (req, res) => {
+    let volunteers = readJSON(FILES.volunteers);
+    let attendance = readJSON(FILES.attendance);
+    const { userId } = req.body;
+
+    volunteers = volunteers.filter(v => v.id !== userId);
+    attendance = attendance.filter(a => a.volunteerId !== userId);
+    writeJSON(FILES.volunteers, volunteers);
+    writeJSON(FILES.attendance, attendance);
+    res.json({ success: true });
 });
 
-app.get('/api/attendance/volunteer/:volunteerId', (req, res) => {
-    const attendance = readJSON(ATTENDANCE_FILE);
-    const records = attendance.filter(r => r.volunteerId === req.params.volunteerId);
-    res.json(records);
-});
-
+// --- Attendance Routes ---
 app.post('/api/attendance/checkin', (req, res) => {
-    const attendance = readJSON(ATTENDANCE_FILE);
-    const { volunteerId } = req.body;
-    
-    if (!volunteerId) {
-        return res.status(400).json({ error: 'Volunteer ID required' });
-    }
-    
-    // Check if already checked in today
-    const today = new Date().toDateString();
-    const existingRecord = attendance.find(r => 
-        r.volunteerId === volunteerId && 
-        new Date(r.date).toDateString() === today &&
-        !r.checkOut
-    );
-    
-    if (existingRecord) {
-        return res.status(400).json({ error: 'Already checked in' });
-    }
-    
+    const attendance = readJSON(FILES.attendance);
+    const { volunteerId, activityName } = req.body;
     const now = new Date();
     const record = {
         id: Date.now().toString(),
         volunteerId,
-        date: now.toISOString(),
+        dateStr: now.toISOString().split('T')[0],
         checkIn: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-        checkInTime: now.toISOString(),
+        checkInTime: now.getTime(),
         checkOut: null,
-        duration: 0
+        duration: 0,
+        type: 'live',
+        activityName: activityName || 'General'
     };
-    
     attendance.push(record);
-    writeJSON(ATTENDANCE_FILE, attendance);
-    
-    res.status(201).json(record);
-});
-
-app.post('/api/attendance/checkout', (req, res) => {
-    const attendance = readJSON(ATTENDANCE_FILE);
-    const { volunteerId } = req.body;
-    
-    if (!volunteerId) {
-        return res.status(400).json({ error: 'Volunteer ID required' });
-    }
-    
-    const today = new Date().toDateString();
-    const recordIndex = attendance.findIndex(r => 
-        r.volunteerId === volunteerId && 
-        new Date(r.date).toDateString() === today &&
-        !r.checkOut
-    );
-    
-    if (recordIndex === -1) {
-        return res.status(400).json({ error: 'No active check-in found' });
-    }
-    
-    const now = new Date();
-    const record = attendance[recordIndex];
-    record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    record.duration = Math.round((now - new Date(record.checkInTime)) / 3600000 * 10) / 10;
-    
-    writeJSON(ATTENDANCE_FILE, attendance);
-    
+    writeJSON(FILES.attendance, attendance);
     res.json(record);
 });
 
-// Activities
-app.get('/api/activities', (req, res) => {
-    const activities = readJSON(ACTIVITIES_FILE);
-    res.json(activities);
+app.post('/api/attendance/checkout', (req, res) => {
+    const attendance = readJSON(FILES.attendance);
+    const { volunteerId } = req.body;
+    const now = new Date();
+    const record = attendance.find(r => r.volunteerId === volunteerId && !r.checkOut);
+    if (!record) return res.status(400).json({ error: 'No active session' });
+    
+    record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    record.duration = Math.round((now.getTime() - record.checkInTime) / 3600000 * 10) / 10;
+    writeJSON(FILES.attendance, attendance);
+    res.json(record);
 });
 
-app.post('/api/activities', (req, res) => {
-    const activities = readJSON(ACTIVITIES_FILE);
-    const { nameAr, nameEn } = req.body;
-    
-    const newActivity = {
-        id: nameEn.toLowerCase().replace(/\s+/g, '_'),
-        nameAr,
-        nameEn,
-        color: 'other'
-    };
-    
-    activities.push(newActivity);
-    writeJSON(ACTIVITIES_FILE, activities);
-    
-    res.status(201).json(newActivity);
+app.post('/api/attendance/manual', (req, res) => {
+    const attendance = readJSON(FILES.attendance);
+    const { volunteerId, date, checkIn, checkOut, activityName } = req.body;
+    const start = new Date(`${date}T${checkIn}`);
+    const end = new Date(`${date}T${checkOut}`);
+    const duration = Math.round((end - start) / 3600000 * 10) / 10;
+
+    attendance.push({
+        id: Date.now().toString(),
+        volunteerId, dateStr: date, checkIn, checkOut, duration,
+        type: 'manual', activityName: activityName || 'General'
+    });
+    writeJSON(FILES.attendance, attendance);
+    res.json({ success: true });
 });
 
-app.delete('/api/activities/:id', (req, res) => {
-    const activities = readJSON(ACTIVITIES_FILE);
-    const filtered = activities.filter(a => a.id !== req.params.id);
-    
-    writeJSON(ACTIVITIES_FILE, filtered);
-    res.json({ message: 'Activity deleted' });
+app.get('/api/attendance/:id', (req, res) => {
+    const attendance = readJSON(FILES.attendance);
+    res.json(attendance.filter(r => r.volunteerId === req.params.id).reverse());
 });
 
-// Admin authentication
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    
-    if (password === ADMIN_PASSWORD) {
-        res.json({ success: true, message: 'Login successful' });
-    } else {
-        res.status(401).json({ success: false, message: 'Invalid password' });
-    }
-});
-
-// Stats
-app.get('/api/stats', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    const attendance = readJSON(ATTENDANCE_FILE);
-    
-    const totalHours = attendance.reduce((sum, r) => sum + (r.duration || 0), 0);
-    const totalDays = attendance.length;
-    
-    const today = new Date().toDateString();
-    const activeToday = attendance.filter(r => 
-        new Date(r.date).toDateString() === today
-    ).length;
-    
+// --- Admin & Stats ---
+app.get('/api/settings', (req, res) => res.json(readJSON(FILES.settings)));
+app.post('/api/admin/login', (req, res) => res.json({ success: req.body.password === ADMIN_PASSWORD }));
+app.get('/api/admin/stats', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const attendance = readJSON(FILES.attendance);
+    const settings = readJSON(FILES.settings);
+    const today = new Date().toISOString().split('T')[0];
     res.json({
         totalVolunteers: volunteers.length,
-        totalHours: Math.round(totalHours * 10) / 10,
-        totalDays,
-        activeToday
+        totalHours: attendance.reduce((s, r) => s + (r.duration || 0), 0).toFixed(1),
+        activeToday: attendance.filter(r => r.dateStr === today).length,
+        hoursTarget: settings.hoursTarget
     });
 });
+app.get('/api/admin/all', (req, res) => res.json({ volunteers: readJSON(FILES.volunteers), attendance: readJSON(FILES.attendance) }));
 
-// Export to Excel
-app.get('/api/export/excel', (req, res) => {
-    const volunteers = readJSON(VOLUNTEERS_FILE);
-    const attendance = readJSON(ATTENDANCE_FILE);
-    const activities = readJSON(ACTIVITIES_FILE);
+// --- Export Excel ---
+app.get('/api/export', async (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const attendance = readJSON(FILES.attendance);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Mersal Report');
     
-    // Volunteers summary
-    const volunteerData = volunteers.map(v => {
-        const records = attendance.filter(r => r.volunteerId === v.id);
-        const totalHours = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-        const totalDays = records.length;
-        const activity = activities.find(a => a.id === v.activity);
-        
-        return {
-            'Name': v.name,
-            'Phone': v.phone,
-            'Activity': activity ? activity.nameEn : v.activity,
-            'Total Hours': totalHours.toFixed(1),
-            'Days Attended': totalDays,
-            'Registration Date': new Date(v.createdAt).toLocaleDateString()
-        };
+    worksheet.columns = [
+        { header: 'Date', key: 'date', width: 12 }, { header: 'Name', key: 'name', width: 20 },
+        { header: 'Activity', key: 'activityName', width: 20 }, { header: 'In', key: 'in', width: 8 },
+        { header: 'Out', key: 'out', width: 8 }, { header: 'Hours', key: 'hours', width: 8 }, { header: 'Type', key: 'type', width: 8 }
+    ];
+    
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0056b3' } };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    
+    attendance.forEach(log => {
+        const user = volunteers.find(v => v.id === log.volunteerId) || {};
+        worksheet.addRow({ date: log.dateStr, name: user.name, activityName: log.activityName, in: log.checkIn, out: log.checkOut || '-', hours: log.duration, type: log.type });
     });
-    
-    // Attendance records
-    const attendanceData = attendance.map(r => {
-        const volunteer = volunteers.find(v => v.id === r.volunteerId);
-        return {
-            'Volunteer Name': volunteer ? volunteer.name : 'Unknown',
-            'Phone': volunteer ? volunteer.phone : '-',
-            'Date': new Date(r.date).toLocaleDateString(),
-            'Check In': r.checkIn,
-            'Check Out': r.checkOut || '-',
-            'Duration (Hours)': (r.duration || 0).toFixed(1)
-        };
-    });
-    
-    const wb = XLSX.utils.book_new();
-    
-    const ws1 = XLSX.utils.json_to_sheet(volunteerData);
-    XLSX.utils.book_append_sheet(wb, ws1, 'Volunteers Summary');
-    
-    const ws2 = XLSX.utils.json_to_sheet(attendanceData);
-    XLSX.utils.book_append_sheet(wb, ws2, 'Attendance Records');
-    
-    const fileName = `Mersal_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
-    const filePath = path.join(DATA_DIR, fileName);
-    
-    XLSX.writeFile(wb, filePath);
-    
-    res.download(filePath, fileName, (err) => {
-        if (err) console.error(err);
-        fs.unlinkSync(filePath); // Clean up after download
-    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Mersal_Data.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Mersal Server running on port ${PORT}`);
-    console.log(`Admin Password: ${ADMIN_PASSWORD}`);
-});
-
-module.exports = app;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
