@@ -8,90 +8,208 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'mersal-secret-change-in-production';
-const EXCEL_FILE = path.join(__dirname, 'mersal-data.xlsx');
+const JWT_SECRET = process.env.JWT_SECRET || 'mersal-secret';
+const FILE = path.join(__dirname, 'mersal-data.xlsx');
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
-// ====================== Excel Functions ======================
-async function loadWorkbook() {
-    const workbook = new ExcelJS.Workbook();
-    if (fs.existsSync(EXCEL_FILE)) {
-        await workbook.xlsx.readFile(EXCEL_FILE);
+// ================= EXCEL =================
+async function loadWB() {
+    const wb = new ExcelJS.Workbook();
+
+    if (fs.existsSync(FILE)) {
+        await wb.xlsx.readFile(FILE);
     } else {
-        const usersSheet = workbook.addWorksheet('Users');
-        usersSheet.columns = [
-            { header: 'ID', key: 'id', width: 15 },
-            { header: 'Name', key: 'name', width: 25 },
-            { header: 'Email', key: 'email', width: 30 },
-            { header: 'Password', key: 'password', width: 40 },
-            { header: 'Role', key: 'role', width: 10 },
-            { header: 'Hours', key: 'hours', width: 10 },
-            { header: 'Sessions', key: 'sessions', width: 10 },
-            { header: 'Streak', key: 'streak', width: 10 },
-            { header: 'LastActive', key: 'lastActive', width: 15 },
-            { header: 'JoinDate', key: 'joinDate', width: 20 }
+        const users = wb.addWorksheet('Users');
+        users.columns = [
+            { header: 'id', key: 'id' },
+            { header: 'name', key: 'name' },
+            { header: 'email', key: 'email' },
+            { header: 'password', key: 'password' },
+            { header: 'role', key: 'role' },
+            { header: 'hours', key: 'hours' },
+            { header: 'sessions', key: 'sessions' },
+            { header: 'joinDate', key: 'joinDate' }
         ];
 
-        const sessionsSheet = workbook.addWorksheet('Sessions');
-        sessionsSheet.columns = [
-            { header: 'ID', key: 'id', width: 10 },
-            { header: 'UserID', key: 'userId', width: 15 },
-            { header: 'StartTime', key: 'startTime', width: 25 },
-            { header: 'EndTime', key: 'endTime', width: 25 },
-            { header: 'DurationHours', key: 'durationHours', width: 15 }
+        const sessions = wb.addWorksheet('Sessions');
+        sessions.columns = [
+            { header: 'id', key: 'id' },
+            { header: 'userId', key: 'userId' },
+            { header: 'start', key: 'start' },
+            { header: 'end', key: 'end' },
+            { header: 'duration', key: 'duration' }
         ];
 
         const hash = await bcrypt.hash('admin123', 10);
-        usersSheet.addRow({
-            id: 'admin-001',
-            name: 'مدير مرسال',
+
+        users.addRow({
+            id: 'admin-1',
+            name: 'Admin',
             email: 'admin@mersal.org',
             password: hash,
             role: 'admin',
             hours: 0,
             sessions: 0,
-            streak: 0,
-            lastActive: '',
             joinDate: new Date().toISOString()
         });
 
-        await workbook.xlsx.writeFile(EXCEL_FILE);
-        console.log('✅ تم إنشاء ملف Excel جديد');
-        console.log('   admin@mersal.org / admin123');
+        await wb.xlsx.writeFile(FILE);
+        console.log('Excel created with admin account');
     }
-    return workbook;
+
+    return wb;
 }
 
-async function saveWorkbook(workbook) {
-    await workbook.xlsx.writeFile(EXCEL_FILE);
+async function saveWB(wb) {
+    await wb.xlsx.writeFile(FILE);
 }
 
-// ====================== API Routes (مختصرة للاختبار) ======================
-// ... (يمكنك لاحقاً إضافة باقي الروابط الكاملة)
+// ================= AUTH =================
+function auth(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
-// ====================== Static + SPA Fallback (الجزء الأهم) ======================
-app.use(express.static(__dirname));
+    try {
+        req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch {
+        res.status(401).json({ message: 'Invalid token' });
+    }
+}
 
-app.get('*', (req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    console.log('Attempting to serve:', indexPath);   // للتصحيح
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('Error sending index.html:', err.message);
-            res.status(500).send('خطأ في الخادم - الملف غير موجود');
+// ================= REGISTER =================
+app.post('/api/auth/register', async (req, res) => {
+    const { name, email, password, role } = req.body;
+
+    const wb = await loadWB();
+    const sheet = wb.getWorksheet('Users');
+
+    const rows = sheet.getRows(2, sheet.rowCount) || [];
+
+    if (rows.find(r => r.getCell('email').value === email))
+        return res.status(400).json({ message: 'Email exists' });
+
+    const hash = await bcrypt.hash(password, 10);
+
+    sheet.addRow({
+        id: 'u-' + Date.now(),
+        name,
+        email,
+        password: hash,
+        role,
+        hours: 0,
+        sessions: 0,
+        joinDate: new Date().toISOString()
+    });
+
+    await saveWB(wb);
+
+    res.json({ message: 'Registered' });
+});
+
+// ================= LOGIN =================
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    const wb = await loadWB();
+    const sheet = wb.getWorksheet('Users');
+    const rows = sheet.getRows(2, sheet.rowCount) || [];
+
+    const user = rows.find(r => r.getCell('email').value === email);
+
+    if (!user) return res.status(400).json({ message: 'Invalid email' });
+
+    const match = await bcrypt.compare(password, user.getCell('password').value);
+
+    if (!match) return res.status(400).json({ message: 'Wrong password' });
+
+    const payload = {
+        id: user.getCell('id').value,
+        role: user.getCell('role').value
+    };
+
+    const token = jwt.sign(payload, JWT_SECRET);
+
+    res.json({
+        token,
+        user: {
+            id: payload.id,
+            name: user.getCell('name').value,
+            email,
+            role: payload.role,
+            hours: user.getCell('hours').value,
+            sessions: user.getCell('sessions').value
         }
     });
 });
 
-// ====================== Start ======================
-loadWorkbook().then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log('====================================');
-        console.log('   مرسال - تتبع ساعات التطوع');
-        console.log(`   المنفذ: ${PORT}`);
-        console.log(`   ملف البيانات: ${EXCEL_FILE}`);
-        console.log('====================================');
+// ================= PROFILE =================
+app.get('/api/profile', auth, async (req, res) => {
+    const wb = await loadWB();
+    const sheet = wb.getWorksheet('Users');
+    const rows = sheet.getRows(2, sheet.rowCount) || [];
+
+    const user = rows.find(r => r.getCell('id').value === req.user.id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+        id: user.getCell('id').value,
+        name: user.getCell('name').value,
+        email: user.getCell('email').value,
+        role: user.getCell('role').value,
+        hours: user.getCell('hours').value,
+        sessions: user.getCell('sessions').value
     });
-}).catch(err => console.error('خطأ:', err));
+});
+
+// ================= SAVE SESSION =================
+app.post('/api/session', auth, async (req, res) => {
+    const { duration } = req.body;
+
+    const wb = await loadWB();
+    const users = wb.getWorksheet('Users');
+    const sessions = wb.getWorksheet('Sessions');
+
+    const rows = users.getRows(2, users.rowCount) || [];
+
+    const user = rows.find(r => r.getCell('id').value === req.user.id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const newHours = (user.getCell('hours').value || 0) + duration;
+    const newSessions = (user.getCell('sessions').value || 0) + 1;
+
+    user.getCell('hours').value = newHours;
+    user.getCell('sessions').value = newSessions;
+
+    sessions.addRow({
+        id: 's-' + Date.now(),
+        userId: req.user.id,
+        start: new Date(Date.now() - duration * 3600000).toISOString(),
+        end: new Date().toISOString(),
+        duration
+    });
+
+    await saveWB(wb);
+
+    res.json({ message: 'Session saved' });
+});
+
+// ================= ADMIN DOWNLOAD =================
+app.get('/api/admin/download', auth, async (req, res) => {
+    if (req.user.role !== 'admin')
+        return res.status(403).json({ message: 'Forbidden' });
+
+    res.download(FILE);
+});
+
+// ================= START =================
+loadWB().then(() => {
+    app.listen(PORT, () => {
+        console.log('Server running on port ' + PORT);
+    });
+});
