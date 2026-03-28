@@ -1,22 +1,19 @@
 {
   "name": "mersal-tracker",
-  "version": "1.1.0",
-  "description": "نظام تتبع ساعات التطوع - مرسال",
+  "version": "1.2.0",
+  "description": "نظام تتبع ساعات التطوع باستخدام Excel",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
     "express": "^4.21.0",
+    "exceljs": "^4.4.0",
+    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "sql.js": "^1.11.0"
-  },
-  "author": "Your Name",
-  "license": "MIT"
+    "cors": "^2.8.5"
+  }
 }
