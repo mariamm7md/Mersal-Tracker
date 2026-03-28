@@ -10,19 +10,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'mersal-secret-change-in-production';
 const EXCEL_FILE = path.join(__dirname, 'mersal-data.xlsx');
-const TARGET_HOURS = 130;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
 
-// ====================== Excel Helper Functions ======================
+// ====================== Excel Functions ======================
 async function loadWorkbook() {
     const workbook = new ExcelJS.Workbook();
     if (fs.existsSync(EXCEL_FILE)) {
         await workbook.xlsx.readFile(EXCEL_FILE);
     } else {
-        // إنشاء ملف Excel جديد مع الأوراق المطلوبة
         const usersSheet = workbook.addWorksheet('Users');
         usersSheet.columns = [
             { header: 'ID', key: 'id', width: 15 },
@@ -46,7 +43,6 @@ async function loadWorkbook() {
             { header: 'DurationHours', key: 'durationHours', width: 15 }
         ];
 
-        // إضافة حساب المدير الافتراضي
         const hash = await bcrypt.hash('admin123', 10);
         usersSheet.addRow({
             id: 'admin-001',
@@ -62,7 +58,7 @@ async function loadWorkbook() {
         });
 
         await workbook.xlsx.writeFile(EXCEL_FILE);
-        console.log('✅ تم إنشاء ملف Excel جديد مع حساب المدير (admin@mersal.org / admin123)');
+        console.log('✅ تم إنشاء ملف Excel جديد - admin@mersal.org / admin123');
     }
     return workbook;
 }
@@ -113,7 +109,7 @@ async function updateUser(user) {
             row.getCell(6).value = user.hours;
             row.getCell(7).value = user.sessions;
             row.getCell(8).value = user.streak;
-            row.getCell(9).value = user.lastActive;
+            row.getCell(9).value = user.lastActive || '';
             found = true;
         }
     });
@@ -126,7 +122,9 @@ async function updateUser(user) {
 // ====================== Middlewares ======================
 function authMiddleware(req, res, next) {
     const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ message: 'غير مصرح' });
+    if (!auth || !auth.startsWith('Bearer ')) 
+        return res.status(401).json({ message: 'غير مصرح' });
+    
     try {
         const decoded = jwt.verify(auth.split(' ')[1], JWT_SECRET);
         req.userId = decoded.userId;
@@ -136,20 +134,15 @@ function authMiddleware(req, res, next) {
     }
 }
 
-function adminMiddleware(req, res, next) {
-    // سيتم التحقق داخل الراوت
-    next();
-}
-
-// ====================== Routes ======================
-// Register
+// ====================== API Routes ======================
 app.post('/api/auth/register', async (req, res) => {
     const { name, email, password, role } = req.body;
     if (!name || name.length < 2 || !email || !password || password.length < 4) {
         return res.status(400).json({ message: 'بيانات غير مكتملة' });
     }
-    const existing = await getUserByEmail(email);
-    if (existing) return res.status(400).json({ message: 'البريد مسجل مسبقاً' });
+    if (await getUserByEmail(email)) {
+        return res.status(400).json({ message: 'البريد مسجل مسبقاً' });
+    }
 
     const hash = await bcrypt.hash(password, 10);
     const id = 'u-' + Date.now();
@@ -162,7 +155,6 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json({ message: 'تم إنشاء الحساب بنجاح' });
 });
 
-// Login
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await getUserByEmail(email);
@@ -170,38 +162,49 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(401).json({ message: 'البريد أو كلمة المرور غير صحيحة' });
     }
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, hours: user.hours, sessions: user.sessions, streak: user.streak, joinDate: user.joinDate } });
+    res.json({ 
+        token, 
+        user: { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email, 
+            role: user.role, 
+            hours: user.hours, 
+            sessions: user.sessions, 
+            streak: user.streak, 
+            joinDate: user.joinDate 
+        } 
+    });
 });
 
-// Profile
 app.get('/api/profile', authMiddleware, async (req, res) => {
     const user = await getUserById(req.userId);
     if (!user) return res.status(404).json({ message: 'المستخدم غير موجود' });
-    res.json({ id: user.id, name: user.name, email: user.email, role: user.role, hours: user.hours, sessions: user.sessions, streak: user.streak, joinDate: user.joinDate });
+    res.json(user);
 });
 
-// Add Session
 app.post('/api/sessions', authMiddleware, async (req, res) => {
     const { startTime, endTime, durationHours } = req.body;
-    if (!durationHours || durationHours < 0.01) return res.status(400).json({ message: 'الجلسة قصيرة جداً' });
+    if (!durationHours || durationHours < 0.01) 
+        return res.status(400).json({ message: 'الجلسة قصيرة جداً' });
 
     let user = await getUserById(req.userId);
-    user.hours = (user.hours || 0) + durationHours;
+    if (!user) return res.status(404).json({ message: 'المستخدم غير موجود' });
+
+    user.hours = (user.hours || 0) + parseFloat(durationHours);
     user.sessions = (user.sessions || 0) + 1;
     user.lastActive = new Date().toDateString();
 
     await updateUser(user);
 
-    // حفظ الجلسة في ورقة Sessions
     const wb = await loadWorkbook();
     const sheet = wb.getWorksheet('Sessions');
     sheet.addRow([Date.now(), req.userId, startTime, endTime, durationHours]);
     await saveWorkbook(wb);
 
-    res.json({ message: `تم حفظ ${durationHours.toFixed(2)} ساعة بنجاح`, user: { hours: user.hours, sessions: user.sessions } });
+    res.json({ message: `تم حفظ ${durationHours.toFixed(2)} ساعة`, user: { hours: user.hours, sessions: user.sessions } });
 });
 
-// Get User Sessions
 app.get('/api/sessions', authMiddleware, async (req, res) => {
     const wb = await loadWorkbook();
     const sheet = wb.getWorksheet('Sessions');
@@ -216,21 +219,21 @@ app.get('/api/sessions', authMiddleware, async (req, res) => {
             });
         }
     });
-    res.json(sessions.sort((a,b) => b.id - a.id));
+    res.json(sessions.sort((a, b) => b.id - a.id));
 });
 
-// Admin - Download Excel
 app.get('/api/admin/download', authMiddleware, async (req, res) => {
     const user = await getUserById(req.userId);
-    if (!user || user.role !== 'admin') return res.status(403).json({ message: 'صلاحيات المدير مطلوبة' });
+    if (!user || user.role !== 'admin') 
+        return res.status(403).json({ message: 'صلاحيات المدير مطلوبة' });
 
     res.download(EXCEL_FILE, 'mersal-data.xlsx');
 });
 
-// Admin - Add Hours to User
 app.post('/api/admin/users/:id/hours', authMiddleware, async (req, res) => {
     const admin = await getUserById(req.userId);
-    if (!admin || admin.role !== 'admin') return res.status(403).json({ message: 'صلاحيات المدير مطلوبة' });
+    if (!admin || admin.role !== 'admin') 
+        return res.status(403).json({ message: 'صلاحيات المدير مطلوبة' });
 
     const { hours } = req.body;
     if (!hours || hours <= 0) return res.status(400).json({ message: 'قيمة غير صالحة' });
@@ -240,24 +243,26 @@ app.post('/api/admin/users/:id/hours', authMiddleware, async (req, res) => {
 
     user.hours += parseFloat(hours);
     await updateUser(user);
-
     res.json({ message: `تم إضافة ${hours} ساعة` });
 });
 
-// Health
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// ====================== Static Files + SPA Fix ======================
+app.use(express.static(__dirname));
 
-// Serve Frontend
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// هذا السطر مهم جداً لحل مشكلة "Not Found"
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// Start
+// ====================== Start Server ======================
 loadWorkbook().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log('====================================');
         console.log('   مرسال - تتبع ساعات التطوع (Excel)');
-        console.log(`   Port: ${PORT}`);
-        console.log(`   Data File: ${EXCEL_FILE}`);
+        console.log(`   المنفذ: ${PORT}`);
+        console.log(`   ملف البيانات: ${EXCEL_FILE}`);
         console.log('====================================');
     });
-}).catch(err => console.error('خطأ:', err));
+}).catch(err => {
+    console.error('خطأ في تشغيل الخادم:', err);
+});
