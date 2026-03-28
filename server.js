@@ -7,24 +7,25 @@ const compression = require('compression');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 🆔 Spreadsheet ID from Environment Variables
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1TMDiMSAtyjk4iPAsLsMoo-uf7nUeJuOwKeOtPZ3o3xw';
 
-app.use(helmet({ contentSecurityPolicy: false }));
+// ═══ Middleware ═══
+app.use(helmet({ contentSecurityPolicy: false })); 
 app.use(compression());
 app.use(express.json());
-app.use(express.static(__dirname));
 
+// ✅ FIX: Serve static files from the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ═══ Google Auth ═══
 let credentials;
 try {
-  // أولاً نحاول القراءة من متغيرات البيئة (Railway Environment Variables)
-  if (process.env.GOOGLE_CREDENTIALS) {
-    credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-  } else {
-    // إذا لم يوجد، نبحث عن الملف المحلي
-    credentials = require('./service-account.json');
-  }
+  credentials = process.env.GOOGLE_CREDENTIALS 
+    ? JSON.parse(process.env.GOOGLE_CREDENTIALS) 
+    : require('./service-account.json');
 } catch (e) {
-  console.error('❌ Google Credentials missing or invalid!', e.message);
+  console.error('❌ Google Credentials missing or invalid!');
 }
 
 const auth = new google.auth.GoogleAuth({
@@ -33,6 +34,7 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
+// ═══ Helper Functions ═══
 async function getSheetData(range) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -41,7 +43,8 @@ async function getSheetData(range) {
   return response.data.values || [];
 }
 
-// --- Endpoints ---
+// ═══ API Endpoints ═══
+
 app.get('/api/init', async (req, res) => {
   try {
     const volunteers = await getSheetData('Volunteers!A2:G');
@@ -77,6 +80,7 @@ app.post('/api/update-volunteer', async (req, res) => {
         values: [[name, email, phone, password, hours, sessions]]
       }
     });
+
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, message: e.message });
@@ -117,16 +121,18 @@ app.post('/api/update-settings', async (req, res) => {
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: actValues }
     });
+
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, message: e.message });
   }
 });
 
+// ✅ FIX: Serve index.html from the 'public' folder for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Mersal Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
