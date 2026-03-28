@@ -3,230 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرسال | نظام تتبع الساعات</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <title>Mersal Tracker | نظام مرسال المتكامل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #0061ff;
-            --primary-gradient: linear-gradient(135deg, #0061ff, #60efff);
-            --bg: #f4f7fe;
-            --white: #ffffff;
-            --text-main: #1b2559;
-            --text-secondary: #a3aed0;
-            --danger: #e31a1a;
-            --success: #05cd99;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        :root { 
+            --p: #2563eb; --p-dark: #1d4ed8; --bg: #f8fafc; --txt: #0f172a; 
+            --card: #ffffff; --border: #e2e8f0; --success: #22c55e; --danger: #ef4444; 
+            --shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        [data-theme="dark"] { 
+            --bg: #0f172a; --txt: #f1f5f9; --card: #1e293b; --border: #334155; 
         }
 
-        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; transition: all 0.3s ease; }
-        body { margin: 0; background: var(--bg); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; transition: 0.3s; }
+        body { background: var(--bg); color: var(--txt); margin: 0; padding: 0; min-height: 100vh; }
         
-        .app { width: 100%; max-width: 450px; padding: 20px; }
-        .card { background: var(--white); border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: var(--shadow); }
-        
-        h2, h3 { margin-top: 0; color: var(--text-main); font-weight: 800; }
-        p { color: var(--text-secondary); font-size: 0.9rem; }
-
-        .input-group { margin-bottom: 15px; }
-        .input-field { 
-            width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #e0e5f2; 
-            outline: none; font-size: 1rem; margin-top: 5px;
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .card { 
+            background: var(--card); padding: 25px; border-radius: 20px; 
+            border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 20px; 
         }
-        .input-field:focus { border-color: var(--primary); }
 
-        .btn { 
-            width: 100%; padding: 15px; border: none; border-radius: 12px; 
-            font-weight: 700; cursor: pointer; font-size: 1rem; margin-top: 10px;
+        /* Navigation & Pages */
+        .page { display: none; }
+        .active { display: block; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography */
+        h1, h2, h3 { margin: 0 0 15px 0; font-weight: 800; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .admin-badge { background: #fef3c7; color: #92400e; }
+
+        /* Inputs & Buttons */
+        input { 
+            width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; 
+            border: 1px solid var(--border); background: var(--bg); color: var(--txt);
+            font-size: 16px; outline: none;
         }
-        .btn-p { background: var(--primary); color: #fff; }
-        .btn-p:hover { background: #004ecc; transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 2px solid #e0e5f2; color: var(--text-secondary); }
-        .btn-outline:hover { background: #f4f7fe; }
-
-        .page { display: none; animation: fadeIn 0.4s ease; }
-        .active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .progress-container { height: 12px; background: #eee; border-radius: 10px; margin: 20px 0 10px; overflow: hidden; }
-        .progress-bar { height: 100%; background: var(--primary-gradient); width: 0%; border-radius: 10px; }
+        input:focus { border-color: var(--p); ring: 2px var(--p); }
         
-        .timer-val { font-size: 2.5rem; font-weight: 900; color: var(--text-main); margin: 20px 0; font-variant-numeric: tabular-nums; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .stat-item { background: #f8faff; padding: 10px; border-radius: 12px; text-align: center; }
+        button { 
+            width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; 
+            border: none; font-weight: bold; cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-p { background: var(--p); color: white; }
+        .btn-p:hover { background: var(--p-dark); transform: scale(1.02); }
+        .btn-sec { background: var(--border); color: var(--txt); }
+
+        /* Timer UI */
+        .timer-display { 
+            font-size: 56px; font-weight: 900; text-align: center; 
+            color: var(--p); margin: 20px 0; letter-spacing: -2px;
+        }
+
+        /* Progress Bar */
+        .progress-wrapper { background: #e2e8f0; height: 12px; border-radius: 10px; overflow: hidden; margin: 15px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--p), #60a5fa); width: 0%; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Admin Table */
+        .user-list-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border-bottom: 1px solid var(--border);
+        }
+        .user-list-item:last-child { border: none; }
+
+        /* Theme Toggle */
+        .theme-btn { 
+            position: fixed; top: 20px; left: 20px; width: 45px; height: 45px; 
+            border-radius: 12px; background: var(--card); border: 1px solid var(--border);
+            cursor: pointer; z-index: 100; font-size: 20px;
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <!-- LOGIN -->
+<button class="theme-btn" onclick="toggleTheme()">🌓</button>
+
+<div class="container">
+    <!-- 1. LOGIN PAGE -->
     <div id="p-login" class="page active">
-        <div class="card">
-            <h2>تسجيل الدخول</h2>
-            <p>مرحباً بك مجدداً في مرسال</p>
-            <input id="l-user" class="input-field" placeholder="البريد الإلكتروني أو الهاتف">
-            <input id="l-pass" type="password" class="input-field" placeholder="كلمة المرور">
-            <button class="btn btn-p" onclick="doLogin()">دخول للنظام</button>
-            <button class="btn btn-outline" onclick="go('p-reg')">إنشاء حساب جديد</button>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 50px;">✉️</div>
+            <h1 style="color: var(--p); margin-bottom: 5px;">مرسال</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">نظام تتبع ساعات التطوع</p>
+            
+            <input type="text" id="l-id" placeholder="البريد الإلكتروني">
+            <input type="password" id="l-pass" placeholder="كلمة المرور">
+            <button class="btn-p" onclick="login()">دخول للنظام</button>
+            <p style="font-size: 14px;">ليس لديك حساب؟ <span onclick="showPage('p-reg')" style="color:var(--p); cursor:pointer; font-weight:bold;">سجل الآن</span></p>
         </div>
     </div>
 
-    <!-- REGISTER -->
+    <!-- 2. REGISTER PAGE -->
     <div id="p-reg" class="page">
         <div class="card">
-            <h2>حساب جديد</h2>
-            <input id="r-name" class="input-field" placeholder="الاسم الكامل">
-            <input id="r-email" class="input-field" placeholder="البريد الإلكتروني">
-            <input id="r-phone" class="input-field" placeholder="رقم الهاتف">
-            <input id="r-pass" type="password" class="input-field" placeholder="كلمة المرور">
-            <button class="btn btn-p" onclick="doRegister()">تأكيد التسجيل</button>
-            <button class="btn btn-outline" onclick="go('p-login')">لديك حساب؟ سجل دخول</button>
+            <h3>متطوع جديد</h3>
+            <input type="text" id="r-name" placeholder="الاسم الكامل">
+            <input type="email" id="r-email" placeholder="البريد الإلكتروني">
+            <input type="password" id="r-pass" placeholder="كلمة المرور">
+            <button class="btn-p" onclick="register()">إنشاء الحساب</button>
+            <button class="btn-sec" onclick="showPage('p-login')">إلغاء</button>
         </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- 3. USER DASHBOARD -->
     <div id="p-dash" class="page">
-        <div class="card">
-            <h3 id="u-name">...</h3>
-            <div class="progress-container">
-                <div id="u-prog" class="progress-bar"></div>
+        <div class="card" style="background: var(--p); color: white; border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h2 id="u-name" style="margin:0;">أهلاً بك</h2>
+                    <span id="u-role" class="badge admin-badge hidden">مدير النظام</span>
+                </div>
+                <button id="admin-btn" class="hidden" onclick="showPage('p-admin')" style="width: auto; padding: 5px 15px; margin: 0; background: rgba(255,255,255,0.2);">لوحة الإدارة</button>
             </div>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <small>الساعات</small>
-                    <div id="stat-hours" style="font-weight:bold">0</div>
+            <div style="margin-top: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size: 14px;">
+                    <span>إجمالي الإنجاز</span>
+                    <span id="u-target-text">0 / 130 ساعة</span>
                 </div>
-                <div class="stat-item">
-                    <small>الجلسات</small>
-                    <div id="stat-sess" style="font-weight:bold">0</div>
-                </div>
+                <div class="progress-wrapper"><div id="u-fill" class="progress-fill"></div></div>
             </div>
         </div>
 
-        <div class="card" style="text-align:center">
-            <div id="timer-display" class="timer-val">00:00:00</div>
-            <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء الجلسة الآن</button>
-            <button class="btn btn-outline" onclick="logout()">تسجيل الخروج</button>
+        <div class="card" style="text-align: center;">
+            <div class="timer-display" id="timer">00:00:00</div>
+            <button id="timer-btn" onclick="toggleTimer()" style="background: var(--success); color: white;">
+                ▶️ بدء المهمة
+            </button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <div class="stat-card" style="background: var(--bg); padding: 10px; border-radius: 12px;">
+                    <small>جلسات اليوم</small>
+                    <div id="u-sessions" style="font-weight:bold">0</div>
+                </div>
+                <div class="stat-card" style="background: var(--bg); padding: 10px; border-radius: 12px;">
+                    <small>الترتيب</small>
+                    <div id="u-rank" style="font-weight:bold">--</div>
+                </div>
+            </div>
+            <button onclick="logout()" style="background:none; color:var(--danger); margin-top:20px; font-size: 14px;">تسجيل الخروج</button>
+        </div>
+    </div>
+
+    <!-- 4. ADMIN DASHBOARD -->
+    <div id="p-admin" class="page">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>إدارة المتطوعين</h3>
+                <button onclick="showPage('p-dash')" style="width:auto; padding:5px 15px; background:var(--bg); color:var(--txt);">عودة</button>
+            </div>
+            <div id="admin-user-list" style="margin-top: 20px;">
+                <!-- سيمتلئ بالجافا سكريبت -->
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    let users = [];
+    const $ = id => document.getElementById(id);
+    const isBrowser = typeof window !== 'undefined';
+
+    // بيانات أولية (سيتم الكتابة فوقها من الـ localStorage)
+    let users = isBrowser ? JSON.parse(localStorage.getItem('m_v2_users')) || [
+        { name: "مدير مرسال", email: "admin@mersal.org", pass: "admin123", hours: 0, sessions: 0, role: 'admin' }
+    ] : [];
+    
     let currentUser = null;
-    let intervalId = null;
+    let timerInt = null;
     let startTime = null;
     let targetHours = 130;
 
-    // --- Core Functions ---
-    async function apiFetch(endpoint, options = {}) {
-        try {
-            const res = await fetch(endpoint, {
-                ...options,
-                headers: { 'Content-Type': 'application/json', ...options.headers }
-            });
-            return await res.json();
-        } catch (e) {
-            console.error("API Error:", e);
-            return { success: false };
-        }
+    function save() { 
+        if(isBrowser) localStorage.setItem('m_v2_users', JSON.stringify(users)); 
     }
 
-    async function init() {
-        const data = await apiFetch('/api/init');
-        if (data.success) {
-            users = data.volunteers || [];
-            targetHours = data.target || 130;
-        }
-    }
-    init();
-
-    function go(id) {
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+        $(id).classList.add('active');
+        if(id === 'p-admin') renderAdminList();
     }
 
-    async function doLogin() {
-        const loginId = document.getElementById('l-user').value.trim().toLowerCase();
-        const pass = document.getElementById('l-pass').value;
+    function login() {
+        const email = $('l-id').value.trim();
+        const pass = $('l-pass').value;
+        const user = users.find(u => u.email === email && u.pass === pass);
 
-        const user = users.find(u => u.email?.toLowerCase() === loginId || u.phone === loginId);
-        if (!user) return alert("المستخدم غير موجود");
-
-        const res = await apiFetch('/api/verify-login', {
-            method: 'POST',
-            body: JSON.stringify({ id: user.id, password: pass })
-        });
-
-        if (res.success) {
+        if(user) {
             currentUser = user;
             updateUI();
-            go('p-dash');
+            showPage('p-dash');
+            // إظهار زر الإدارة إذا كان أدمن
+            if(user.role === 'admin') {
+                $('admin-btn').classList.remove('hidden');
+                $('u-role').classList.remove('hidden');
+            } else {
+                $('admin-btn').classList.add('hidden');
+                $('u-role').classList.add('hidden');
+            }
         } else {
-            alert("كلمة المرور خاطئة");
+            alert('بيانات الدخول غير صحيحة');
         }
     }
 
-    async function doRegister() {
-        const name = document.getElementById('r-name').value.trim();
-        const email = document.getElementById('r-email').value.trim();
-        const phone = document.getElementById('r-phone').value.trim();
-        const password = document.getElementById('r-pass').value;
+    function register() {
+        const name = $('r-name').value.trim();
+        const email = $('r-email').value.trim();
+        const pass = $('r-pass').value;
 
-        if (!name || !email || !password) return alert("يرجى ملء البيانات الأساسية");
+        if(!name || !email || !pass) return alert('يرجى إكمال جميع الحقول');
+        if(users.some(u => u.email === email)) return alert('هذا البريد مسجل مسبقاً');
 
-        const newUser = { id: Date.now().toString(), name, email, phone, password, hours: 0, sessions: 0 };
-        const res = await apiFetch('/api/register', { method: 'POST', body: JSON.stringify(newUser) });
+        const newUser = { 
+            name, email, pass, 
+            hours: 0, 
+            sessions: 0, 
+            role: 'user',
+            joinDate: new Date().toLocaleDateString() 
+        };
 
-        if (res.success) {
-            alert("تم التسجيل بنجاح");
-            location.reload();
-        }
-    }
-
-    function updateUI() {
-        document.getElementById('u-name').innerText = `أهلاً، ${currentUser.name}`;
-        const percent = Math.min((currentUser.hours / targetHours) * 100, 100);
-        document.getElementById('u-prog').style.width = percent + "%";
-        document.getElementById('stat-hours').innerText = currentUser.hours.toFixed(1);
-        document.getElementById('stat-sess').innerText = currentUser.sessions;
+        users.push(newUser);
+        save();
+        alert('تم التسجيل بنجاح، يمكنك الآن الدخول');
+        showPage('p-login');
     }
 
     function toggleTimer() {
-        const btn = document.getElementById('btn-timer');
-        const display = document.getElementById('timer-display');
-
-        if (!startTime) {
+        const btn = $('timer-btn');
+        if(!startTime) {
             startTime = new Date();
-            btn.innerText = "إنهاء الجلسة";
-            btn.style.background = "var(--danger)";
-            intervalId = setInterval(() => {
-                const diff = Math.floor((new Date() - startTime) / 1000);
-                const h = String(Math.floor(diff / 3600)).padStart(2, '0');
-                const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                const s = String(diff % 60).padStart(2, '0');
-                display.innerText = `${h}:${m}:${s}`;
-            }, 1000);
+            timerInt = setInterval(updateTimerDisplay, 1000);
+            btn.textContent = '⏹️ إنهاء المهمة';
+            btn.style.background = 'var(--danger)';
         } else {
-            const addedHours = (new Date() - startTime) / 3600000;
-            currentUser.hours += addedHours;
+            const diffMs = new Date() - startTime;
+            const diffHours = diffMs / 3600000;
+            
+            currentUser.hours += diffHours;
             currentUser.sessions += 1;
-
-            saveUser(currentUser);
-            clearInterval(intervalId);
+            
+            save();
+            clearInterval(timerInt);
             startTime = null;
-            display.innerText = "00:00:00";
-            btn.innerText = "بدء الجلسة الآن";
-            btn.style.background = "var(--primary)";
+            $('timer').textContent = '00:00:00';
+            btn.textContent = '▶️ بدء المهمة';
+            btn.style.background = 'var(--success)';
             updateUI();
         }
     }
 
-    async function saveUser(u) {
-        await apiFetch('/api/update-volunteer', { method: 'POST', body: JSON.stringify(u) });
+    function updateTimerDisplay() {
+        const diff = new Date() - startTime;
+        const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+        const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+        const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+        $('timer').textContent = `${h}:${m}:${s}`;
     }
 
-    function logout() { location.reload(); }
+    function updateUI() {
+        $('u-name').textContent = `أهلاً، ${currentUser.name.split(' ')[0]}`;
+        const hours = currentUser.hours || 0;
+        $('u-target-text').textContent = `${hours.toFixed(1)} / ${targetHours} ساعة`;
+        $('u-fill').style.width = Math.min((hours / targetHours) * 100, 100) + '%';
+        $('u-sessions').textContent = currentUser.sessions || 0;
+        
+        // حساب الترتيب
+        const sorted = [...users].sort((a,b) => b.hours - a.hours);
+        const rank = sorted.findIndex(u => u.email === currentUser.email) + 1;
+        $('u-rank').textContent = `#${rank}`;
+    }
+
+    function renderAdminList() {
+        const list = $('admin-user-list');
+        list.innerHTML = users.map((u, idx) => `
+            <div class="user-list-item">
+                <div>
+                    <strong>${u.name}</strong><br>
+                    <small>${u.email} | ${u.hours.toFixed(1)} ساعة</small>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="adjustHours(${idx})" style="width:auto; padding:5px; background:var(--success); font-size:12px;">+ ساعة</button>
+                    ${u.role !== 'admin' ? `<button onclick="deleteUser(${idx})" style="width:auto; padding:5px; background:var(--danger); font-size:12px;">حذف</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function adjustHours(idx) {
+        users[idx].hours += 1;
+        save();
+        renderAdminList();
+    }
+
+    function deleteUser(idx) {
+        if(confirm('هل أنت متأكد من حذف هذا المتطوع؟')) {
+            users.splice(idx, 1);
+            save();
+            renderAdminList();
+        }
+    }
+
+    function toggleTheme() {
+        const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('m_theme', theme);
+    }
+
+    function logout() { 
+        if(startTime) clearInterval(timerInt);
+        startTime = null;
+        currentUser = null; 
+        showPage('p-login'); 
+    }
+
+    // تهيئة الثيم عند التحميل
+    if(localStorage.getItem('m_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
 </script>
+
 </body>
 </html>
