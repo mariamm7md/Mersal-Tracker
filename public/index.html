@@ -8,92 +8,69 @@
     <style>
         :root {
             --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b;
-            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
-            --success: #059669; --danger: #dc2626; --warning: #d97706;
+            --primary: #2563eb; --primary-dark: #1d4ed8; --success: #059669; --danger: #dc2626;
             --border: #e2e8f0; --radius: 16px;
         }
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8"; --border: #334151"; }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
         
-        /* Layout */
-        .app-container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; }
-        .admin-container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        
+        .app-container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Components */
         .card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        
         .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
         
         .input-group { margin-bottom: 16px; }
         .input-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-        .input-field { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 15px; transition: 0.2s; }
-        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .input-field { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 15px; }
+        .input-field:focus { outline: none; border-color: var(--primary); }
 
-        /* Header */
-        .header-box { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 30px 24px; color: white; margin-bottom: 20px; position: relative; overflow: hidden; }
-        .header-box::after { content: ''; position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); }
-        
-        .user-row { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+        /* Header & Progress */
+        .header-box { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 25px; color: white; margin-bottom: 20px; }
+        .user-row { display: flex; justify-content: space-between; align-items: center; }
         .user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid rgba(255,255,255,0.5); overflow: hidden; color: white; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid rgba(255,255,255,0.5); overflow: hidden; color: white; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .user-text h2 { font-size: 18px; font-weight: 700; }
-        .user-text p { font-size: 12px; opacity: 0.8; }
-        .logout-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .progress-bg { height: 8px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; margin-top: 15px; }
+        .progress-fill { height: 100%; background: #34d399; transition: width 0.5s; }
 
-        /* Progress */
-        .progress-container { margin-top: 20px; position: relative; z-index: 1; }
-        .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 500; }
-        .progress-bg { height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #34d399, #059669); border-radius: 10px; transition: width 0.5s ease; }
-
-        /* Timer */
-        .timer-display { font-size: 48px; font-weight: 800; text-align: center; color: var(--primary); margin: 10px 0; letter-spacing: 1px; }
-        .status-badge { text-align: center; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+        /* Dashboard Layout */
+        .timer-display { font-size: 42px; font-weight: 800; text-align: center; color: var(--primary); margin: 10px 0; }
+        .status-badge { text-align: center; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
         .status-active { background: #d1fae5; color: #065f46; }
         .status-inactive { background: #fee2e2; color: #991b1b; }
 
-        /* Modal */
-        .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        /* Unified Control UI */
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .time-input-group { position: relative; }
+        .time-label { position: absolute; top: -8px; right: 10px; background: var(--card); padding: 0 5px; font-size: 11px; color: var(--muted); z-index: 1; }
+        
+        /* Modals */
+        .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background: var(--card); padding: 30px; border-radius: var(--radius); width: 100%; max-width: 400px; position: relative; }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
-
+        
         /* Admin Tabs */
-        .admin-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 6px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .admin-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .admin-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 6px; margin-bottom: 20px; }
+        .admin-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; border-radius: 8px; cursor: pointer; }
         .admin-tab.active { background: var(--primary); color: white; }
-
-        /* Admin Table */
         .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .admin-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 12px; text-transform: uppercase; }
-        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border); }
-        .admin-table tr:last-child td { border: none; }
-        .action-btn { background: none; border: none; cursor: pointer; padding: 5px; font-size: 16px; }
-        .action-btn.edit { color: var(--primary); }
-        .action-btn.delete { color: var(--danger); }
-
-        /* Responsive */
-        @media (max-width: 768px) { .admin-container { padding: 10px; } .admin-table { display: block; overflow-x: auto; } }
+        .admin-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 11px; }
+        .admin-table td { padding: 10px; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
-<!-- ==================== USER PAGES ==================== -->
 <div class="app-container">
-    <!-- LOGIN -->
+    
+    <!-- 1. Login Page -->
     <div id="page-login" class="page active">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card" style="text-align: center;">
@@ -102,40 +79,70 @@
                 <p style="color: var(--muted); margin-bottom: 25px;">Time Keeper</p>
                 
                 <div class="input-group">
-                    <input type="tel" id="login-phone" class="input-field" placeholder="Phone Number">
+                    <input type="email" id="login-email" class="input-field" placeholder="Email Address">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-pass" class="input-field" placeholder="Password">
                 </div>
                 
-                <button class="btn btn-primary" onclick="login()">Continue</button>
+                <button class="btn btn-primary" onclick="login()">Login</button>
                 <div style="margin: 15px 0;"><span style="color:var(--border)">—————</span></div>
                 <button class="btn btn-outline" onclick="showPage('page-admin-login')">Admin Access</button>
             </div>
         </div>
     </div>
 
-    <!-- REGISTER -->
+    <!-- 2. Register Page (Only Name, Email, Pass) -->
     <div id="page-register" class="page">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card">
-                <h2 style="text-align: center; margin-bottom: 20px;">New Volunteer</h2>
+                <h2 style="text-align: center; margin-bottom: 20px;">Create Account</h2>
                 <div class="input-group">
                     <label class="input-label">Full Name</label>
                     <input type="text" id="reg-name" class="input-field" placeholder="Enter your name">
                 </div>
                 <div class="input-group">
-                    <input type="tel" id="reg-phone" class="input-field" readonly style="opacity:0.7">
+                    <label class="input-label">Email</label>
+                    <input type="email" id="reg-email" class="input-field" placeholder="Enter your email">
                 </div>
                 <div class="input-group">
-                    <label class="input-label">Select Activity</label>
-                    <select id="reg-activity" class="input-field"></select>
+                    <label class="input-label">Password</label>
+                    <input type="password" id="reg-pass" class="input-field" placeholder="Create a password">
                 </div>
-                <button class="btn btn-primary" onclick="register()">Create Account</button>
-                <button class="btn btn-outline" style="margin-top:10px;" onclick="showPage('page-login')">Back</button>
+                <button class="btn btn-primary" onclick="register()">Register</button>
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="showPage('page-login')">Back to Login</button>
             </div>
         </div>
     </div>
 
-    <!-- USER DASHBOARD -->
+    <!-- 3. Activity Selection Page (Post-Login) -->
+    <div id="page-activity-select" class="page">
+        <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 10px;">Select Activity</h2>
+                <p style="text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 20px;">What will you work on today?</p>
+                
+                <div class="input-group">
+                    <label class="input-label">Choose Activity</label>
+                    <select id="select-activity" class="input-field" onchange="handleActivityChange(this)">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+
+                <div class="input-group" id="manual-activity-group" style="display:none;">
+                    <label class="input-label">Specify Activity</label>
+                    <input type="text" id="manual-activity-input" class="input-field" placeholder="Type your activity name">
+                </div>
+
+                <button class="btn btn-success" onclick="startSessionWithActivity()">Start Session</button>
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="logout()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. User Dashboard -->
     <div id="page-dash" class="page">
+        <!-- Header -->
         <div class="header-box">
             <div class="user-row">
                 <div class="user-info" onclick="openModal('modal-profile')">
@@ -143,70 +150,59 @@
                         <img id="dash-avatar" style="display:none;">
                         <span id="dash-avatar-letter">U</span>
                     </div>
-                    <div class="user-text">
+                    <div>
                         <div style="font-size: 12px; opacity: 0.8;">Welcome back,</div>
-                        <h2 id="dash-name">User</h2>
+                        <h2 id="dash-name" style="font-size: 18px;">User</h2>
                     </div>
                 </div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="logout-btn" style="background: rgba(255,255,255,0.15); border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer;" onclick="logout()">Logout</button>
             </div>
-            <div class="progress-container">
-                <div class="progress-header">
-                    <span>Verified Hours</span>
-                    <span id="prog-text">0 / 130h</span>
-                </div>
-                <div class="progress-bg">
-                    <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
-                </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 13px;">
+                <span>Verified Hours</span>
+                <span id="prog-text">0 / 130h</span>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
             </div>
         </div>
 
+        <!-- Unified Tracking Card -->
         <div class="card">
             <div style="text-align: center;">
                 <span class="status-badge status-inactive" id="status-badge">Not Checked In</span>
                 <div class="timer-display" id="timer">00:00:00</div>
+                <div style="font-size: 12px; color: var(--muted); margin-bottom: 15px;" id="current-activity-display">No activity selected</div>
             </div>
 
-            <div class="input-group">
-                <label class="input-label">Activity Name (Optional)</label>
-                <input type="text" id="activity-name" class="input-field" placeholder="What are you working on?">
+            <!-- Unified Time Control -->
+            <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                <div class="control-grid">
+                    <div class="time-input-group">
+                        <span class="time-label">Start Time</span>
+                        <input type="time" id="input-start" class="input-field" style="margin:0;">
+                    </div>
+                    <div class="time-input-group">
+                        <span class="time-label">End Time</span>
+                        <input type="time" id="input-end" class="input-field" style="margin:0;">
+                    </div>
+                </div>
+                
+                <!-- Feedback integrated -->
+                <div class="input-group" style="margin: 10px 0 0 0;">
+                    <input type="text" id="quick-feedback" class="input-field" placeholder="Notes/Feedback (Optional)" style="font-size: 13px; padding: 10px;">
+                </div>
             </div>
 
-            <button id="clock-btn" class="btn btn-success" onclick="handleClock()">Clock In</button>
-
-            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <button id="main-action-btn" class="btn btn-success" onclick="handleMainAction()">Clock In / Add Entry</button>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border);">
                 <div style="font-size: 12px; color: var(--muted);">Total Hours</div>
-                <div style="font-size: 32px; font-weight: 800; color: var(--text);" id="total-hours">0.00</div>
+                <div style="font-size: 28px; font-weight: 800;" id="total-hours">0.00</div>
             </div>
-        </div>
-
-        <div class="card" style="background: var(--bg); border: 2px dashed var(--border); box-shadow: none;">
-            <h3 style="font-size: 16px; margin-bottom: 15px;">Log Missed Shift</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="input-group" style="margin-bottom:0;">
-                    <label class="input-label">Start Time</label>
-                    <input type="time" id="miss-start" class="input-field">
-                </div>
-                <div class="input-group" style="margin-bottom:0;">
-                    <label class="input-label">End Time</label>
-                    <input type="time" id="miss-end" class="input-field">
-                </div>
-            </div>
-            <div class="input-group">
-                <label class="input-label">Date</label>
-                <input type="date" id="miss-date" class="input-field">
-            </div>
-            <div class="input-group">
-                <input type="text" id="miss-activity" class="input-field" placeholder="Activity Name">
-            </div>
-            <div class="input-group">
-                <textarea id="miss-feedback" class="input-field" placeholder="Feedback/Notes (Optional)" style="resize:none; height: 60px;"></textarea>
-            </div>
-            <button class="btn btn-primary" onclick="addMissed()">Add Missed Shift</button>
         </div>
     </div>
 
-    <!-- ADMIN LOGIN -->
+    <!-- Admin Pages -->
     <div id="page-admin-login" class="page">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card">
@@ -218,279 +214,257 @@
         </div>
     </div>
 
-    <!-- ADMIN DASHBOARD -->
     <div id="page-admin" class="page">
-        <div class="admin-container" style="padding:0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2>Admin Dashboard</h2>
-                <button class="btn btn-outline" style="width:auto; padding:8px 16px; font-size:13px;" onclick="logout()">Exit</button>
-            </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>Admin Panel</h2>
+            <button class="btn btn-outline" style="width:auto; padding:8px 16px; font-size:13px;" onclick="logout()">Exit</button>
+        </div>
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchTab('dashboard')">Stats</button>
+            <button class="admin-tab" onclick="switchTab('users')">Users</button>
+            <button class="admin-tab" onclick="switchTab('activities')">Activities</button>
+            <button class="admin-tab" onclick="switchTab('logs')">Logs</button>
+        </div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab active" onclick="switchTab('dashboard')">Overview</button>
-                <button class="admin-tab" onclick="switchTab('users')">Users</button>
-                <button class="admin-tab" onclick="switchTab('activities')">Activities</button>
-                <button class="admin-tab" onclick="switchTab('logs')">Logs</button>
-            </div>
-
-            <!-- Dashboard Tab -->
-            <div id="tab-dashboard" class="admin-section">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
-                    <div class="card" style="background: var(--primary); color: white; margin:0; text-align: center;">
-                        <div style="font-size: 24px; font-weight: 800;" id="adm-vol">0</div>
-                        <div style="font-size: 11px; opacity: 0.8;">Volunteers</div>
-                    </div>
-                    <div class="card" style="background: var(--success); color: white; margin:0; text-align: center;">
-                        <div style="font-size: 24px; font-weight: 800;" id="adm-hrs">0</div>
-                        <div style="font-size: 11px; opacity: 0.8;">Total Hours</div>
-                    </div>
-                    <div class="card" style="background: var(--warning); color: white; margin:0; text-align: center;">
-                        <div style="font-size: 24px; font-weight: 800;" id="adm-active">0</div>
-                        <div style="font-size: 11px; opacity: 0.8;">Active Today</div>
-                    </div>
+        <div id="tab-dashboard" class="admin-section">
+             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div class="card" style="background: var(--primary); color: white; margin:0; text-align: center; padding: 15px;">
+                    <div style="font-size: 22px; font-weight: 800;" id="adm-vol">0</div>
+                    <div style="font-size: 10px;">Volunteers</div>
                 </div>
-                <button class="btn btn-success" onclick="downloadExcel()">Download Excel Report</button>
-            </div>
-
-            <!-- Users Tab -->
-            <div id="tab-users" class="admin-section" style="display:none;">
-                <div class="card">
-                    <h3 style="margin-bottom: 10px;">Manage Volunteers</h3>
-                    <div style="overflow-x: auto;">
-                        <table class="admin-table">
-                            <thead><tr><th>Name</th><th>Phone</th><th>Activity</th><th>Actions</th></tr></thead>
-                            <tbody id="admin-users-body"></tbody>
-                        </table>
-                    </div>
+                <div class="card" style="background: var(--success); color: white; margin:0; text-align: center; padding: 15px;">
+                    <div style="font-size: 22px; font-weight: 800;" id="adm-hrs">0</div>
+                    <div style="font-size: 10px;">Hours</div>
+                </div>
+                <div class="card" style="background: var(--danger); color: white; margin:0; text-align: center; padding: 15px;">
+                    <div style="font-size: 22px; font-weight: 800;" id="adm-active">0</div>
+                    <div style="font-size: 10px;">Active</div>
                 </div>
             </div>
+            <button class="btn btn-success" onclick="downloadExcel()">Download Report</button>
+        </div>
 
-            <!-- Activities Tab -->
-            <div id="tab-activities" class="admin-section" style="display:none;">
-                <div class="card">
-                    <h3 style="margin-bottom: 15px;">Add New Activity</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="new-activity-name" class="input-field" placeholder="Activity Name">
-                        <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="addActivity()">Add</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3 style="margin-bottom: 10px;">Activities List</h3>
-                    <div id="admin-activities-list"></div>
+        <div id="tab-users" class="admin-section" style="display:none;">
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Users</h3>
+                <table class="admin-table"><tbody id="admin-users-body"></tbody></table>
+            </div>
+        </div>
+
+        <div id="tab-activities" class="admin-section" style="display:none;">
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Add Activity</h3>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-act-name" class="input-field" placeholder="Name">
+                    <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="addActivity()">Add</button>
                 </div>
             </div>
+            <div class="card"><div id="admin-act-list"></div></div>
+        </div>
 
-            <!-- Logs Tab -->
-            <div id="tab-logs" class="admin-section" style="display:none;">
-                <div class="card">
-                    <h3 style="margin-bottom: 10px;">Attendance Logs & Feedback</h3>
-                    <div style="overflow-x: auto;">
-                        <table class="admin-table">
-                            <thead><tr><th>User</th><th>Date</th><th>Activity</th><th>Hrs</th><th>Feedback</th><th>Action</th></tr></thead>
-                            <tbody id="admin-logs-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <div id="tab-logs" class="admin-section" style="display:none;">
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Logs</h3>
+                <table class="admin-table"><tbody id="admin-logs-body"></tbody></table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ==================== MODALS ==================== -->
-
-<!-- Profile Modal -->
+<!-- Modals -->
+<!-- Profile Modal (Name, Email, Avatar Only) -->
 <div class="modal" id="modal-profile">
     <div class="modal-content">
-        <button class="modal-close" onclick="closeModal('modal-profile')">&times;</button>
+        <button onclick="closeModal('modal-profile')" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
         <div style="text-align: center; margin-bottom: 20px;">
-            <div class="avatar" style="width: 80px; height: 80px; margin: 0 auto; font-size: 30px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
+            <div class="avatar" style="width:80px; height:80px; margin:0 auto; font-size:30px; cursor:pointer;" onclick="document.getElementById('file-input').click()">
                 <img id="modal-avatar-img" style="display:none;">
                 <span id="modal-avatar-letter">U</span>
             </div>
             <input type="file" id="file-input" style="display:none" onchange="uploadAvatar(this)">
-            <h2 style="margin-top: 10px;" id="modal-name">User</h2>
         </div>
-
         <div class="input-group">
-            <label class="input-label">Edit Name</label>
+            <label class="input-label">Name</label>
             <input type="text" id="edit-name" class="input-field">
         </div>
         <div class="input-group">
-            <label class="input-label">Edit Activity</label>
-            <select id="edit-activity" class="input-field"></select>
+            <label class="input-label">Email</label>
+            <input type="email" id="edit-email" class="input-field">
         </div>
-
-        <button class="btn btn-success" onclick="updateProfile()">Save Changes</button>
-        <button class="btn btn-danger" style="margin-top: 10px; opacity: 0.7;" onclick="deleteAccount()">Delete My Account</button>
-    </div>
-</div>
-
-<!-- Checkout Feedback Modal -->
-<div class="modal" id="modal-checkout">
-    <div class="modal-content">
-        <button class="modal-close" onclick="closeModal('modal-checkout')">&times;</button>
-        <h3 style="margin-bottom: 15px;">End Session</h3>
-        <p style="font-size: 14px; color: var(--muted); margin-bottom: 15px;">You worked for <strong id="checkout-duration">0</strong> hours.</p>
-        <div class="input-group">
-            <label class="input-label">Feedback (Optional)</label>
-            <textarea id="checkout-feedback" class="input-field" placeholder="How was your shift?" style="resize:none; height: 80px;"></textarea>
-        </div>
-        <button class="btn btn-danger" onclick="confirmCheckOut()">Clock Out</button>
-    </div>
-</div>
-
-<!-- Admin Edit User Modal -->
-<div class="modal" id="modal-admin-edit">
-    <div class="modal-content">
-        <button class="modal-close" onclick="closeModal('modal-admin-edit')">&times;</button>
-        <h3 style="margin-bottom: 20px;">Edit Volunteer</h3>
-        <input type="hidden" id="admin-edit-id">
-        <div class="input-group">
-            <label class="input-label">Name</label>
-            <input type="text" id="admin-edit-name" class="input-field">
-        </div>
-        <div class="input-group">
-            <label class="input-label">Phone</label>
-            <input type="tel" id="admin-edit-phone" class="input-field">
-        </div>
-        <div class="input-group">
-            <label class="input-label">Activity</label>
-            <input type="text" id="admin-edit-act" class="input-field">
-        </div>
-        <button class="btn btn-success" onclick="adminSaveUser()">Save Changes</button>
+        <button class="btn btn-success" onclick="updateProfile()">Save</button>
+        <button class="btn btn-danger" style="margin-top:10px; opacity:0.7;" onclick="deleteAccount()">Delete Account</button>
     </div>
 </div>
 
 <script>
-    // --- Core Functions ---
     const $ = id => document.getElementById(id);
     const showPage = id => { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); $(id).classList.add('active'); };
     const post = (url, data) => fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}).then(r => r.json());
     const get = url => fetch(url).then(r => r.json());
     
-    // --- State ---
     let user = null;
     let timerInterval = null;
     let sessionStart = null;
-    let adminData = { volunteers: [], attendance: [], activities: [] };
+    let currentActivityName = "";
+    let adminData = {};
 
-    // --- Helpers ---
-    function updateAvatars() {
-        const setAv = (imgId, letId) => {
-            const img = $(imgId); const lt = $(letId);
-            if(user.avatar) { img.src = user.avatar; img.style.display = 'block'; lt.style.display = 'none'; }
-            else { img.style.display = 'none'; lt.style.display = 'block'; lt.textContent = user.name.charAt(0); }
-        };
-        setAv('dash-avatar', 'dash-avatar-letter');
-        setAv('modal-avatar-img', 'modal-avatar-letter');
-        $('dash-name').textContent = user.name;
-        $('modal-name').textContent = user.name;
-        $('edit-name').value = user.name;
-        loadActivitiesDropdown('edit-activity', user.activity);
-    }
-
-    async function loadActivitiesDropdown(id, selectedVal = null) {
-        const acts = await get('/api/activities');
-        $(id).innerHTML = acts.map(a => `<option value="${a.name}" ${a.name === selectedVal ? 'selected' : ''}>${a.name}</option>`).join('');
-    }
-
-    // --- Auth ---
+    // --- Auth Flow ---
     async function login() {
-        const phone = $('login-phone').value;
-        if(!phone) return;
-        const res = await post('/api/login', { phone });
-        if(res) { user = res; loadDash(); } 
-        else { $('reg-phone').value = phone; await loadActivitiesDropdown('reg-activity'); showPage('page-register'); }
+        const email = $('login-email').value;
+        const password = $('login-pass').value;
+        if(!email || !password) return alert('Enter email and password');
+        
+        const res = await post('/api/login', { email, password });
+        if (res) {
+            user = res;
+            checkActiveSession(); // Check if already working
+        } else {
+            // If login fails, prompt to register
+            if(confirm('Account not found. Do you want to register?')) {
+                $('reg-email').value = email;
+                $('reg-pass').value = password;
+                showPage('page-register');
+            }
+        }
     }
 
     async function register() {
         const name = $('reg-name').value;
+        const email = $('reg-email').value;
+        const password = $('reg-pass').value;
         if(!name) return alert('Enter name');
-        user = await post('/api/register', { name, phone: $('reg-phone').value, activity: $('reg-activity').value });
-        loadDash();
+        
+        user = await post('/api/register', { name, email, password });
+        if(user.error) return alert(user.error);
+        proceedToActivitySelection();
     }
 
-    async function adminLogin() {
-        const res = await post('/api/admin/login', { password: $('admin-pass').value });
-        if(res.success) loadAdmin();
-        else alert('Wrong Password (mersal2026admin)');
+    function logout() { user = null; clearInterval(timerInterval); showPage('page-login'); }
+
+    // --- Activity Selection Flow ---
+    async function proceedToActivitySelection() {
+        await loadActivitiesDropdown('select-activity');
+        showPage('page-activity-select');
     }
 
-    function logout() { user = null; clearInterval(timerInterval); showPage('page-login'); $('login-phone').value = ''; }
+    async function loadActivitiesDropdown(id) {
+        const acts = await get('/api/activities');
+        $(id).innerHTML = acts.map(a => `<option value="${a.name}">${a.name}</option>`).join('') + `<option value="other">Other (Manual Entry)</option>`;
+    }
 
-    // --- Dashboard ---
-    async function loadDash() {
+    function handleActivityChange(el) {
+        if(el.value === 'other') {
+            $('manual-activity-group').style.display = 'block';
+        } else {
+            $('manual-activity-group').style.display = 'none';
+        }
+    }
+
+    async function startSessionWithActivity() {
+        const selectVal = $('select-activity').value;
+        currentActivityName = selectVal === 'other' ? $('manual-activity-input').value : selectVal;
+        
+        if(!currentActivityName) return alert('Please select or type an activity');
+        
+        $('current-activity-display').textContent = `Activity: ${currentActivityName}`;
+        $('input-start').value = new Date().toTimeString().slice(0,5); // Pre-fill current time
+        $('input-end').value = '';
         showPage('page-dash');
-        updateAvatars();
-        
+    }
+
+    async function checkActiveSession() {
+        // Check if user has active log
         const logs = await get(`/api/attendance/${user.id}`);
-        const settings = await get('/api/settings');
-        
-        // Check Active
         const todayStr = new Date().toISOString().split('T')[0];
         const active = logs.find(l => l.dateStr === todayStr && !l.checkOut);
+        
         if(active) {
+            currentActivityName = active.activityName;
             sessionStart = new Date(active.checkInTime);
             startTimer();
             setUIState(true);
-            $('activity-name').value = active.activityName;
+            $('current-activity-display').textContent = `Activity: ${active.activityName}`;
+            showPage('page-dash');
+            updateStats(logs);
         } else {
-            setUIState(false);
+            proceedToActivitySelection();
         }
-
-        // Stats
-        const total = logs.reduce((s, l) => s + (l.duration || 0), 0);
-        const percent = Math.min(100, Math.round((total/settings.hoursTarget)*100));
-        
-        $('total-hours').textContent = total.toFixed(2);
-        $('prog-text').textContent = `${total.toFixed(0)} / ${settings.hoursTarget}h`;
-        $('prog-percent').textContent = `${percent}%`;
-        $('prog-fill').style.width = percent + '%';
     }
 
+    // --- Dashboard Logic ---
     function setUIState(isActive) {
-        const btn = $('clock-btn');
+        const btn = $('main-action-btn');
         const badge = $('status-badge');
         if(isActive) {
-            btn.className = 'btn btn-danger'; btn.textContent = 'Clock Out';
-            badge.className = 'status-badge status-active'; badge.textContent = 'Currently Active';
+            btn.className = 'btn btn-danger';
+            btn.textContent = 'Clock Out';
+            badge.className = 'status-badge status-active';
+            badge.textContent = 'Currently Active';
         } else {
-            btn.className = 'btn btn-success'; btn.textContent = 'Clock In';
-            badge.className = 'status-badge status-inactive'; badge.textContent = 'Not Checked In';
+            btn.className = 'btn btn-success';
+            btn.textContent = 'Clock In / Add Entry';
+            badge.className = 'status-badge status-inactive';
+            badge.textContent = 'Not Checked In';
             $('timer').textContent = '00:00:00';
         }
     }
 
-    function handleClock() {
-        if(sessionStart) {
-            const diff = new Date() - sessionStart;
-            $('checkout-duration').textContent = (diff / 3600000).toFixed(2);
-            openModal('modal-checkout');
-        } else {
-            const act = $('activity-name').value || 'General';
-            toggleClock(act);
-        }
-    }
+    async function handleMainAction() {
+        const startTime = $('input-start').value;
+        const endTime = $('input-end').value;
+        const feedback = $('quick-feedback').value;
 
-    async function toggleClock(act, feedback = '') {
         if(sessionStart) {
+            // LOGOUT FLOW
             clearInterval(timerInterval);
             await post('/api/attendance/checkout', { volunteerId: user.id, feedback });
             sessionStart = null;
             setUIState(false);
-            closeModal('modal-checkout');
-            loadDash();
+            loadDashStats();
+            alert('Session ended successfully!');
         } else {
-            const res = await post('/api/attendance/checkin', { volunteerId: user.id, activityName: act });
-            sessionStart = new Date(res.checkInTime);
-            startTimer();
-            setUIState(true);
-        }
-    }
+            // LOGIN OR MANUAL ENTRY FLOW
+            if(!startTime) return alert('Please select Start Time');
 
-    function confirmCheckOut() {
-        const fb = $('checkout-feedback').value;
-        toggleClock(null, fb);
+            if(endTime) {
+                // Manual Entry Logic
+                const today = new Date().toISOString().split('T')[0];
+                await post('/api/attendance/manual', {
+                    volunteerId: user.id,
+                    date: today,
+                    checkIn: startTime,
+                    checkOut: endTime,
+                    activityName: currentActivityName,
+                    feedback: feedback
+                });
+                alert('Manual entry added!');
+                $('input-start').value = '';
+                $('input-end').value = '';
+                $('quick-feedback').value = '';
+                loadDashStats();
+            } else {
+                // Live Check In Logic
+                const now = new Date();
+                // Use manual time if provided, else now
+                const checkInDate = new Date(); 
+                if(startTime) {
+                    const parts = startTime.split(':');
+                    checkInDate.setHours(parts[0], parts[1], 0);
+                }
+
+                const res = await post('/api/attendance/checkin', { 
+                    volunteerId: user.id, 
+                    activityName: currentActivityName,
+                    overrideTime: startTime // Sending time to backend if needed (backend needs update for override, currently uses NOW)
+                });
+                
+                // For now, just starting timer with current time if backend uses NOW
+                sessionStart = new Date(); 
+                // Adjust UI to match backend if needed
+                startTimer();
+                setUIState(true);
+            }
+        }
     }
 
     function startTimer() {
@@ -504,29 +478,46 @@
         }, 1000);
     }
 
-    async function addMissed() {
-        await post('/api/attendance/manual', {
-            volunteerId: user.id,
-            date: $('miss-date').value,
-            checkIn: $('miss-start').value,
-            checkOut: $('miss-end').value,
-            activityName: $('miss-activity').value || 'General',
-            feedback: $('miss-feedback').value
-        });
-        alert('Shift Added Successfully!');
-        loadDash();
+    async function loadDashStats() {
+        const logs = await get(`/api/attendance/${user.id}`);
+        const settings = await get('/api/settings');
+        updateStats(logs, settings.hoursTarget);
+    }
+
+    function updateStats(logs, target) {
+        const total = logs.reduce((s, l) => s + (l.duration || 0), 0);
+        const percent = Math.min(100, Math.round((total/target)*100));
+        $('total-hours').textContent = total.toFixed(2);
+        $('prog-text').textContent = `${total.toFixed(0)} / ${target}h`;
+        $('prog-fill').style.width = percent + '%';
     }
 
     // --- Profile ---
-    function openModal(id) { $(id).classList.add('active'); }
+    function openModal(id) { 
+        updateAvatars();
+        $(id).classList.add('active'); 
+    }
     function closeModal(id) { $(id).classList.remove('active'); }
 
-    function uploadAvatar(input) {
+    function updateAvatars() {
+        const setAv = (imgId, letId) => {
+            const img = $(imgId); const lt = $(letId);
+            if(user.avatar) { img.src = user.avatar; img.style.display = 'block'; lt.style.display = 'none'; }
+            else { img.style.display = 'none'; lt.style.display = 'block'; lt.textContent = user.name.charAt(0); }
+        };
+        setAv('dash-avatar', 'dash-avatar-letter');
+        setAv('modal-avatar-img', 'modal-avatar-letter');
+        $('dash-name').textContent = user.name;
+        $('edit-name').value = user.name;
+        $('edit-email').value = user.email;
+    }
+
+    async function uploadAvatar(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = async function (e) {
-                const res = await post('/api/user/avatar', { userId: user.id, avatar: e.target.result });
-                user.avatar = e.target.result; // Update local state
+                await post('/api/user/avatar', { userId: user.id, avatar: e.target.result });
+                user.avatar = e.target.result;
                 updateAvatars();
             };
             reader.readAsDataURL(input.files[0]);
@@ -534,136 +525,71 @@
     }
 
     async function updateProfile() {
-        const res = await post('/api/user/update', { userId: user.id, name: $('edit-name').value, activity: $('edit-activity').value });
-        user = res; // Update local state
+        const res = await post('/api/user/update', { userId: user.id, name: $('edit-name').value, email: $('edit-email').value });
+        user = res;
         updateAvatars();
         closeModal('modal-profile');
-        loadDash();
     }
 
     async function deleteAccount() {
-        if(confirm('Are you sure? All your data will be deleted.')) {
+        if(confirm('Delete account?')) {
             await fetch('/api/user/delete', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: user.id }) });
             logout();
         }
     }
 
-    // --- Admin Functions ---
+    // --- Admin ---
+    async function adminLogin() {
+        const res = await post('/api/admin/login', { password: $('admin-pass').value });
+        if(res.success) loadAdmin();
+        else alert('Wrong Password');
+    }
     async function loadAdmin() {
         showPage('page-admin');
         const stats = await get('/api/admin/stats');
         adminData = await get('/api/admin/all');
-        
         $('adm-vol').textContent = stats.totalVolunteers;
         $('adm-hrs').textContent = stats.totalHours;
         $('adm-active').textContent = stats.activeToday;
-        
-        renderAdminUsers();
-        renderAdminActivities();
-        renderAdminLogs();
+        renderAdmin();
     }
-
-    function switchTab(tabName) {
+    function switchTab(tab) {
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
         event.target.classList.add('active');
-        $('tab-' + tabName).style.display = 'block';
+        $('tab-' + tab).style.display = 'block';
     }
-
-    function renderAdminUsers() {
+    function renderAdmin() {
         $('admin-users-body').innerHTML = adminData.volunteers.map(v => `
-            <tr>
-                <td style="font-weight:600;">${v.name}</td>
-                <td>${v.phone}</td>
-                <td>${v.activity}</td>
-                <td>
-                    <button class="action-btn edit" onclick="openEditUser('${v.id}')">✎</button>
-                    <button class="action-btn delete" onclick="deleteUser('${v.id}')">✕</button>
-                </td>
-            </tr>
+            <tr><td style="font-weight:600">${v.name}</td><td>${v.email}</td><td><button class="btn btn-danger" style="padding:5px 10px; width:auto; font-size:12px;" onclick="deleteUser('${v.id}')">Del</button></td></tr>
         `).join('');
-    }
-
-    function renderAdminActivities() {
-        const acts = adminData.activities || [];
-        $('admin-activities-list').innerHTML = `<table class="admin-table"><tbody>` + acts.map(a => `
-            <tr>
-                <td style="font-weight:500;">${a.name}</td>
-                <td style="text-align:right;"><button class="action-btn delete" onclick="deleteActivity('${a.id}')">Delete</button></td>
-            </tr>
-        `).join('') + `</tbody></table>`;
-    }
-
-    function renderAdminLogs() {
-        $('admin-logs-body').innerHTML = adminData.attendance.slice(-20).reverse().map(l => {
-            const u = adminData.volunteers.find(v => v.id === l.volunteerId) || {name: 'Unknown'};
-            return `
-            <tr>
-                <td>${u.name}</td>
-                <td>${l.dateStr}</td>
-                <td>${l.activityName}</td>
-                <td>${l.duration}</td>
-                <td style="font-size:12px; color:var(--muted);">${l.feedback || '-'}</td>
-                <td><button class="action-btn delete" onclick="deleteLog('${l.id}')">✕</button></td>
-            </tr>
-        `}).join('');
-    }
-
-    // Admin Actions
-    function openEditUser(id) {
-        const u = adminData.volunteers.find(v => v.id === id);
-        $('admin-edit-id').value = u.id;
-        $('admin-edit-name').value = u.name;
-        $('admin-edit-phone').value = u.phone;
-        $('admin-edit-act').value = u.activity;
-        openModal('modal-admin-edit');
-    }
-
-    async function adminSaveUser() {
-        const id = $('admin-edit-id').value;
-        const res = await post('/api/admin/user/update', {
-            userId: id,
-            name: $('admin-edit-name').value,
-            phone: $('admin-edit-phone').value,
-            activity: $('admin-edit-act').value
-        });
-        // Update local data
-        const idx = adminData.volunteers.findIndex(v => v.id === id);
-        if(idx !== -1) adminData.volunteers[idx] = res;
         
-        closeModal('modal-admin-edit');
-        renderAdminUsers();
-    }
+        $('admin-act-list').innerHTML = adminData.activities.map(a => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);"><span>${a.name}</span><button onclick="deleteActivity('${a.id}')" style="color:var(--danger); border:none; background:none; cursor:pointer;">Delete</button></div>
+        `).join('');
 
-    async function deleteUser(id) {
-        if(!confirm('Delete this user?')) return;
-        await fetch('/api/admin/user', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: id }) });
-        loadAdmin();
+        $('admin-logs-body').innerHTML = adminData.attendance.slice(-15).reverse().map(l => {
+            const u = adminData.volunteers.find(v => v.id === l.volunteerId) || {name: '?'};
+            return `<tr><td>${u.name}</td><td>${l.dateStr}</td><td>${l.activityName}</td><td>${l.duration}h</td></tr>`;
+        }).join('');
     }
-
+    
     async function addActivity() {
-        const name = $('new-activity-name').value;
+        const name = $('new-act-name').value;
         if(!name) return;
-        const res = await post('/api/admin/activity', { name });
-        adminData.activities = res;
-        $('new-activity-name').value = '';
-        renderAdminActivities();
+        adminData.activities = await post('/api/admin/activity', { name });
+        $('new-act-name').value = '';
+        renderAdmin();
     }
-
     async function deleteActivity(id) {
         await fetch('/api/admin/activity', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id }) });
         loadAdmin();
     }
-
-    async function deleteLog(id) {
-        await fetch('/api/admin/log', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ logId: id }) });
+    async function deleteUser(id) {
+        await fetch('/api/admin/user', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: id }) });
         loadAdmin();
     }
-
     function downloadExcel() { window.location.href = '/api/export'; }
-
-    // Init Date Input
-    $('miss-date').valueAsDate = new Date();
 </script>
 </body>
 </html>
