@@ -1,248 +1,340 @@
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
-const ExcelJS = require('exceljs');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mersal System</title>
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static('public'));
+<style>
+:root{
+--primary:#2563eb;
+--bg:#f1f5f9;
+--card:#ffffff;
+--text:#0f172a;
+--border:#e2e8f0;
+--success:#16a34a;
+--danger:#dc2626;
+}
 
-// ================= CONFIG =================
-const ADMIN_PASSWORD = "mersal2026admin";
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter;background:var(--bg);}
 
-const DATA_DIR = path.join(__dirname, 'data');
-const FILES = {
-    volunteers: path.join(DATA_DIR, 'volunteers.json'),
-    attendance: path.join(DATA_DIR, 'attendance.json'),
-    activities: path.join(DATA_DIR, 'activities.json'),
-    settings: path.join(DATA_DIR, 'settings.json')
-};
+.container{max-width:420px;margin:auto;padding:20px}
 
-// ================= INIT =================
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+.card{
+background:var(--card);
+padding:25px;
+border-radius:18px;
+margin-top:20px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
+}
 
-const safeRead = (file) => {
-    try {
-        if (!fs.existsSync(file)) return [];
-        const data = fs.readFileSync(file, 'utf-8');
-        return data ? JSON.parse(data) : [];
-    } catch (e) {
-        console.error("Read error:", e);
-        return [];
-    }
-};
+h1{text-align:center;margin-bottom:10px}
+p{text-align:center;color:gray;margin-bottom:20px}
 
-const safeWrite = (file, data) => {
-    try {
-        fs.writeFileSync(file, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error("Write error:", e);
-    }
-};
+input,select{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:10px;
+border:1px solid var(--border);
+}
 
-// default data
-if (!fs.existsSync(FILES.settings)) safeWrite(FILES.settings, { hoursTarget: 130 });
+button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+font-weight:600;
+cursor:pointer;
+}
 
-if (!fs.existsSync(FILES.activities)) safeWrite(FILES.activities, [
-    { id: '1', name: 'Medical Services' },
-    { id: '2', name: 'Education' },
-    { id: '3', name: 'Social Services' }
-]);
+.btn-primary{background:var(--primary);color:white}
+.btn-success{background:var(--success);color:white}
+.btn-danger{background:var(--danger);color:white}
+.btn-outline{background:none;border:2px solid var(--border)}
 
-// ================= AUTH =================
-app.post('/api/login', (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const users = safeRead(FILES.volunteers);
+.hidden{display:none}
 
-        const user = users.find(u => u.email === email && u.password === password);
+.header{
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+color:white;
+padding:20px;
+border-radius:20px;
+text-align:center;
+}
 
-        if (!user) return res.json(null);
+.timer{
+font-size:40px;
+font-weight:800;
+text-align:center;
+margin:20px 0;
+color:var(--primary);
+}
 
-        const { password: _, ...safeUser } = user;
-        res.json(safeUser);
+</style>
+</head>
 
-    } catch (err) {
-        res.status(500).json({ error: "Login failed" });
-    }
-});
+<body>
 
-app.post('/api/register', (req, res) => {
-    try {
-        const { name, email, password } = req.body;
+<div class="container">
 
-        if (!name || !email || !password)
-            return res.status(400).json({ error: "Missing fields" });
+<!-- HOME -->
+<div id="home">
+<div class="card">
+<h1>Mersal</h1>
+<p>Select Mode</p>
 
-        const users = safeRead(FILES.volunteers);
+<button class="btn-primary" onclick="show('login')">User</button>
+<button class="btn-outline" onclick="show('adminLogin')">Admin</button>
+</div>
+</div>
 
-        if (users.find(u => u.email === email))
-            return res.status(400).json({ error: "Email exists" });
+<!-- LOGIN -->
+<div id="login" class="hidden">
+<div class="card">
+<h1>Login</h1>
 
-        const newUser = {
-            id: Date.now().toString(),
-            name,
-            email,
-            password,
-            avatar: null,
-            createdAt: new Date().toISOString()
-        };
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
 
-        users.push(newUser);
-        safeWrite(FILES.volunteers, users);
+<button class="btn-primary" onclick="login()">Login</button>
+<button class="btn-outline" onclick="show('register')">Register</button>
+</div>
+</div>
 
-        const { password: _, ...safeUser } = newUser;
-        res.json(safeUser);
+<!-- REGISTER -->
+<div id="register" class="hidden">
+<div class="card">
+<h1>Register</h1>
 
-    } catch (err) {
-        res.status(500).json({ error: "Register failed" });
-    }
-});
+<input id="name" placeholder="Name">
+<input id="regEmail" placeholder="Email">
+<input id="regPass" type="password" placeholder="Password">
 
-// ================= USER =================
-app.post('/api/user/update', (req, res) => {
-    try {
-        let users = safeRead(FILES.volunteers);
-        const { userId, name, email } = req.body;
+<button class="btn-success" onclick="register()">Create</button>
+<button class="btn-outline" onclick="show('login')">Back</button>
+</div>
+</div>
 
-        const i = users.findIndex(u => u.id === userId);
-        if (i === -1) return res.status(404).json({ error: "Not found" });
+<!-- DASHBOARD -->
+<div id="dash" class="hidden">
 
-        if (name) users[i].name = name;
-        if (email) users[i].email = email;
+<div class="header">
+<h2 id="username"></h2>
+<button onclick="logout()" style="margin-top:10px">Logout</button>
+</div>
 
-        safeWrite(FILES.volunteers, users);
+<div class="card">
 
-        const { password, ...safeUser } = users[i];
-        res.json(safeUser);
+<select id="activity"></select>
 
-    } catch {
-        res.status(500).json({ error: "Update failed" });
-    }
-});
+<div class="timer" id="timer">00:00:00</div>
 
-app.post('/api/user/avatar', (req, res) => {
-    let users = safeRead(FILES.volunteers);
-    const { userId, avatar } = req.body;
+<input type="time" id="start">
+<input type="time" id="end">
 
-    const i = users.findIndex(u => u.id === userId);
-    if (i === -1) return res.status(404).json({ error: "Not found" });
+<input id="note" placeholder="Feedback">
 
-    users[i].avatar = avatar;
-    safeWrite(FILES.volunteers, users);
+<button id="mainBtn" class="btn-success" onclick="action()">Start</button>
 
-    res.json({ success: true });
-});
+<p>Total Hours: <span id="total">0</span></p>
 
-// ================= ATTENDANCE =================
-app.post('/api/attendance/checkin', (req, res) => {
-    try {
-        const { volunteerId, activityName } = req.body;
-        let attendance = safeRead(FILES.attendance);
+</div>
 
-        const active = attendance.find(a => a.volunteerId === volunteerId && !a.checkOut);
-        if (active) return res.status(400).json({ error: "Already checked in" });
+</div>
 
-        const now = new Date();
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="hidden">
+<div class="card">
+<h1>Admin</h1>
 
-        const record = {
-            id: Date.now().toString(),
-            volunteerId,
-            dateStr: now.toISOString().split('T')[0],
-            checkIn: now.toLocaleTimeString(),
-            checkInTime: now.getTime(),
-            checkOut: null,
-            duration: 0,
-            activityName,
-            feedback: ""
-        };
+<input id="adminPass" type="password" placeholder="Password">
+<button class="btn-primary" onclick="adminLogin()">Login</button>
 
-        attendance.push(record);
-        safeWrite(FILES.attendance, attendance);
+</div>
+</div>
 
-        res.json(record);
+<!-- ADMIN PANEL -->
+<div id="admin" class="hidden">
+<div class="card">
+<h1>Admin Panel</h1>
 
-    } catch {
-        res.status(500).json({ error: "Checkin failed" });
-    }
-});
+<p>Total Users: <span id="users"></span></p>
+<p>Total Hours: <span id="hours"></span></p>
 
-app.post('/api/attendance/checkout', (req, res) => {
-    try {
-        let attendance = safeRead(FILES.attendance);
-        const { volunteerId, feedback } = req.body;
+<button class="btn-success" onclick="download()">Download Excel</button>
+<button class="btn-outline" onclick="logout()">Exit</button>
 
-        const rec = attendance.find(a => a.volunteerId === volunteerId && !a.checkOut);
-        if (!rec) return res.status(400).json({ error: "No active session" });
+</div>
+</div>
 
-        const now = new Date();
+</div>
 
-        rec.checkOut = now.toLocaleTimeString();
-        rec.duration = ((now - rec.checkInTime) / 3600000).toFixed(2);
-        rec.feedback = feedback || "";
+<script>
 
-        safeWrite(FILES.attendance, attendance);
+let user=null
+let timer=null
+let startTime=null
 
-        res.json(rec);
+function show(id){
+document.querySelectorAll(".container > div").forEach(d=>d.classList.add("hidden"))
+document.getElementById(id).classList.remove("hidden")
+}
 
-    } catch {
-        res.status(500).json({ error: "Checkout failed" });
-    }
-});
+async function login(){
+const res=await fetch('/api/login',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+email:email.value,
+password:password.value
+})
+})
 
-app.get('/api/attendance/:id', (req, res) => {
-    const data = safeRead(FILES.attendance);
-    res.json(data.filter(d => d.volunteerId === req.params.id));
-});
+const data=await res.json()
 
-// ================= ADMIN =================
-app.post('/api/admin/login', (req, res) => {
-    res.json({ success: req.body.password === ADMIN_PASSWORD });
-});
+if(!data)return alert("Wrong login")
 
-app.get('/api/admin/stats', (req, res) => {
-    const users = safeRead(FILES.volunteers);
-    const attendance = safeRead(FILES.attendance);
+user=data
+username.innerText=data.name
 
-    res.json({
-        totalVolunteers: users.length,
-        totalHours: attendance.reduce((s, a) => s + Number(a.duration || 0), 0).toFixed(1)
-    });
-});
+loadActivities()
+loadStats()
 
-// ================= EXPORT =================
-app.get('/api/export', async (req, res) => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Report');
+show('dash')
+}
 
-    sheet.columns = [
-        { header: 'Name', key: 'name', width: 20 },
-        { header: 'Date', key: 'date', width: 15 },
-        { header: 'Hours', key: 'hours', width: 10 }
-    ];
+async function register(){
+const res=await fetch('/api/register',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+name:name.value,
+email:regEmail.value,
+password:regPass.value
+})
+})
 
-    const users = safeRead(FILES.volunteers);
-    const attendance = safeRead(FILES.attendance);
+const data=await res.json()
 
-    attendance.forEach(a => {
-        const u = users.find(x => x.id === a.volunteerId) || {};
-        sheet.addRow({
-            name: u.name,
-            date: a.dateStr,
-            hours: a.duration
-        });
-    });
+if(data.error)return alert(data.error)
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats');
-    await workbook.xlsx.write(res);
-    res.end();
-});
+alert("Account created")
+show('login')
+}
 
-// ================= SERVER =================
-app.listen(PORT, () => {
-    console.log("✅ Server running on port " + PORT);
-});
+async function loadActivities(){
+const res=await fetch('/api/activities')
+const data=await res.json()
+
+activity.innerHTML=data.map(a=>`<option>${a.name}</option>`).join('')
+}
+
+function startTimer(){
+timer=setInterval(()=>{
+let diff=Date.now()-startTime
+let h=Math.floor(diff/3600000)
+let m=Math.floor((diff%3600000)/60000)
+let s=Math.floor((diff%60000)/1000)
+
+timerDisplay(`${h}:${m}:${s}`)
+},1000)
+}
+
+function timerDisplay(t){
+timer.innerText=t
+}
+
+async function action(){
+
+if(startTime){
+clearInterval(timer)
+
+await fetch('/api/attendance/checkout',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({volunteerId:user.id,feedback:note.value})
+})
+
+startTime=null
+mainBtn.innerText="Start"
+loadStats()
+
+}else{
+
+if(end.value){
+await fetch('/api/attendance/manual',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+volunteerId:user.id,
+date:new Date().toISOString().split('T')[0],
+checkIn:start.value,
+checkOut:end.value,
+activityName:activity.value,
+feedback:note.value
+})
+})
+
+loadStats()
+}else{
+
+await fetch('/api/attendance/checkin',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+volunteerId:user.id,
+activityName:activity.value
+})
+})
+
+startTime=Date.now()
+startTimer()
+mainBtn.innerText="Stop"
+}
+}
+}
+
+async function loadStats(){
+const res=await fetch('/api/attendance/'+user.id)
+const data=await res.json()
+
+let total=data.reduce((s,x)=>s+Number(x.duration||0),0)
+totalSpan.innerText=total.toFixed(2)
+}
+
+async function adminLogin(){
+const res=await fetch('/api/admin/login',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({password:adminPass.value})
+})
+
+const data=await res.json()
+
+if(!data.success)return alert("Wrong")
+
+const stats=await fetch('/api/admin/stats').then(r=>r.json())
+
+users.innerText=stats.totalVolunteers
+hours.innerText=stats.totalHours
+
+show('admin')
+}
+
+function download(){
+window.location='/api/export'
+}
+
+function logout(){
+location.reload()
+}
+
+</script>
+
+</body>
+</html>
