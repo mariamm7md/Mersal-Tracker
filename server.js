@@ -7,218 +7,217 @@ const ExcelJS = require('exceljs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// إعدادات الوسيط (Middleware)
+// --- Middlewares ---
 app.use(cors());
-// زيادة الحجم المسموح به لاستقبال الصور الشخصية Base64
-app.use(express.json({ limit: '10mb' })); 
+// Increased limit to 15MB to handle Base64 Profile Pictures
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static('public'));
 
-// --- التكوين وقواعد البيانات ---
-const ADMIN_PASSWORD = "mersal2026admin";
+// --- Configuration & Database Files ---
+const ADMIN_PIN = "1234"; // Same as frontend
 const DATA_DIR = path.join(__dirname, 'data');
 const FILES = {
     volunteers: path.join(DATA_DIR, 'volunteers.json'),
     attendance: path.join(DATA_DIR, 'attendance.json'),
-    activities: path.join(DATA_DIR, 'activities.json'),
     settings: path.join(DATA_DIR, 'settings.json')
 };
 
-// التأكد من وجود المجلد والملفات
+// Initialize Data Directory and Files
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
 const readJSON = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
-// تهيئة البيانات الافتراضية إذا كانت فارغة
+// Initial settings if they don't exist
 if (!fs.existsSync(FILES.settings)) writeJSON(FILES.settings, { hoursTarget: 130 });
-if (!fs.existsSync(FILES.activities)) writeJSON(FILES.activities, [
-    { id: '1', name: 'فرز ملابس' }, 
-    { id: '2', name: 'معرض ملابس' }, 
-    { id: '3', name: 'تعبئة كراتين' }
-]);
 
-// ===================
-// مسارات المصادقة (Auth)
-// ===================
+// ===============================
+// 1. AUTHENTICATION (PRO LOGIC)
+// ===============================
 
 app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
+    const { identifier, password, name } = req.body;
     const volunteers = readJSON(FILES.volunteers);
-    const user = volunteers.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-        const attendance = readJSON(FILES.attendance);
-        // حساب إجمالي الساعات وعدد الجلسات فور تسجيل الدخول
-        const userLogs = attendance.filter(a => a.volunteerId === user.id);
-        const totalHours = userLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
-        
-        const { password, ...safeUser } = user;
-        res.json({ ...safeUser, totalHours, totalSessions: userLogs.length });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+    const attendance = readJSON(FILES.attendance);
+
+    // Step A: Find all profiles matching this email or phone AND password
+    const matches = volunteers.filter(u => 
+        (u.email === identifier || u.phone === identifier) && u.password === password
+    );
+
+    if (matches.length === 0) {
+        return res.status(401).json({ error: "Invalid Credentials" });
     }
+
+    // Step B: Handle Shared Accounts (Multiple names for one email)
+    if (matches.length > 1 && !name) {
+        // Tell frontend to show a name selector
+        return res.json({ 
+            needName: true, 
+            profiles: matches.map(m => m.name) 
+        });
+    }
+
+    // Step C: Identify the specific user
+    const user = name 
+        ? matches.find(m => m.name === name) 
+        : matches[0];
+
+    if (!user) return res.status(404).json({ error: "Profile not found" });
+
+    // Step D: Calculate live stats for the user
+    const userLogs = attendance.filter(a => a.volunteerId === user.id);
+    const totalHours = userLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
+
+    const { password: _, ...safeUser } = user;
+    res.json({ 
+        ...safeUser, 
+        totalHours: parseFloat(totalHours.toFixed(1)), 
+        totalSessions: userLogs.length 
+    });
 });
 
 app.post('/api/register', (req, res) => {
+    const { name, email, phone, password } = req.body;
     const volunteers = readJSON(FILES.volunteers);
-    const { name, email, password } = req.body;
 
-    if (volunteers.find(u => u.email === email)) {
-        return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً' });
+    // Prevent duplicate Name + Email/Phone combo
+    const existing = volunteers.find(u => 
+        u.name === name && (u.email === email || u.phone === phone)
+    );
+
+    if (existing) {
+        return res.status(400).json({ error: "This profile name already exists for this contact." });
     }
 
-    const newUser = { 
-        id: Date.now().toString(), 
-        name, 
-        email, 
-        password, 
-        avatar: null, 
-        createdAt: new Date().toISOString() 
+    const newUser = {
+        id: "V-" + Date.now(),
+        name,
+        email: email || null,
+        phone: phone || null,
+        password,
+        avatar: null,
+        createdAt: new Date().toISOString()
     };
-    
+
     volunteers.push(newUser);
     writeJSON(FILES.volunteers, volunteers);
     res.json({ success: true });
 });
 
-// ===================
-// الحضور والتحكم بالوقت
-// ===================
+// ===============================
+// 2. ATTENDANCE & TRACKING
+// ===============================
 
-// تسجيل الدخول (Start Timer)
 app.post('/api/attendance/checkin', (req, res) => {
     const attendance = readJSON(FILES.attendance);
     const { volunteerId, activityName } = req.body;
     const now = new Date();
-    
+
     const record = {
-        id: Date.now().toString(),
+        id: "LOG-" + Date.now(),
         volunteerId,
         dateStr: now.toISOString().split('T')[0],
         checkIn: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-        checkInTime: now.getTime(),
-        checkOut: null, 
-        duration: 0, 
-        activityName: activityName || 'General',
-        feedback: '',
-        status: 'active'
+        startTime: now.getTime(),
+        checkOut: null,
+        duration: 0,
+        activityName: activityName || 'General Volunteering',
+        feedback: ''
     };
-    
+
     attendance.push(record);
     writeJSON(FILES.attendance, attendance);
     res.json(record);
 });
 
-// تسجيل الخروج (Stop Timer & Save)
 app.post('/api/attendance/checkout', (req, res) => {
     const attendance = readJSON(FILES.attendance);
     const { volunteerId, feedback } = req.body;
     const now = new Date();
-    
+
     const record = attendance.find(r => r.volunteerId === volunteerId && !r.checkOut);
-    if (!record) return res.status(400).json({ error: 'لا توجد جلسة نشطة حالياً' });
-    
+    if (!record) return res.status(400).json({ error: "No active session found" });
+
     record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    // حساب الساعات (الفرق بالملي ثانية / 3600000)
-    const diffHours = (now.getTime() - record.checkInTime) / 3600000;
-    record.duration = parseFloat(diffHours.toFixed(2));
+    const diffMs = now.getTime() - record.startTime;
+    record.duration = parseFloat((diffMs / 3600000).toFixed(2)); // Hours
     record.feedback = feedback || '';
-    record.status = 'completed';
-    
+
     writeJSON(FILES.attendance, attendance);
     res.json(record);
 });
 
-// الإضافة اليدوية لساعات سابقة
-app.post('/api/attendance/manual', (req, res) => {
-    const attendance = readJSON(FILES.attendance);
-    const { volunteerId, date, checkIn, checkOut, activityName, feedback } = req.body;
-    
-    // حساب الفرق الزمني يدوياً
-    const start = new Date(`${date}T${checkIn}`);
-    const end = new Date(`${date}T${checkOut}`);
-    let duration = (end - start) / 3600000;
-    
-    // معالجة إذا كان العمل تخطى منتصف الليل
-    if (duration < 0) duration += 24;
-
-    const record = {
-        id: Date.now().toString(),
-        volunteerId,
-        dateStr: date,
-        checkIn,
-        checkOut,
-        duration: parseFloat(duration.toFixed(2)),
-        type: 'manual',
-        activityName: activityName || 'General',
-        feedback: feedback || ''
-    };
-    
-    attendance.push(record);
-    writeJSON(FILES.attendance, attendance);
-    res.json({ success: true, record });
-});
-
-// ===================
-// الملف الشخصي والإدارة
-// ===================
+// ===============================
+// 3. PROFILE & ADMIN MANAGEMENT
+// ===============================
 
 app.post('/api/user/update', (req, res) => {
     let volunteers = readJSON(FILES.volunteers);
-    const { userId, name, avatar } = req.body;
+    const { userId, avatar, name } = req.body;
     const index = volunteers.findIndex(v => v.id === userId);
-    
+
     if (index !== -1) {
+        if (avatar) volunteers[index].avatar = avatar;
         if (name) volunteers[index].name = name;
-        if (avatar) volunteers[index].avatar = avatar; // تخزين Base64
         writeJSON(FILES.volunteers, volunteers);
-        res.json({ success: true, user: volunteers[index] });
-    } else res.status(404).json({ error: 'المستخدم غير موجود' });
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: "User not found" });
+    }
 });
 
-app.get('/api/admin/stats', (req, res) => {
+app.get('/api/admin/full-data', (req, res) => {
     const volunteers = readJSON(FILES.volunteers);
     const attendance = readJSON(FILES.attendance);
-    const settings = readJSON(FILES.settings);
     
+    // Map total hours to each volunteer for admin view
+    const volunteersWithStats = volunteers.map(v => {
+        const userLogs = attendance.filter(a => a.volunteerId === v.id);
+        const totalHours = userLogs.reduce((s, l) => s + (l.duration || 0), 0);
+        return { ...v, totalHours };
+    });
+
     res.json({
-        totalVolunteers: volunteers.length,
-        totalHours: attendance.reduce((s, r) => s + (r.duration || 0), 0).toFixed(1),
-        activeSessions: attendance.filter(r => !r.checkOut).length,
-        hoursTarget: settings.hoursTarget
+        volunteers: volunteersWithStats,
+        attendance: attendance
     });
 });
 
-// تصدير التقارير للإكسل
+// ===============================
+// 4. EXCEL EXPORT
+// ===============================
+
 app.get('/api/export', async (req, res) => {
     const volunteers = readJSON(FILES.volunteers);
     const attendance = readJSON(FILES.attendance);
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Volunteer Report');
+    const sheet = workbook.addWorksheet('Volunteer Hours Report');
 
-    worksheet.columns = [
-        { header: 'التاريخ', key: 'date', width: 15 },
-        { header: 'الاسم', key: 'name', width: 25 },
-        { header: 'النشاط', key: 'activity', width: 20 },
-        { header: 'وقت الدخول', key: 'in', width: 12 },
-        { header: 'وقت الخروج', key: 'out', width: 12 },
-        { header: 'عدد الساعات', key: 'hours', width: 12 },
-        { header: 'ملاحظات', key: 'note', width: 30 }
+    sheet.columns = [
+        { header: 'Date', key: 'date', width: 15 },
+        { header: 'Volunteer Name', key: 'name', width: 25 },
+        { header: 'Activity', key: 'activity', width: 25 },
+        { header: 'Clock In', key: 'in', width: 12 },
+        { header: 'Clock Out', key: 'out', width: 12 },
+        { header: 'Total Hours', key: 'hours', width: 12 },
+        { header: 'Notes', key: 'notes', width: 35 }
     ];
 
-    // تنسيق العنوان
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    // Styling Header
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
 
     attendance.forEach(log => {
-        const user = volunteers.find(v => v.id === log.volunteerId) || { name: 'Unknown' };
-        worksheet.addRow({
+        const user = volunteers.find(v => v.id === log.volunteerId) || { name: 'Deleted User' };
+        sheet.addRow({
             date: log.dateStr,
             name: user.name,
             activity: log.activityName,
             in: log.checkIn,
-            out: log.checkOut || 'Pending',
+            out: log.checkOut || 'Active',
             hours: log.duration,
-            note: log.feedback
+            notes: log.feedback
         });
     });
 
@@ -228,4 +227,14 @@ app.get('/api/export', async (req, res) => {
     res.end();
 });
 
-app.listen(PORT, () => console.log(`🚀 Mersal Server Live on port ${PORT}`));
+// Start the engine
+app.listen(PORT, () => {
+    console.log(`
+    🚀 Mersal Pro Server Running!
+    ---------------------------
+    Port: ${PORT}
+    Admin PIN: ${ADMIN_PIN}
+    Data Storage: ${DATA_DIR}
+    ---------------------------
+    `);
+});
