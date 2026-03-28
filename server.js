@@ -98,6 +98,33 @@ app.post('/api/attendance/checkout', (req, res) => {
     res.json(record);
 });
 
+app.delete('/api/admin/user/:id', (req, res) => {
+    let volunteers = readJSON(FILES.volunteers);
+    let attendance = readJSON(FILES.attendance);
+    
+    // حذف المتطوع وحذف سجلات حضوره أيضاً
+    volunteers = volunteers.filter(v => v.id !== req.params.id);
+    attendance = attendance.filter(a => a.volunteerId !== req.params.id);
+    
+    writeJSON(FILES.volunteers, volunteers);
+    writeJSON(FILES.attendance, attendance);
+    res.json({ success: true });
+});
+
+app.post('/api/admin/user/update', (req, res) => {
+    const { id, name, phone, activity } = req.body;
+    let volunteers = readJSON(FILES.volunteers);
+    const index = volunteers.findIndex(v => v.id === id);
+    
+    if (index !== -1) {
+        volunteers[index] = { ...volunteers[index], name, phone, activity };
+        writeJSON(FILES.volunteers, volunteers);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'User not found' });
+    }
+});
+
 // 3. Manual Entry
 app.post('/api/attendance/manual', (req, res) => {
     const attendance = readJSON(FILES.attendance);
