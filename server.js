@@ -5,158 +5,115 @@ const path = require('path');
 const ExcelJS = require('exceljs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(cors());
-// زيادة الحجم للتعامل مع الصور الشخصية Base64
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static('public'));
 
 const DATA_DIR = path.join(__dirname, 'data');
 const FILES = {
-    vols: path.join(DATA_DIR, 'volunteers.json'),
-    logs: path.join(DATA_DIR, 'attendance.json')
+    volunteers: path.join(DATA_DIR, 'volunteers.json'),
+    attendance: path.join(DATA_DIR, 'attendance.json')
 };
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const readJSON = (f) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f)) : [];
-const saveJSON = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
+const writeJSON = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
 
-// قائمة المسؤولين (Admins)
-const ADMIN_EMAILS = ["admin@mersal.org", "mariameltras@gmail.com"];
-
-// --- 1. تسجيل الدخول والمصادقة الذكية ---
+// --- 1. LOGIN & REGISTER ---
 app.post('/api/login', (req, res) => {
     const { identifier, password, name } = req.body;
-    const vols = readJSON(FILES.vols);
-    const logs = readJSON(FILES.logs);
+    const vols = readJSON(FILES.volunteers);
+    const logs = readJSON(FILES.attendance);
 
-    // البحث بالمطابقة للإيميل أو الهاتف وكلمة المرور
-    const matches = vols.filter(u => 
-        (u.email === identifier || u.phone === identifier) && u.password === password
-    );
-
-    if (matches.length === 0) {
-        return res.status(401).json({ error: "بيانات خطأ" });
-    }
-
-    // إذا وجد أكثر من بروفايل لنفس الإيميل ولم يتم اختيار الاسم بعد
-    if (matches.length > 1 && !name) {
-        return res.json({ multi: true, profiles: matches.map(m => m.name) });
-    }
+    const matches = vols.filter(u => (u.email === identifier || u.phone === identifier) && u.password === password);
+    if (matches.length === 0) return res.status(401).json({ error: "بيانات خطأ" });
+    if (matches.length > 1 && !name) return res.json({ needName: true, profiles: matches.map(m => m.name) });
 
     const user = name ? matches.find(m => m.name === name) : matches[0];
-    
-    // تحديد الصلاحية تلقائياً بناءً على قائمة الـ Admin
-    user.role = ADMIN_EMAILS.includes(user.email) ? 'admin' : 'volunteer';
+    const userLogs = logs.filter(a => a.volunteerId === user.id);
+    const totalHours = userLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
 
-    // حساب إحصائيات الساعات للمستخدم (سواء أدمن أو متطوع)
-    const userLogs = logs.filter(l => l.vId === user.id);
-    const totalH = userLogs.reduce((s, l) => s + (l.hours || 0), 0);
-
-    const { password: _, ...safeUser } = user;
-    res.json({ 
-        ...safeUser, 
-        totalH: parseFloat(totalH.toFixed(2)), 
-        sessions: userLogs.length 
-    });
+    res.json({ ...user, totalHours: parseFloat(totalHours.toFixed(1)), totalSessions: userLogs.length });
 });
 
-// --- 2. تسجيل حساب جديد ---
 app.post('/api/register', (req, res) => {
-    const vols = readJSON(FILES.vols);
     const { name, email, phone, password } = req.body;
-    
-    if (vols.find(u => u.name === name && u.email === email)) {
-        return res.status(400).json({ error: "هذا الاسم مسجل بالفعل لهذا الإيميل" });
+    const vols = readJSON(FILES.volunteers);
+    if (vols.find(u => u.name === name && (u.email === email || u.phone === phone))) {
+        return res.status(400).json({ error: "الاسم مسجل مسبقاً بهذا البريد" });
     }
-
-    const newUser = { 
-        id: "V" + Date.now(), 
-        name, email, phone, password,
-        // تسجيل الصلاحية بناءً على قائمة الـ Admin
-        role: ADMIN_EMAILS.includes(email) ? 'admin' : 'volunteer',
-        createdAt: new Date().toISOString()
-    };
-    
+    const newUser = { id: "V-" + Date.now(), name, email, phone, password, createdAt: new Date() };
     vols.push(newUser);
-    saveJSON(FILES.vols, vols);
+    writeJSON(FILES.volunteers, vols);
     res.json({ success: true });
 });
 
-// --- 3. نظام الحضور والوقت (يعمل للكل) ---
+// --- 2. ATTENDANCE (THE FIXED LOGIC) ---
 app.post('/api/checkin', (req, res) => {
-    const logs = readJSON(FILES.logs);
-    const newLog = { 
-        id: "L"+Date.now(), 
-        vId: req.body.vId, 
-        start: Date.now(), 
-        end: null, 
-        hours: 0, 
+    const logs = readJSON(FILES.attendance);
+    const newLog = {
+        id: "L-" + Date.now(),
+        volunteerId: req.body.volunteerId,
         activity: req.body.activity,
-        dateStr: new Date().toLocaleDateString('ar-EG')
+        startTime: Date.now(),
+        dateStr: new Date().toLocaleDateString('ar-EG'),
+        checkIn: new Date().toLocaleTimeString('ar-EG'),
+        duration: 0,
+        status: 'active'
     };
     logs.push(newLog);
-    saveJSON(FILES.logs, logs);
+    writeJSON(FILES.attendance, logs);
     res.json(newLog);
 });
 
 app.post('/api/checkout', (req, res) => {
-    const logs = readJSON(FILES.logs);
-    const log = logs.find(l => l.vId === req.body.vId && !l.end);
-    if (!log) return res.status(400).json({ error: "لا توجد جلسة نشطة" });
-    
-    log.end = Date.now();
-    log.hours = parseFloat(((log.end - log.start) / 3600000).toFixed(2));
-    saveJSON(FILES.logs, logs);
+    const logs = readJSON(FILES.attendance);
+    const log = logs.find(l => l.volunteerId === req.body.vId && l.status === 'active');
+    if (!log) return res.status(400).send("No active session");
+
+    log.status = 'completed';
+    log.duration = parseFloat(((Date.now() - log.startTime) / 3600000).toFixed(2));
+    log.notes = req.body.notes || "";
+    writeJSON(FILES.attendance, logs);
     res.json(log);
 });
 
-// --- 4. لوحة الإدارة (الأدمن فقط) ---
-app.get('/api/admin/stats', (req, res) => {
-    const vols = readJSON(FILES.vols);
-    const logs = readJSON(FILES.logs);
+// --- 3. ADMIN & EXCEL (FIXED DOWNLOAD) ---
+app.get('/api/admin/data', (req, res) => {
+    const vols = readJSON(FILES.volunteers);
+    const logs = readJSON(FILES.attendance);
     res.json({
-        totalV: vols.length,
-        totalH: logs.reduce((s,l) => s + l.hours, 0).toFixed(1),
-        active: logs.filter(l => !l.end).length,
-        vols: vols.map(v => ({
-            ...v,
-            h: logs.filter(l => l.vId === v.id).reduce((s,l)=>s+l.hours, 0)
-        }))
+        vols: vols.map(v => ({ ...v, h: logs.filter(l => l.volunteerId === v.id).reduce((s,l)=>s+l.duration,0) })),
+        activeCount: logs.filter(l => l.status === 'active').length
     });
 });
 
-// --- 5. استخراج تقرير الإكسل المتكامل ---
 app.get('/api/export', async (req, res) => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('تقرير متطوعي مرسال');
-    sheet.columns = [
-        { header: 'الاسم', key: 'name', width: 20 },
-        { header: 'البريد/الهاتف', key: 'contact', width: 20 },
-        { header: 'النشاط', key: 'act', width: 20 },
-        { header: 'الساعات', key: 'h', width: 10 },
-        { header: 'التاريخ', key: 'd', width: 15 }
-    ];
-    
-    const logs = readJSON(FILES.logs);
-    const vols = readJSON(FILES.vols);
-    
-    logs.filter(l => l.end !== null).forEach(l => {
-        const v = vols.find(u => u.id === l.vId);
-        sheet.addRow({ 
-            name: v?.name || 'محذوف', 
-            contact: v ? (v.email || v.phone) : '-',
-            act: l.activity, 
-            h: l.hours, 
-            d: l.dateStr 
-        });
-    });
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('ساعات المتطوعين');
+        sheet.columns = [
+            { header: 'التاريخ', key: 'date', width: 15 },
+            { header: 'الاسم', key: 'name', width: 25 },
+            { header: 'النشاط', key: 'act', width: 20 },
+            { header: 'الساعات', key: 'h', width: 10 }
+        ];
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=Mersal_Report.xlsx');
-    await workbook.xlsx.write(res);
-    res.end();
+        const logs = readJSON(FILES.attendance).filter(l => l.status === 'completed');
+        const vols = readJSON(FILES.volunteers);
+
+        logs.forEach(l => {
+            const v = vols.find(u => u.id === l.volunteerId);
+            sheet.addRow({ date: l.dateStr, name: v ? v.name : 'Unknown', act: l.activity, h: l.duration });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Mersal_Report.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (e) { res.status(500).send(e.message); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Mersal Pro System is Live on Port ${PORT}`));
+app.listen(PORT, () => console.log(`Mersal Server Live on http://localhost:${PORT}`));
