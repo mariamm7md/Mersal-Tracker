@@ -14,12 +14,13 @@ const EXCEL_FILE = path.join(__dirname, 'mersal-data.xlsx');
 app.use(cors());
 app.use(express.json());
 
-// ====================== Excel Functions ======================
+// ====================== Excel Helper Functions ======================
 async function loadWorkbook() {
     const workbook = new ExcelJS.Workbook();
     if (fs.existsSync(EXCEL_FILE)) {
         await workbook.xlsx.readFile(EXCEL_FILE);
     } else {
+        // إنشاء ملف Excel جديد
         const usersSheet = workbook.addWorksheet('Users');
         usersSheet.columns = [
             { header: 'ID', key: 'id', width: 15 },
@@ -43,6 +44,7 @@ async function loadWorkbook() {
             { header: 'DurationHours', key: 'durationHours', width: 15 }
         ];
 
+        // إنشاء حساب المدير الافتراضي
         const hash = await bcrypt.hash('admin123', 10);
         usersSheet.addRow({
             id: 'admin-001',
@@ -58,7 +60,8 @@ async function loadWorkbook() {
         });
 
         await workbook.xlsx.writeFile(EXCEL_FILE);
-        console.log('✅ تم إنشاء ملف Excel جديد - admin@mersal.org / admin123');
+        console.log('✅ تم إنشاء ملف Excel جديد');
+        console.log('   حساب المدير: admin@mersal.org / admin123');
     }
     return workbook;
 }
@@ -92,7 +95,7 @@ async function getUsers() {
 
 async function getUserByEmail(email) {
     const users = await getUsers();
-    return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    return users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
 }
 
 async function getUserById(id) {
@@ -114,7 +117,7 @@ async function updateUser(user) {
         }
     });
     if (!found) {
-        sheet.addRow([user.id, user.name, user.email, user.password, user.role, user.hours, user.sessions, user.streak, user.lastActive, user.joinDate]);
+        sheet.addRow([user.id, user.name, user.email, user.password, user.role, user.hours, user.sessions, user.streak, user.lastActive || '', user.joinDate]);
     }
     await saveWorkbook(wb);
 }
@@ -202,7 +205,10 @@ app.post('/api/sessions', authMiddleware, async (req, res) => {
     sheet.addRow([Date.now(), req.userId, startTime, endTime, durationHours]);
     await saveWorkbook(wb);
 
-    res.json({ message: `تم حفظ ${durationHours.toFixed(2)} ساعة`, user: { hours: user.hours, sessions: user.sessions } });
+    res.json({ 
+        message: `تم حفظ ${durationHours.toFixed(2)} ساعة بنجاح`, 
+        user: { hours: user.hours, sessions: user.sessions } 
+    });
 });
 
 app.get('/api/sessions', authMiddleware, async (req, res) => {
@@ -246,19 +252,24 @@ app.post('/api/admin/users/:id/hours', authMiddleware, async (req, res) => {
     res.json({ message: `تم إضافة ${hours} ساعة` });
 });
 
-// ====================== Static Files + SPA Fix ======================
+// ====================== Static Files + SPA Fix (مهم جداً) ======================
 app.use(express.static(__dirname));
 
-// هذا السطر مهم جداً لحل مشكلة "Not Found"
+// إرجاع index.html لكل المسارات (حل مشكلة Not Found)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'), (err) => {
+        if (err) {
+            console.error('Error sending index.html:', err.message);
+            res.status(500).send('خطأ في الخادم');
+        }
+    });
 });
 
 // ====================== Start Server ======================
 loadWorkbook().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log('====================================');
-        console.log('   مرسال - تتبع ساعات التطوع (Excel)');
+        console.log('   مرسال - تتبع ساعات التطوع');
         console.log(`   المنفذ: ${PORT}`);
         console.log(`   ملف البيانات: ${EXCEL_FILE}`);
         console.log('====================================');
