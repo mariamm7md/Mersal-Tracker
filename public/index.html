@@ -1,34 +1,73 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرسال - نظام تتبع الساعات</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --p: #0061ff; --s: #2b333e; --bg: #f4f7fe; --white: #ffffff; --text: #1b2559; --danger: #e31a1a; }
-        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background: var(--bg); margin: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مرسال - نظام تتبع الساعات</title>
 
-        .app { max-width: 500px; margin: auto; padding: 20px; }
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-        .card { background: var(--white); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
+<style>
+:root {
+    --p:#0061ff;
+    --bg:#f4f7fe;
+    --white:#fff;
+    --text:#1b2559;
+    --danger:#e31a1a;
+}
 
-        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-p { background: var(--p); color: white; }
-        .btn-outline { background: transparent; border: 2px solid #ddd; }
+*{box-sizing:border-box;font-family:'Tajawal',sans-serif}
 
-        .input-field { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #ddd; margin: 10px 0; }
+body{margin:0;background:var(--bg)}
 
-        .page { display: none; }
-        .active { display: block; }
+.app{max-width:500px;margin:auto;padding:20px}
 
-        .progress-container { height: 10px; background: #eee; border-radius: 10px; overflow: hidden; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg,#0061ff,#60efff); }
+.card{
+    background:var(--white);
+    border-radius:20px;
+    padding:25px;
+    margin-bottom:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.05)
+}
 
-        .admin-item { display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; }
-    </style>
+.btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-weight:bold;
+    cursor:pointer;
+    margin-top:10px
+}
+
+.btn-p{background:var(--p);color:#fff}
+.btn-outline{background:transparent;border:2px solid #ddd}
+
+.input-field{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:2px solid #ddd;
+    margin:10px 0
+}
+
+.page{display:none}
+.active{display:block}
+
+.progress-container{
+    height:10px;
+    background:#eee;
+    border-radius:10px;
+    overflow:hidden
+}
+
+.progress-bar{
+    height:100%;
+    background:linear-gradient(90deg,#0061ff,#60efff)
+}
+</style>
 </head>
+
 <body>
 
 <div class="app">
@@ -47,7 +86,7 @@
 <!-- REGISTER -->
 <div id="p-reg" class="page">
     <div class="card">
-        <h2>تسجيل</h2>
+        <h2>تسجيل جديد</h2>
         <input id="r-name" class="input-field" placeholder="الاسم">
         <input id="r-email" class="input-field" placeholder="الإيميل">
         <input id="r-phone" class="input-field" placeholder="الهاتف">
@@ -61,155 +100,186 @@
 <div id="p-dash" class="page">
     <div class="card">
         <h3 id="u-name"></h3>
+
         <div class="progress-container">
             <div id="u-prog" class="progress-bar"></div>
         </div>
+
         <p id="u-stats"></p>
     </div>
 
-    <div class="card" style="text-align:center;">
-        <div id="timer" style="font-size:30px;">00:00:00</div>
-        <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء</button>
-        <button class="btn btn-outline" onclick="logout()">خروج</button>
-    </div>
-</div>
+    <div class="card" style="text-align:center">
+        <div id="timer-display" style="font-size:32px;font-weight:bold">00:00:00</div>
 
-<!-- ADMIN -->
-<div id="p-admin" class="page">
-    <div class="card">
-        <h3>الإدارة</h3>
-        <div id="admin-list"></div>
-        <button class="btn btn-outline" onclick="logout()">خروج</button>
+        <button id="btn-timer" class="btn btn-p" onclick="toggleTimer()">بدء الجلسة</button>
+        <button class="btn btn-outline" onclick="logout()">تسجيل خروج</button>
     </div>
 </div>
 
 </div>
 
 <script>
-let users = [], currentUser = null, timer = null, startTime = null, target = 130;
+let users = [];
+let currentUser = null;
+let intervalId = null;
+let startTime = null;
+let target = 130;
 
-// INIT
-async function init() {
-    const res = await fetch('/api/init').then(r=>r.json());
-    if(res.success){
-        users = res.volunteers;
-        target = res.target;
+// ================= INIT =================
+async function init(){
+    try{
+        const res = await fetch('/api/init').then(r=>r.json());
+        if(res.success){
+            users = res.volunteers || [];
+            target = res.target || 130;
+        }
+    }catch(e){
+        alert("خطأ في الاتصال بالسيرفر");
     }
 }
 init();
 
-// NAVIGATION
+// ================= NAV =================
 function go(id){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
 
-// LOGIN (secure)
+// ================= LOGIN =================
 async function doLogin(){
-    const loginId = l-user.value.trim().toLowerCase();
-    const pass = l-pass.value;
+    const loginId = document.getElementById('l-user').value.trim().toLowerCase();
+    const pass = document.getElementById('l-pass').value;
 
-    if(!loginId || !pass) return alert("املأ البيانات");
+    if(!loginId || !pass){
+        return alert("أدخل البيانات كاملة");
+    }
 
     const user = users.find(u =>
-        u.email.toLowerCase() === loginId || u.phone === loginId
+        (u.email && u.email.toLowerCase() === loginId) ||
+        u.phone === loginId
     );
 
-    if(!user) return alert("الحساب غير موجود");
+    if(!user) return alert("المستخدم غير موجود");
 
-    const res = await fetch('/api/verify-login',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id:user.id,password:pass})
-    }).then(r=>r.json());
+    try{
+        const res = await fetch('/api/verify-login',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({id:user.id,password:pass})
+        }).then(r=>r.json());
 
-    if(res.success){
-        currentUser = user;
-        updateUI();
-        go('p-dash');
-    }else{
-        alert("كلمة المرور خطأ");
+        if(res.success){
+            currentUser = user;
+            updateUI();
+            go('p-dash');
+        }else{
+            alert("كلمة المرور غير صحيحة");
+        }
+    }catch{
+        alert("خطأ في السيرفر");
     }
 }
 
-// REGISTER
+// ================= REGISTER =================
 async function doRegister(){
-    const user = {
-        id: Date.now().toString(),
-        name: r-name.value,
-        email: r-email.value,
-        phone: r-phone.value,
-        password: r-pass.value
-    };
+    const name = r-name.value.trim();
+    const email = r-email.value.trim();
+    const phone = r-phone.value.trim();
+    const password = r-pass.value;
 
-    if(!user.name || !user.email || !user.password){
+    if(!name || !email || !password){
         return alert("املأ كل البيانات");
     }
 
-    const res = await fetch('/api/register',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(user)
-    }).then(r=>r.json());
+    const user = {
+        id: Date.now().toString(),
+        name, email, phone, password
+    };
 
-    if(res.success){
-        alert("تم التسجيل");
-        location.reload();
+    try{
+        const res = await fetch('/api/register',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(user)
+        }).then(r=>r.json());
+
+        if(res.success){
+            alert("تم التسجيل بنجاح");
+            location.reload();
+        }else{
+            alert("فشل التسجيل");
+        }
+    }catch{
+        alert("خطأ في السيرفر");
     }
 }
 
-// UI
+// ================= UI =================
 function updateUI(){
     u-name.innerText = "مرحباً " + currentUser.name;
 
-    const percent = (currentUser.hours / target) * 100;
+    const percent = Math.min((currentUser.hours / target) * 100,100);
     u-prog.style.width = percent + "%";
 
-    u-stats.innerText = `${currentUser.hours.toFixed(1)} / ${target} ساعة`;
+    u-stats.innerText =
+        `${currentUser.hours.toFixed(1)} / ${target} ساعة | جلسات: ${currentUser.sessions}`;
 }
 
-// TIMER
+// ================= TIMER =================
 function toggleTimer(){
     const btn = document.getElementById('btn-timer');
+    const display = document.getElementById('timer-display');
 
     if(!startTime){
         startTime = new Date();
-        btn.innerText = "إنهاء";
-        btn.style.background = "red";
 
-        timer = setInterval(()=>{
-            const diff = Math.floor((new Date()-startTime)/1000);
-            const h = Math.floor(diff/3600);
-            const m = Math.floor((diff%3600)/60);
-            const s = diff%60;
-            timer.innerText = `${h}:${m}:${s}`;
+        btn.innerText = "إنهاء الجلسة";
+        btn.style.background = "var(--danger)";
+
+        intervalId = setInterval(()=>{
+            const diff = Math.floor((new Date() - startTime)/1000);
+
+            const h = String(Math.floor(diff/3600)).padStart(2,'0');
+            const m = String(Math.floor((diff%3600)/60)).padStart(2,'0');
+            const s = String(diff%60).padStart(2,'0');
+
+            display.innerText = `${h}:${m}:${s}`;
         },1000);
 
     }else{
-        const hours = (new Date()-startTime)/3600000;
+        const hours = (new Date() - startTime) / 3600000;
+
         currentUser.hours += hours;
-        currentUser.sessions++;
+        currentUser.sessions += 1;
 
         saveUser(currentUser);
 
-        clearInterval(timer);
+        clearInterval(intervalId);
         startTime = null;
-        btn.innerText = "بدء";
+
+        display.innerText = "00:00:00";
+
+        btn.innerText = "بدء الجلسة";
         btn.style.background = "var(--p)";
+
         updateUI();
     }
 }
 
-// SAVE
+// ================= SAVE =================
 async function saveUser(u){
-    await fetch('/api/update-volunteer',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(u)
-    });
+    try{
+        await fetch('/api/update-volunteer',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(u)
+        });
+    }catch(e){
+        alert("فشل حفظ البيانات");
+    }
 }
 
-// LOGOUT
+// ================= LOGOUT =================
 function logout(){
     location.reload();
 }
