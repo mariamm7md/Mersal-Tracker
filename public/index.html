@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -213,25 +212,36 @@
     const $ = id => document.getElementById(id);
     const showPage = id => { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); $(id).classList.add('active'); };
 
-    // Data Storage Logic
-    let allVolunteers = JSON.parse(localStorage.getItem('mersal_users')) || [
-        { id: '1', name: 'Mariam Mohammed', email: 'm@m.com', phone: '010', password: '123', hours: 12.5, sessions: 5 },
-        { id: '2', name: 'Ahmed Ali', email: 'a@a.com', phone: '010', password: '123', hours: 45, sessions: 10 }
-    ];
-    let activitiesList = JSON.parse(localStorage.getItem('mersal_acts')) || ['معرض الملابس', 'فرز الملابس', 'صيدلية مرسال', 'قوافل غزة'];
-    let globalHoursTarget = localStorage.getItem('mersal_target') || 130;
-
+    let allVolunteers = [];
+    let activitiesList = [];
+    let globalHoursTarget = 130;
     let currentUser = null;
     let timerInterval = null;
     let sessionStart = null;
 
-    function saveData() {
-        localStorage.setItem('mersal_users', JSON.stringify(allVolunteers));
-        localStorage.setItem('mersal_acts', JSON.stringify(activitiesList));
-        localStorage.setItem('mersal_target', globalHoursTarget);
+    // --- الربط مع السيرفر ---
+    async function init() {
+        try {
+            const res = await fetch('/api/init');
+            const data = await res.json();
+            if(data.success) {
+                allVolunteers = data.volunteers;
+                activitiesList = data.activities;
+                globalHoursTarget = data.target;
+                loadUserActivities();
+            }
+        } catch (e) { console.error("Error loading data from server"); }
     }
 
-    // Login & Register
+    async function serverUpdateUser(user) {
+        await fetch('/api/update-volunteer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(user)
+        });
+    }
+
+    // --- الوظائف الأساسية ---
     function login() {
         const idVal = $('login-id').value;
         const passVal = $('login-pass').value;
@@ -242,28 +252,31 @@
             $('welcome-msg').textContent = `Welcome back, ${user.name}!`;
             loadUserActivities();
             showPage('page-activity-select');
-        } else {
-            alert('Invalid credentials');
-        }
+        } else { alert('Invalid credentials'); }
     }
 
-    function register() {
+    async function register() {
         const name = $('reg-name').value;
         const email = $('reg-email').value;
         const phone = $('reg-phone').value;
         const password = $('reg-pass').value;
-
-        if(!name || !email || !password) return alert('Please fill required fields');
-        
-        // Check if email already exists
-        if(allVolunteers.find(u => u.email === email)) return alert('Email already registered');
+        if(!name || !email || !password) return alert('Fill required fields');
 
         const newUser = { id: Date.now().toString(), name, email, phone, password, hours: 0, sessions: 0 };
-        allVolunteers.push(newUser);
-        saveData();
-        currentUser = newUser;
-        loadUserActivities();
-        showPage('page-activity-select');
+        
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(newUser)
+        });
+        
+        const data = await res.json();
+        if(data.success) {
+            allVolunteers.push(newUser);
+            currentUser = newUser;
+            loadUserActivities();
+            showPage('page-activity-select');
+        }
     }
 
     function loadUserActivities() {
@@ -284,7 +297,6 @@
         showPage('page-dash');
     }
 
-    // Timer Logic
     function handleMainAction() {
         if(!sessionStart) {
             sessionStart = new Date();
@@ -297,7 +309,9 @@
             const diff = (new Date() - sessionStart) / 3600000;
             currentUser.hours += diff;
             currentUser.sessions++;
-            saveData();
+            
+            serverUpdateUser(currentUser); // حفظ في السيرفر
+            
             clearInterval(timerInterval);
             sessionStart = null;
             $('timer').textContent = '00:00:00';
@@ -327,13 +341,9 @@
         $('prog-text').textContent = `${Math.floor(currentUser.hours)} / ${globalHoursTarget}h`;
     }
 
-    function logout() {
-        currentUser = null;
-        clearInterval(timerInterval);
-        showPage('page-login');
-    }
+    function logout() { currentUser = null; clearInterval(timerInterval); showPage('page-login'); }
 
-    // Admin Logic
+    // Admin
     function adminLogin() {
         if($('admin-pass').value === 'admin123') {
             loadAdminDashboard();
@@ -343,17 +353,14 @@
 
     function loadAdminDashboard() {
         $('adm-vol').textContent = allVolunteers.length;
-        $('adm-hrs').textContent = allVolunteers.reduce((s, v) => s + v.hours, 0).toFixed(1);
-        
+        $('adm-hrs').textContent = allVolunteers.reduce((s, v) => s + (v.hours || 0), 0).toFixed(1);
         $('admin-users-body').innerHTML = allVolunteers.map(v => `
             <tr>
                 <td><b>${v.name}</b></td>
                 <td style="font-size:10px; color:var(--muted)">${v.phone}<br>${v.email}</td>
-                <td>${v.hours.toFixed(1)}h</td>
+                <td>${(v.hours || 0).toFixed(1)}h</td>
                 <td><button onclick="adminEditUser('${v.id}')" style="color:var(--primary); background:none; border:none; cursor:pointer; font-weight:700;">Edit</button></td>
-            </tr>
-        `).join('');
-
+            </tr>`).join('');
         renderAdminActivities();
     }
 
@@ -362,8 +369,15 @@
             <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border);">
                 <span>${a}</span>
                 <span style="color:var(--danger); cursor:pointer;" onclick="removeActivity(${i})">Delete</span>
-            </div>
-        `).join('');
+            </div>`).join('');
+    }
+
+    async function saveAdminSettings() {
+        await fetch('/api/update-settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ target: globalHoursTarget, activities: activitiesList })
+        });
     }
 
     function addActivity() {
@@ -371,18 +385,23 @@
         if(name) {
             activitiesList.push(name);
             $('new-act-name').value = '';
-            saveData();
             renderAdminActivities();
+            saveAdminSettings();
         }
     }
 
     function removeActivity(index) {
         activitiesList.splice(index, 1);
-        saveData();
         renderAdminActivities();
+        saveAdminSettings();
     }
 
-    // Modal Profile Logic
+    function updateGlobalTarget() {
+        globalHoursTarget = parseInt($('global-target-input').value) || 130;
+        saveAdminSettings();
+        alert('Target updated!');
+    }
+
     let editingUserId = null;
     function adminEditUser(id) {
         editingUserId = id;
@@ -391,7 +410,7 @@
         $('edit-name').value = user.name;
         $('edit-email').value = user.email;
         $('edit-phone').value = user.phone || '';
-        $('edit-hours').value = user.hours.toFixed(1);
+        $('edit-hours').value = (user.hours || 0).toFixed(1);
         $('admin-only-edit').style.display = 'block';
         $('modal-profile').classList.add('active');
     }
@@ -406,9 +425,8 @@
         $('modal-profile').classList.add('active');
     }
 
-    function saveProfileChanges() {
+    async function saveProfileChanges() {
         const targetUser = editingUserId ? allVolunteers.find(v => v.id === editingUserId) : currentUser;
-        
         targetUser.name = $('edit-name').value;
         targetUser.email = $('edit-email').value;
         targetUser.phone = $('edit-phone').value;
@@ -416,16 +434,13 @@
         if(editingUserId) {
             targetUser.hours = parseFloat($('edit-hours').value) || 0;
             loadAdminDashboard();
-        } else {
-            updateUI();
-        }
+        } else { updateUI(); }
         
-        saveData();
+        await serverUpdateUser(targetUser);
         closeModal('modal-profile');
     }
 
     function closeModal(id) { $(id).classList.remove('active'); }
-
     function switchTab(tab, btn) {
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
@@ -433,11 +448,7 @@
         $('tab-' + tab).style.display = 'block';
     }
 
-    function updateGlobalTarget() {
-        globalHoursTarget = parseInt($('global-target-input').value) || 130;
-        saveData();
-        alert('Global target updated!');
-    }
+    init(); // تشغيل عند البداية
 </script>
 </body>
 </html>
