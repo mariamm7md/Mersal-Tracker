@@ -3,188 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersal System</title>
+    <title>Mersal Time Keeper</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f3f4f6; --card: #ffffff; --text: #111827; --muted: #6b7280;
-            --primary: #0056b3; --primary-dark: #003d80; --primary-light: #dbeafe;
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-            --border: #e5e7eb; --radius: 16px;
+            --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b;
+            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+            --success: #059669; --danger: #dc2626; --warning: #d97706;
+            --border: #e2e8f0; --radius: 16px;
         }
-        [data-theme="dark"] { --bg: #111827; --card: #1f2937; --text: #f9fafb; --muted: #9ca3af"; --border: #374151"; }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8"; --border: #334151"; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
         
         /* Layout */
-        .container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; }
-        .page { display: none; animation: fadeIn 0.4s; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .app-container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .admin-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Components */
-        .card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
+        .card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background: var(--primary-dark); }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
         
-        .input-group { margin-bottom: 15px; }
-        .input-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-        .input-field { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; }
-        .input-field:focus { outline: none; border-color: var(--primary); }
+        .input-group { margin-bottom: 16px; }
+        .input-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .input-field { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 15px; transition: 0.2s; }
+        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 
         /* Header */
-        .header-welcome { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 25px; color: white; margin-bottom: 20px; }
-        .user-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-box { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 30px 24px; color: white; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .header-box::after { content: ''; position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); }
+        
+        .user-row { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
         .user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid rgba(255,255,255,0.5); overflow: hidden; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid rgba(255,255,255,0.5); overflow: hidden; color: white; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-text h2 { font-size: 18px; font-weight: 700; }
+        .user-text p { font-size: 12px; opacity: 0.8; }
+        .logout-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
 
         /* Progress */
-        .progress-bar-bg { height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--success); transition: width 0.5s; }
+        .progress-container { margin-top: 20px; position: relative; z-index: 1; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 500; }
+        .progress-bg { height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #34d399, #059669); border-radius: 10px; transition: width 0.5s ease; }
 
         /* Timer */
-        .timer-display { font-size: 42px; font-weight: 800; text-align: center; color: var(--primary); margin: 15px 0; font-variant-numeric: tabular-nums; }
-        
-        /* Feedback Textarea */
-        textarea.input-field { min-height: 80px; resize: none; }
-
-        /* Admin Tabs */
-        .admin-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
-        .admin-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; border-radius: 8px; cursor: pointer; }
-        .admin-tab.active { background: var(--primary); color: white; }
+        .timer-display { font-size: 48px; font-weight: 800; text-align: center; color: var(--primary); margin: 10px 0; letter-spacing: 1px; }
+        .status-badge { text-align: center; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-inactive { background: #fee2e2; color: #991b1b; }
 
         /* Modal */
-        .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal.active { display: flex; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: var(--radius); width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
-        
-        /* List Items */
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg); border-radius: 10px; margin-bottom: 8px; }
-        .list-item-actions { display: flex; gap: 5px; }
-        .icon-btn { background: transparent; border: none; cursor: pointer; padding: 5px; color: var(--muted); }
-        .icon-btn:hover { color: var(--primary); }
-        .icon-btn.danger:hover { color: var(--danger); }
+        .modal-content { background: var(--card); padding: 30px; border-radius: var(--radius); width: 100%; max-width: 400px; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+
+        /* Admin Tabs */
+        .admin-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 6px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .admin-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .admin-tab.active { background: var(--primary); color: white; }
+
+        /* Admin Table */
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .admin-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 12px; text-transform: uppercase; }
+        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .admin-table tr:last-child td { border: none; }
+        .action-btn { background: none; border: none; cursor: pointer; padding: 5px; font-size: 16px; }
+        .action-btn.edit { color: var(--primary); }
+        .action-btn.delete { color: var(--danger); }
+
+        /* Responsive */
+        @media (max-width: 768px) { .admin-container { padding: 10px; } .admin-table { display: block; overflow-x: auto; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- LOGIN PAGE -->
+<!-- ==================== USER PAGES ==================== -->
+<div class="app-container">
+    <!-- LOGIN -->
     <div id="page-login" class="page active">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card" style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: var(--primary); border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 800;">M</div>
-                <h1>Mersal</h1>
-                <p style="color: var(--muted); margin-bottom: 25px;">Time Keeper System</p>
+                <div style="width: 60px; height: 60px; background: var(--primary); border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: 800;">M</div>
+                <h1 style="font-size: 24px;">Mersal</h1>
+                <p style="color: var(--muted); margin-bottom: 25px;">Time Keeper</p>
+                
                 <div class="input-group">
                     <input type="tel" id="login-phone" class="input-field" placeholder="Phone Number">
                 </div>
+                
                 <button class="btn btn-primary" onclick="login()">Continue</button>
-                <div style="margin: 20px 0;"></div>
+                <div style="margin: 15px 0;"><span style="color:var(--border)">—————</span></div>
                 <button class="btn btn-outline" onclick="showPage('page-admin-login')">Admin Access</button>
             </div>
         </div>
     </div>
 
-    <!-- REGISTER PAGE -->
+    <!-- REGISTER -->
     <div id="page-register" class="page">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card">
                 <h2 style="text-align: center; margin-bottom: 20px;">New Volunteer</h2>
                 <div class="input-group">
                     <label class="input-label">Full Name</label>
-                    <input type="text" id="reg-name" class="input-field" placeholder="Name">
+                    <input type="text" id="reg-name" class="input-field" placeholder="Enter your name">
                 </div>
                 <div class="input-group">
-                    <input type="tel" id="reg-phone" class="input-field" readonly style="opacity:0.6">
+                    <input type="tel" id="reg-phone" class="input-field" readonly style="opacity:0.7">
                 </div>
                 <div class="input-group">
                     <label class="input-label">Select Activity</label>
                     <select id="reg-activity" class="input-field"></select>
                 </div>
                 <button class="btn btn-primary" onclick="register()">Create Account</button>
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="showPage('page-login')">Back</button>
             </div>
         </div>
     </div>
 
     <!-- USER DASHBOARD -->
     <div id="page-dash" class="page">
-        <!-- Header -->
-        <div class="header-welcome">
+        <div class="header-box">
             <div class="user-row">
                 <div class="user-info" onclick="openModal('modal-profile')">
                     <div class="avatar">
                         <img id="dash-avatar" style="display:none;">
                         <span id="dash-avatar-letter">U</span>
                     </div>
-                    <div>
+                    <div class="user-text">
                         <div style="font-size: 12px; opacity: 0.8;">Welcome back,</div>
-                        <h2 id="dash-name" style="font-size: 18px;">User</h2>
+                        <h2 id="dash-name">User</h2>
                     </div>
                 </div>
-                <button class="icon-btn" style="color:white;" onclick="logout()">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
-            <!-- Progress -->
-            <div style="font-size: 13px; opacity: 0.9;">Verified Hours</div>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin: 5px 0;">
-                <span id="prog-text">0 / 130h</span>
-                <span id="prog-percent">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="prog-fill" style="width: 0%"></div>
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Verified Hours</span>
+                    <span id="prog-text">0 / 130h</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Clock In/Out Card -->
         <div class="card">
             <div style="text-align: center;">
-                <div style="font-size: 13px; color: var(--muted);" id="status-text">Ready to start</div>
+                <span class="status-badge status-inactive" id="status-badge">Not Checked In</span>
                 <div class="timer-display" id="timer">00:00:00</div>
             </div>
 
             <div class="input-group">
-                <label class="input-label">Activity Name</label>
+                <label class="input-label">Activity Name (Optional)</label>
                 <input type="text" id="activity-name" class="input-field" placeholder="What are you working on?">
             </div>
 
-            <!-- Feedback field shows only when checking out? Or manual? Let's keep it simple for Live check out in modal -->
-            <button id="clock-btn" class="btn btn-success" onclick="handleClockAction()">Clock In</button>
+            <button id="clock-btn" class="btn btn-success" onclick="handleClock()">Clock In</button>
 
-            <div style="text-align: center; margin-top: 15px;">
+            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
                 <div style="font-size: 12px; color: var(--muted);">Total Hours</div>
-                <div style="font-size: 24px; font-weight: 800;" id="total-hours">0.00</div>
+                <div style="font-size: 32px; font-weight: 800; color: var(--text);" id="total-hours">0.00</div>
             </div>
         </div>
 
-        <!-- Log Missed Shift Card -->
         <div class="card" style="background: var(--bg); border: 2px dashed var(--border); box-shadow: none;">
-            <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--muted);">Log Missed Shift</h3>
-            <div class="input-group">
-                <label class="input-label">Date</label>
-                <input type="date" id="miss-date" class="input-field">
-            </div>
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Log Missed Shift</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="input-group">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label class="input-label">Start Time</label>
                     <input type="time" id="miss-start" class="input-field">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label class="input-label">End Time</label>
                     <input type="time" id="miss-end" class="input-field">
                 </div>
             </div>
             <div class="input-group">
-                <label class="input-label">Activity Name</label>
-                <input type="text" id="miss-activity" class="input-field" placeholder="What did you do?">
+                <label class="input-label">Date</label>
+                <input type="date" id="miss-date" class="input-field">
             </div>
             <div class="input-group">
-                <label class="input-label">Feedback / Notes</label>
-                <textarea id="miss-feedback" class="input-field" placeholder="How was your day?"></textarea>
+                <input type="text" id="miss-activity" class="input-field" placeholder="Activity Name">
+            </div>
+            <div class="input-group">
+                <textarea id="miss-feedback" class="input-field" placeholder="Feedback/Notes (Optional)" style="resize:none; height: 60px;"></textarea>
             </div>
             <button class="btn btn-primary" onclick="addMissed()">Add Missed Shift</button>
         </div>
@@ -194,7 +210,7 @@
     <div id="page-admin-login" class="page">
         <div style="height: 90vh; display: flex; flex-direction: column; justify-content: center;">
             <div class="card">
-                <h2 style="text-align: center; margin-bottom: 20px;">Admin Login</h2>
+                <h2 style="text-align: center; margin-bottom: 20px;">Admin Access</h2>
                 <input type="password" id="admin-pass" class="input-field" placeholder="Password" style="margin-bottom:15px;">
                 <button class="btn btn-primary" onclick="adminLogin()">Login</button>
                 <button class="btn btn-outline" style="margin-top:10px;" onclick="showPage('page-login')">Back</button>
@@ -204,113 +220,131 @@
 
     <!-- ADMIN DASHBOARD -->
     <div id="page-admin" class="page">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2>Admin Panel</h2>
-            <button class="btn btn-outline" style="width: auto; padding: 8px 16px;" onclick="logout()">Exit</button>
-        </div>
+        <div class="admin-container" style="padding:0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Admin Dashboard</h2>
+                <button class="btn btn-outline" style="width:auto; padding:8px 16px; font-size:13px;" onclick="logout()">Exit</button>
+            </div>
 
-        <!-- Admin Tabs -->
-        <div class="admin-tabs">
-            <button class="admin-tab active" onclick="switchAdminTab('dashboard')">Stats</button>
-            <button class="admin-tab" onclick="switchAdminTab('users')">Users</button>
-            <button class="admin-tab" onclick="switchAdminTab('activities')">Activities</button>
-            <button class="admin-tab" onclick="switchAdminTab('logs')">Logs</button>
-        </div>
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchTab('dashboard')">Overview</button>
+                <button class="admin-tab" onclick="switchTab('users')">Users</button>
+                <button class="admin-tab" onclick="switchTab('activities')">Activities</button>
+                <button class="admin-tab" onclick="switchTab('logs')">Logs</button>
+            </div>
 
-        <!-- Tab Content: Dashboard -->
-        <div id="admin-tab-dashboard" class="admin-content">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <div class="card" style="background: var(--primary); color: white; margin:0;">
-                    <div style="font-size: 28px; font-weight: 800;" id="adm-vol">0</div>
-                    <div style="font-size: 12px; opacity: 0.8;">Volunteers</div>
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="admin-section">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <div class="card" style="background: var(--primary); color: white; margin:0; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800;" id="adm-vol">0</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Volunteers</div>
+                    </div>
+                    <div class="card" style="background: var(--success); color: white; margin:0; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800;" id="adm-hrs">0</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Total Hours</div>
+                    </div>
+                    <div class="card" style="background: var(--warning); color: white; margin:0; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800;" id="adm-active">0</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Active Today</div>
+                    </div>
                 </div>
-                <div class="card" style="background: var(--success); color: white; margin:0;">
-                    <div style="font-size: 28px; font-weight: 800;" id="adm-hrs">0</div>
-                    <div style="font-size: 12px; opacity: 0.8;">Total Hours</div>
+                <button class="btn btn-success" onclick="downloadExcel()">Download Excel Report</button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="admin-section" style="display:none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 10px;">Manage Volunteers</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead><tr><th>Name</th><th>Phone</th><th>Activity</th><th>Actions</th></tr></thead>
+                            <tbody id="admin-users-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-success" onclick="downloadExcel()">Download Excel Report</button>
-        </div>
 
-        <!-- Tab Content: Users -->
-        <div id="admin-tab-users" class="admin-content" style="display:none;">
-            <div class="card" style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>Volunteers</h3>
+            <!-- Activities Tab -->
+            <div id="tab-activities" class="admin-section" style="display:none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Add New Activity</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="new-activity-name" class="input-field" placeholder="Activity Name">
+                        <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="addActivity()">Add</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 10px;">Activities List</h3>
+                    <div id="admin-activities-list"></div>
                 </div>
             </div>
-            <div id="admin-users-list"></div>
-        </div>
 
-        <!-- Tab Content: Activities -->
-        <div id="admin-tab-activities" class="admin-content" style="display:none;">
-            <div class="card">
-                <h3 style="margin-bottom: 15px;">Add New Activity</h3>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="new-activity-name" class="input-field" placeholder="Activity Name">
-                    <button class="btn btn-primary" style="width: auto; padding: 0 20px;" onclick="addActivity()">Add</button>
+            <!-- Logs Tab -->
+            <div id="tab-logs" class="admin-section" style="display:none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 10px;">Attendance Logs & Feedback</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead><tr><th>User</th><th>Date</th><th>Activity</th><th>Hrs</th><th>Feedback</th><th>Action</th></tr></thead>
+                            <tbody id="admin-logs-body"></tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            <div id="admin-activities-list"></div>
-        </div>
-
-        <!-- Tab Content: Logs -->
-        <div id="admin-tab-logs" class="admin-content" style="display:none;">
-            <div class="card">
-                <h3>Recent Logs & Feedback</h3>
-                <div id="admin-logs-list" style="margin-top: 15px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal: User Profile -->
+<!-- ==================== MODALS ==================== -->
+
+<!-- Profile Modal -->
 <div class="modal" id="modal-profile">
     <div class="modal-content">
-        <div style="text-align: center;">
-            <div class="avatar" style="width: 80px; height: 80px; margin: 0 auto 15px; font-size: 30px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
+        <button class="modal-close" onclick="closeModal('modal-profile')">&times;</button>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="avatar" style="width: 80px; height: 80px; margin: 0 auto; font-size: 30px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
                 <img id="modal-avatar-img" style="display:none;">
                 <span id="modal-avatar-letter">U</span>
             </div>
             <input type="file" id="file-input" style="display:none" onchange="uploadAvatar(this)">
-            <h2 id="modal-name">User Name</h2>
-            <p id="modal-phone" style="color: var(--muted); font-size: 13px;">Phone</p>
+            <h2 style="margin-top: 10px;" id="modal-name">User</h2>
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
+        <div class="input-group">
             <label class="input-label">Edit Name</label>
             <input type="text" id="edit-name" class="input-field">
         </div>
         <div class="input-group">
-            <label class="input-label">Activity</label>
+            <label class="input-label">Edit Activity</label>
             <select id="edit-activity" class="input-field"></select>
         </div>
 
         <button class="btn btn-success" onclick="updateProfile()">Save Changes</button>
-        <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-profile')">Cancel</button>
         <button class="btn btn-danger" style="margin-top: 10px; opacity: 0.7;" onclick="deleteAccount()">Delete My Account</button>
     </div>
 </div>
 
-<!-- Modal: Checkout Feedback -->
+<!-- Checkout Feedback Modal -->
 <div class="modal" id="modal-checkout">
     <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('modal-checkout')">&times;</button>
         <h3 style="margin-bottom: 15px;">End Session</h3>
-        <p style="font-size: 14px; color: var(--muted); margin-bottom: 10px;">You worked for <span id="checkout-time">0</span> hours.</p>
+        <p style="font-size: 14px; color: var(--muted); margin-bottom: 15px;">You worked for <strong id="checkout-duration">0</strong> hours.</p>
         <div class="input-group">
             <label class="input-label">Feedback (Optional)</label>
-            <textarea id="checkout-feedback" class="input-field" placeholder="How was your shift?"></textarea>
+            <textarea id="checkout-feedback" class="input-field" placeholder="How was your shift?" style="resize:none; height: 80px;"></textarea>
         </div>
         <button class="btn btn-danger" onclick="confirmCheckOut()">Clock Out</button>
-        <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-checkout')">Cancel</button>
     </div>
 </div>
 
-<!-- Modal: Edit User (Admin) -->
-<div class="modal" id="modal-admin-user">
+<!-- Admin Edit User Modal -->
+<div class="modal" id="modal-admin-edit">
     <div class="modal-content">
-        <h3 style="margin-bottom: 15px;">Edit User</h3>
-        <input type="hidden" id="edit-user-id">
+        <button class="modal-close" onclick="closeModal('modal-admin-edit')">&times;</button>
+        <h3 style="margin-bottom: 20px;">Edit Volunteer</h3>
+        <input type="hidden" id="admin-edit-id">
         <div class="input-group">
             <label class="input-label">Name</label>
             <input type="text" id="admin-edit-name" class="input-field">
@@ -321,10 +355,9 @@
         </div>
         <div class="input-group">
             <label class="input-label">Activity</label>
-            <input type="text" id="admin-edit-activity" class="input-field">
+            <input type="text" id="admin-edit-act" class="input-field">
         </div>
-        <button class="btn btn-success" onclick="adminSaveUser()">Save</button>
-        <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-admin-user')">Cancel</button>
+        <button class="btn btn-success" onclick="adminSaveUser()">Save Changes</button>
     </div>
 </div>
 
@@ -341,29 +374,24 @@
     let sessionStart = null;
     let adminData = { volunteers: [], attendance: [], activities: [] };
 
-    // --- Init ---
-    if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-    
-    // --- Helper Functions ---
+    // --- Helpers ---
     function updateAvatars() {
-        const setAvatar = (imgId, letterId) => {
-            const img = $(imgId); const letter = $(letterId);
-            if(user.avatar) { img.src = user.avatar; img.style.display = 'block'; letter.style.display = 'none'; }
-            else { img.style.display = 'none'; letter.style.display = 'block'; letter.textContent = user.name.charAt(0); }
+        const setAv = (imgId, letId) => {
+            const img = $(imgId); const lt = $(letId);
+            if(user.avatar) { img.src = user.avatar; img.style.display = 'block'; lt.style.display = 'none'; }
+            else { img.style.display = 'none'; lt.style.display = 'block'; lt.textContent = user.name.charAt(0); }
         };
-        setAvatar('dash-avatar', 'dash-avatar-letter');
-        setAvatar('modal-avatar-img', 'modal-avatar-letter');
+        setAv('dash-avatar', 'dash-avatar-letter');
+        setAv('modal-avatar-img', 'modal-avatar-letter');
         $('dash-name').textContent = user.name;
         $('modal-name').textContent = user.name;
-        $('modal-phone').textContent = user.phone;
         $('edit-name').value = user.name;
+        loadActivitiesDropdown('edit-activity', user.activity);
     }
 
-    async function loadActivities() {
-        const activities = await get('/api/activities');
-        const options = activities.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
-        $('reg-activity').innerHTML = options || '<option value="">No Activities</option>';
-        $('edit-activity').innerHTML = options || '<option value="">No Activities</option>';
+    async function loadActivitiesDropdown(id, selectedVal = null) {
+        const acts = await get('/api/activities');
+        $(id).innerHTML = acts.map(a => `<option value="${a.name}" ${a.name === selectedVal ? 'selected' : ''}>${a.name}</option>`).join('');
     }
 
     // --- Auth ---
@@ -372,7 +400,7 @@
         if(!phone) return;
         const res = await post('/api/login', { phone });
         if(res) { user = res; loadDash(); } 
-        else { $('reg-phone').value = phone; await loadActivities(); showPage('page-register'); }
+        else { $('reg-phone').value = phone; await loadActivitiesDropdown('reg-activity'); showPage('page-register'); }
     }
 
     async function register() {
@@ -385,7 +413,7 @@
     async function adminLogin() {
         const res = await post('/api/admin/login', { password: $('admin-pass').value });
         if(res.success) loadAdmin();
-        else alert('Wrong Password');
+        else alert('Wrong Password (mersal2026admin)');
     }
 
     function logout() { user = null; clearInterval(timerInterval); showPage('page-login'); $('login-phone').value = ''; }
@@ -393,7 +421,6 @@
     // --- Dashboard ---
     async function loadDash() {
         showPage('page-dash');
-        await loadActivities();
         updateAvatars();
         
         const logs = await get(`/api/attendance/${user.id}`);
@@ -423,34 +450,30 @@
 
     function setUIState(isActive) {
         const btn = $('clock-btn');
+        const badge = $('status-badge');
         if(isActive) {
-            btn.className = 'btn btn-danger';
-            btn.textContent = 'Clock Out';
-            $('status-text').textContent = 'Session Active';
+            btn.className = 'btn btn-danger'; btn.textContent = 'Clock Out';
+            badge.className = 'status-badge status-active'; badge.textContent = 'Currently Active';
         } else {
-            btn.className = 'btn btn-success';
-            btn.textContent = 'Clock In';
-            $('status-text').textContent = 'Ready to start';
+            btn.className = 'btn btn-success'; btn.textContent = 'Clock In';
+            badge.className = 'status-badge status-inactive'; badge.textContent = 'Not Checked In';
             $('timer').textContent = '00:00:00';
         }
     }
 
-    function handleClockAction() {
+    function handleClock() {
         if(sessionStart) {
-            // Open Checkout Modal
             const diff = new Date() - sessionStart;
-            $('checkout-time').textContent = (diff / 3600000).toFixed(2);
+            $('checkout-duration').textContent = (diff / 3600000).toFixed(2);
             openModal('modal-checkout');
         } else {
-            // Check In
-            toggleClock();
+            const act = $('activity-name').value || 'General';
+            toggleClock(act);
         }
     }
 
-    async function toggleClock(feedback = '') {
-        const activity = $('activity-name').value || 'General';
+    async function toggleClock(act, feedback = '') {
         if(sessionStart) {
-            // Check Out
             clearInterval(timerInterval);
             await post('/api/attendance/checkout', { volunteerId: user.id, feedback });
             sessionStart = null;
@@ -458,8 +481,7 @@
             closeModal('modal-checkout');
             loadDash();
         } else {
-            // Check In
-            const res = await post('/api/attendance/checkin', { volunteerId: user.id, activityName: activity });
+            const res = await post('/api/attendance/checkin', { volunteerId: user.id, activityName: act });
             sessionStart = new Date(res.checkInTime);
             startTimer();
             setUIState(true);
@@ -467,8 +489,8 @@
     }
 
     function confirmCheckOut() {
-        const feedback = $('checkout-feedback').value;
-        toggleClock(feedback);
+        const fb = $('checkout-feedback').value;
+        toggleClock(null, fb);
     }
 
     function startTimer() {
@@ -488,14 +510,14 @@
             date: $('miss-date').value,
             checkIn: $('miss-start').value,
             checkOut: $('miss-end').value,
-            activityName: $('miss-activity').value,
+            activityName: $('miss-activity').value || 'General',
             feedback: $('miss-feedback').value
         });
-        alert('Shift Added!');
+        alert('Shift Added Successfully!');
         loadDash();
     }
 
-    // --- Profile Actions ---
+    // --- Profile ---
     function openModal(id) { $(id).classList.add('active'); }
     function closeModal(id) { $(id).classList.remove('active'); }
 
@@ -503,8 +525,8 @@
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = async function (e) {
-                await post('/api/user/avatar', { userId: user.id, avatar: e.target.result });
-                user.avatar = e.target.result;
+                const res = await post('/api/user/avatar', { userId: user.id, avatar: e.target.result });
+                user.avatar = e.target.result; // Update local state
                 updateAvatars();
             };
             reader.readAsDataURL(input.files[0]);
@@ -513,14 +535,14 @@
 
     async function updateProfile() {
         const res = await post('/api/user/update', { userId: user.id, name: $('edit-name').value, activity: $('edit-activity').value });
-        user = res;
+        user = res; // Update local state
         updateAvatars();
         closeModal('modal-profile');
         loadDash();
     }
 
     async function deleteAccount() {
-        if(confirm('Are you sure?')) {
+        if(confirm('Are you sure? All your data will be deleted.')) {
             await fetch('/api/user/delete', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: user.id }) });
             logout();
         }
@@ -534,60 +556,89 @@
         
         $('adm-vol').textContent = stats.totalVolunteers;
         $('adm-hrs').textContent = stats.totalHours;
+        $('adm-active').textContent = stats.activeToday;
         
         renderAdminUsers();
         renderAdminActivities();
         renderAdminLogs();
     }
 
-    function switchAdminTab(tab) {
+    function switchTab(tabName) {
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.admin-content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
         event.target.classList.add('active');
-        $(`admin-tab-${tab}`).style.display = 'block';
+        $('tab-' + tabName).style.display = 'block';
     }
 
     function renderAdminUsers() {
-        $('admin-users-list').innerHTML = adminData.volunteers.map(v => `
-            <div class="list-item">
-                <div>
-                    <div style="font-weight: 600;">${v.name}</div>
-                    <div style="font-size: 12px; color: var(--muted);">${v.phone} - ${v.activity}</div>
-                </div>
-                <div class="list-item-actions">
-                    <button class="icon-btn" onclick="openEditUser('${v.id}')">✎</button>
-                    <button class="icon-btn danger" onclick="deleteUser('${v.id}')">✕</button>
-                </div>
-            </div>
+        $('admin-users-body').innerHTML = adminData.volunteers.map(v => `
+            <tr>
+                <td style="font-weight:600;">${v.name}</td>
+                <td>${v.phone}</td>
+                <td>${v.activity}</td>
+                <td>
+                    <button class="action-btn edit" onclick="openEditUser('${v.id}')">✎</button>
+                    <button class="action-btn delete" onclick="deleteUser('${v.id}')">✕</button>
+                </td>
+            </tr>
         `).join('');
     }
 
     function renderAdminActivities() {
-        const activities = adminData.activities || [];
-        $('admin-activities-list').innerHTML = activities.map(a => `
-            <div class="list-item">
-                <span style="font-weight: 500;">${a.name}</span>
-                <button class="icon-btn danger" onclick="deleteActivity('${a.id}')">✕</button>
-            </div>
-        `).join('');
+        const acts = adminData.activities || [];
+        $('admin-activities-list').innerHTML = `<table class="admin-table"><tbody>` + acts.map(a => `
+            <tr>
+                <td style="font-weight:500;">${a.name}</td>
+                <td style="text-align:right;"><button class="action-btn delete" onclick="deleteActivity('${a.id}')">Delete</button></td>
+            </tr>
+        `).join('') + `</tbody></table>`;
     }
 
     function renderAdminLogs() {
-        $('admin-logs-list').innerHTML = adminData.attendance.slice(-20).reverse().map(l => {
-            const user = adminData.volunteers.find(v => v.id === l.volunteerId) || {};
+        $('admin-logs-body').innerHTML = adminData.attendance.slice(-20).reverse().map(l => {
+            const u = adminData.volunteers.find(v => v.id === l.volunteerId) || {name: 'Unknown'};
             return `
-                <div class="list-item" style="flex-direction: column; align-items: flex-start;">
-                    <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
-                        <strong>${user.name || 'Unknown'}</strong>
-                        <span style="font-size: 12px;">${l.dateStr}</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--muted);">${l.checkIn} - ${l.checkOut || 'Now'} | ${l.duration}h</div>
-                    <div style="font-size: 12px; margin-top: 5px; background: var(--bg); padding: 5px 10px; border-radius: 6px; width: 100%;">
-                        📝 ${l.feedback || 'No feedback'}
-                    </div>
-                </div>
-            `;
-        }).join('');
+            <tr>
+                <td>${u.name}</td>
+                <td>${l.dateStr}</td>
+                <td>${l.activityName}</td>
+                <td>${l.duration}</td>
+                <td style="font-size:12px; color:var(--muted);">${l.feedback || '-'}</td>
+                <td><button class="action-btn delete" onclick="deleteLog('${l.id}')">✕</button></td>
+            </tr>
+        `}).join('');
+    }
+
+    // Admin Actions
+    function openEditUser(id) {
+        const u = adminData.volunteers.find(v => v.id === id);
+        $('admin-edit-id').value = u.id;
+        $('admin-edit-name').value = u.name;
+        $('admin-edit-phone').value = u.phone;
+        $('admin-edit-act').value = u.activity;
+        openModal('modal-admin-edit');
+    }
+
+    async function adminSaveUser() {
+        const id = $('admin-edit-id').value;
+        const res = await post('/api/admin/user/update', {
+            userId: id,
+            name: $('admin-edit-name').value,
+            phone: $('admin-edit-phone').value,
+            activity: $('admin-edit-act').value
+        });
+        // Update local data
+        const idx = adminData.volunteers.findIndex(v => v.id === id);
+        if(idx !== -1) adminData.volunteers[idx] = res;
+        
+        closeModal('modal-admin-edit');
+        renderAdminUsers();
+    }
+
+    async function deleteUser(id) {
+        if(!confirm('Delete this user?')) return;
+        await fetch('/api/admin/user', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: id }) });
+        loadAdmin();
     }
 
     async function addActivity() {
@@ -600,36 +651,12 @@
     }
 
     async function deleteActivity(id) {
-        if(!confirm('Delete activity?')) return;
         await fetch('/api/admin/activity', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id }) });
-        loadAdmin(); // Refresh
-    }
-
-    function openEditUser(id) {
-        const u = adminData.volunteers.find(v => v.id === id);
-        if(!u) return;
-        $('edit-user-id').value = id;
-        $('admin-edit-name').value = u.name;
-        $('admin-edit-phone').value = u.phone;
-        $('admin-edit-activity').value = u.activity;
-        openModal('modal-admin-user');
-    }
-
-    async function adminSaveUser() {
-        const id = $('edit-user-id').value;
-        await post('/api/admin/user/update', {
-            userId: id,
-            name: $('admin-edit-name').value,
-            phone: $('admin-edit-phone').value,
-            activity: $('admin-edit-activity').value
-        });
-        closeModal('modal-admin-user');
         loadAdmin();
     }
 
-    async function deleteUser(id) {
-        if(!confirm('Delete this user and all their data?')) return;
-        await fetch('/api/admin/user', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: id }) });
+    async function deleteLog(id) {
+        await fetch('/api/admin/log', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ logId: id }) });
         loadAdmin();
     }
 
