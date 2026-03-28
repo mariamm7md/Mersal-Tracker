@@ -1,125 +1,248 @@
 const express = require('express');
-const ExcelJS = require('exceljs');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const path = require('path');
+const cors = require('cors');
 const fs = require('fs');
+const path = require('path');
+const ExcelJS = require('exceljs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = 'mersal-secret-2024';
-const DB_PATH = path.join(__dirname, 'mersal-database.xlsx');
 
-app.use(express.json());
-app.use(express.static(__dirname));
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static('public'));
 
-// دالة لتهيئة أو تحميل ملف القاعدة (Excel)
-async function getDB() {
-    const wb = new ExcelJS.Workbook();
-    if (fs.existsSync(DB_PATH)) {
-        await wb.xlsx.readFile(DB_PATH);
-    } else {
-        const users = wb.addWorksheet('Users');
-        users.columns = [
-            { header: 'id', key: 'id' },
-            { header: 'name', key: 'name' },
-            { header: 'email', key: 'email' },
-            { header: 'phone', key: 'phone' },
-            { header: 'password', key: 'password' },
-            { header: 'role', key: 'role' },
-            { header: 'hours', key: 'hours' },
-            { header: 'sessions', key: 'sessions' }
-        ];
-        // إضافة مدير افتراضي
-        const adminHash = await bcrypt.hash('admin123', 10);
-        users.addRow(['admin-1', 'المدير العام', 'admin@mersal.org', '0123456789', adminHash, 'admin', 0, 0]);
-        await wb.xlsx.writeFile(DB_PATH);
+// ================= CONFIG =================
+const ADMIN_PASSWORD = "mersal2026admin";
+
+const DATA_DIR = path.join(__dirname, 'data');
+const FILES = {
+    volunteers: path.join(DATA_DIR, 'volunteers.json'),
+    attendance: path.join(DATA_DIR, 'attendance.json'),
+    activities: path.join(DATA_DIR, 'activities.json'),
+    settings: path.join(DATA_DIR, 'settings.json')
+};
+
+// ================= INIT =================
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+const safeRead = (file) => {
+    try {
+        if (!fs.existsSync(file)) return [];
+        const data = fs.readFileSync(file, 'utf-8');
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error("Read error:", e);
+        return [];
     }
-    return wb;
-}
+};
 
-// التحقق من الهوية (Middleware)
-function authenticate(req, res, next) {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'دخول غير مصرح' });
+const safeWrite = (file, data) => {
     try {
-        req.user = jwt.verify(token, JWT_SECRET);
-        next();
-    } catch { res.status(401).json({ message: 'انتهت الجلسة' }); }
-}
+        fs.writeFileSync(file, JSON.stringify(data, null, 2));
+    } catch (e) {
+        console.error("Write error:", e);
+    }
+};
 
-// --- المسارات (Routes) ---
+// default data
+if (!fs.existsSync(FILES.settings)) safeWrite(FILES.settings, { hoursTarget: 130 });
 
-// 1. تسجيل مستخدم جديد
-app.post('/api/auth/register', async (req, res) => {
+if (!fs.existsSync(FILES.activities)) safeWrite(FILES.activities, [
+    { id: '1', name: 'Medical Services' },
+    { id: '2', name: 'Education' },
+    { id: '3', name: 'Social Services' }
+]);
+
+// ================= AUTH =================
+app.post('/api/login', (req, res) => {
     try {
-        const { name, email, phone, password, role } = req.body;
-        const wb = await getDB();
-        const sheet = wb.getWorksheet('Users');
-        
-        // التأكد من عدم تكرار البريد أو الهاتف
-        let exists = false;
-        sheet.eachRow(row => {
-            if (row.getCell(3).value === email || row.getCell(4).value === phone) exists = true;
-        });
-        if (exists) return res.status(400).json({ message: 'البريد أو الهاتف مسجل بالفعل' });
+        const { email, password } = req.body;
+        const users = safeRead(FILES.volunteers);
 
-        const hash = await bcrypt.hash(password, 10);
-        sheet.addRow([Date.now(), name, email, phone, hash, role, 0, 0]);
-        await wb.xlsx.writeFile(DB_PATH);
-        res.json({ message: 'تم التسجيل بنجاح' });
-    } catch (e) { res.status(500).json({ message: 'خطأ في السيرفر' }); }
+        const user = users.find(u => u.email === email && u.password === password);
+
+        if (!user) return res.json(null);
+
+        const { password: _, ...safeUser } = user;
+        res.json(safeUser);
+
+    } catch (err) {
+        res.status(500).json({ error: "Login failed" });
+    }
 });
 
-// 2. تسجيل الدخول (بالبريد أو الهاتف)
-app.post('/api/auth/login', async (req, res) => {
-    const { loginId, password } = req.body;
-    const wb = await getDB();
-    const sheet = wb.getWorksheet('Users');
-    let userRow = null;
+app.post('/api/register', (req, res) => {
+    try {
+        const { name, email, password } = req.body;
 
-    sheet.eachRow((row, rowNum) => {
-        if (rowNum === 1) return;
-        if (row.getCell(3).value == loginId || row.getCell(4).value == loginId) userRow = row;
-    });
+        if (!name || !email || !password)
+            return res.status(400).json({ error: "Missing fields" });
 
-    if (!userRow) return res.status(400).json({ message: 'المستخدم غير موجود' });
+        const users = safeRead(FILES.volunteers);
 
-    const match = await bcrypt.compare(password, userRow.getCell(5).value);
-    if (!match) return res.status(400).json({ message: 'كلمة مرور خاطئة' });
+        if (users.find(u => u.email === email))
+            return res.status(400).json({ error: "Email exists" });
 
-    const token = jwt.sign({ id: userRow.getCell(1).value, role: userRow.getCell(6).value }, JWT_SECRET);
-    res.json({
-        token,
-        user: {
-            name: userRow.getCell(2).value,
-            role: userRow.getCell(6).value,
-            hours: userRow.getCell(7).value || 0,
-            sessions: userRow.getCell(8).value || 0
-        }
-    });
+        const newUser = {
+            id: Date.now().toString(),
+            name,
+            email,
+            password,
+            avatar: null,
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        safeWrite(FILES.volunteers, users);
+
+        const { password: _, ...safeUser } = newUser;
+        res.json(safeUser);
+
+    } catch (err) {
+        res.status(500).json({ error: "Register failed" });
+    }
 });
 
-// 3. تحديث الساعات عند إنهاء الجلسة
-app.post('/api/session/save', authenticate, async (req, res) => {
-    const { durationHours } = req.body;
-    const wb = await getDB();
-    const sheet = wb.getWorksheet('Users');
-    
-    sheet.eachRow(row => {
-        if (row.getCell(1).value == req.user.id) {
-            row.getCell(7).value = (Number(row.getCell(7).value) || 0) + durationHours;
-            row.getCell(8).value = (Number(row.getCell(8).value) || 0) + 1;
-        }
-    });
-    await wb.xlsx.writeFile(DB_PATH);
+// ================= USER =================
+app.post('/api/user/update', (req, res) => {
+    try {
+        let users = safeRead(FILES.volunteers);
+        const { userId, name, email } = req.body;
+
+        const i = users.findIndex(u => u.id === userId);
+        if (i === -1) return res.status(404).json({ error: "Not found" });
+
+        if (name) users[i].name = name;
+        if (email) users[i].email = email;
+
+        safeWrite(FILES.volunteers, users);
+
+        const { password, ...safeUser } = users[i];
+        res.json(safeUser);
+
+    } catch {
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
+app.post('/api/user/avatar', (req, res) => {
+    let users = safeRead(FILES.volunteers);
+    const { userId, avatar } = req.body;
+
+    const i = users.findIndex(u => u.id === userId);
+    if (i === -1) return res.status(404).json({ error: "Not found" });
+
+    users[i].avatar = avatar;
+    safeWrite(FILES.volunteers, users);
+
     res.json({ success: true });
 });
 
-// 4. تحميل ملف البيانات (للأدمن فقط)
-app.get('/api/admin/download', authenticate, (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).send('غير مسموح');
-    res.download(DB_PATH);
+// ================= ATTENDANCE =================
+app.post('/api/attendance/checkin', (req, res) => {
+    try {
+        const { volunteerId, activityName } = req.body;
+        let attendance = safeRead(FILES.attendance);
+
+        const active = attendance.find(a => a.volunteerId === volunteerId && !a.checkOut);
+        if (active) return res.status(400).json({ error: "Already checked in" });
+
+        const now = new Date();
+
+        const record = {
+            id: Date.now().toString(),
+            volunteerId,
+            dateStr: now.toISOString().split('T')[0],
+            checkIn: now.toLocaleTimeString(),
+            checkInTime: now.getTime(),
+            checkOut: null,
+            duration: 0,
+            activityName,
+            feedback: ""
+        };
+
+        attendance.push(record);
+        safeWrite(FILES.attendance, attendance);
+
+        res.json(record);
+
+    } catch {
+        res.status(500).json({ error: "Checkin failed" });
+    }
 });
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.post('/api/attendance/checkout', (req, res) => {
+    try {
+        let attendance = safeRead(FILES.attendance);
+        const { volunteerId, feedback } = req.body;
+
+        const rec = attendance.find(a => a.volunteerId === volunteerId && !a.checkOut);
+        if (!rec) return res.status(400).json({ error: "No active session" });
+
+        const now = new Date();
+
+        rec.checkOut = now.toLocaleTimeString();
+        rec.duration = ((now - rec.checkInTime) / 3600000).toFixed(2);
+        rec.feedback = feedback || "";
+
+        safeWrite(FILES.attendance, attendance);
+
+        res.json(rec);
+
+    } catch {
+        res.status(500).json({ error: "Checkout failed" });
+    }
+});
+
+app.get('/api/attendance/:id', (req, res) => {
+    const data = safeRead(FILES.attendance);
+    res.json(data.filter(d => d.volunteerId === req.params.id));
+});
+
+// ================= ADMIN =================
+app.post('/api/admin/login', (req, res) => {
+    res.json({ success: req.body.password === ADMIN_PASSWORD });
+});
+
+app.get('/api/admin/stats', (req, res) => {
+    const users = safeRead(FILES.volunteers);
+    const attendance = safeRead(FILES.attendance);
+
+    res.json({
+        totalVolunteers: users.length,
+        totalHours: attendance.reduce((s, a) => s + Number(a.duration || 0), 0).toFixed(1)
+    });
+});
+
+// ================= EXPORT =================
+app.get('/api/export', async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Report');
+
+    sheet.columns = [
+        { header: 'Name', key: 'name', width: 20 },
+        { header: 'Date', key: 'date', width: 15 },
+        { header: 'Hours', key: 'hours', width: 10 }
+    ];
+
+    const users = safeRead(FILES.volunteers);
+    const attendance = safeRead(FILES.attendance);
+
+    attendance.forEach(a => {
+        const u = users.find(x => x.id === a.volunteerId) || {};
+        sheet.addRow({
+            name: u.name,
+            date: a.dateStr,
+            hours: a.duration
+        });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats');
+    await workbook.xlsx.write(res);
+    res.end();
+});
+
+// ================= SERVER =================
+app.listen(PORT, () => {
+    console.log("✅ Server running on port " + PORT);
+});
