@@ -1,787 +1,277 @@
-/* =============================================
-   Mersal Time Keeper - الخادم الكامل
-   ============================================= */
-
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const ExcelJS = require('exceljs');
 
 const app = express();
-
-// ===== الإعدادات =====
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'mersal_secret_key_2024_change_in_production';
+
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.static('public'));
+
+// --- Configuration ---
+const ADMIN_CREDENTIALS = { email: 'mariameltras@gmail.com', password: 'mariam2003' };
 const DATA_DIR = path.join(__dirname, 'data');
+const FILES = {
+    volunteers: path.join(DATA_DIR, 'volunteers.json'),
+    attendance: path.join(DATA_DIR, 'attendance.json'),
+    activities: path.join(DATA_DIR, 'activities.json'),
+    auditLog: path.join(DATA_DIR, 'audit_log.json'),
+    settings: path.join(DATA_DIR, 'settings.json')
+};
 
-// ===== إنشاء مجلد البيانات =====
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// --- Helpers ---
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const readJSON = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
+const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
+
+// Initialize Data
+if (!fs.existsSync(FILES.settings)) writeJSON(FILES.settings, { hoursTarget: 130 });
+if (!fs.existsSync(FILES.auditLog)) writeJSON(FILES.auditLog, []);
+if (!fs.existsSync(FILES.activities)) writeJSON(FILES.activities, [
+    { id: '1', name: 'Medical Services' }, { id: '2', name: 'Education' }, { id: '3', name: 'Social Services' }
+]);
+
+// --- Helper: Log Admin Action ---
+function logAction(adminEmail, action, details) {
+    const log = readJSON(FILES.auditLog);
+    log.push({
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        adminEmail,
+        action, // e.g., "Edit User", "Delete Activity"
+        details // e.g., "Updated name of user X"
+    });
+    writeJSON(FILES.auditLog, log);
 }
 
-// ===== Middleware =====
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+// ===================
+// AUTH ROUTES
+// ===================
 
-// ===== أدوات مساعدة لقراءة/كتابة البيانات =====
-function readJSON(file, fallback = []) {
-  try {
-    const filePath = path.join(DATA_DIR, file);
-    if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch (err) {
-    console.error(`خطأ في قراءة ${file}:`, err.message);
-    return fallback;
-  }
-}
-
-function writeJSON(file, data) {
-  try {
-    const filePath = path.join(DATA_DIR, file);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (err) {
-    console.error(`خطأ في كتابة ${file}:`, err.message);
-    return false;
-  }
-}
-
-// ===== التحقق من التوكن =====
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, message: 'لم يتم تقديم توكن المصادقة' });
-  }
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'توكن غير صالح أو منتهي الصلاحية' });
-  }
-}
-
-// ===== التحقق من صلاحيات المدير =====
-function adminMiddleware(req, res, next) {
-  if (!req.user || !req.user.isAdmin) {
-    return res.status(403).json({ success: false, message: 'صلاحيات المدير مطلوبة' });
-  }
-  next();
-}
-
-// ===== تسجيل نشاط =====
-function logActivity(type, description) {
-  const activities = readJSON('activities.json', []);
-  activities.push({
-    id: Date.now() + Math.random(),
-    type,
-    description,
-    timestamp: new Date().toISOString()
-  });
-  // الاحتفاظ بآخر 1000 نشاط فقط
-  if (activities.length > 1000) activities.splice(0, activities.length - 1000);
-  writeJSON('activities.json', activities);
-}
-
-// ===== أدوات مساعدة =====
-function formatDuration(minutes) {
-  if (!minutes || minutes <= 0) return '00:00';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h > 0) return `${h} س ${String(m).padStart(2, '0')} د`;
-  return `${String(m).padStart(2, '0')} د`;
-}
-
-function getTodayStr() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function determineStatus(clockInStr, clockOutStr, settings) {
-  const lateThreshold = settings.lateThreshold || 15;
-  const [wh, wm] = (settings.workStart || '08:00').split(':').map(Number);
-  const [eh, em] = (settings.workEnd || '16:00').split(':').map(Number);
-  const workStartMin = wh * 60 + wm;
-  const workEndMin = eh * 60 + em;
-
-  const [cih, cim] = clockInStr.split(':').map(Number);
-  const clockInMin = cih * 60 + cim;
-
-  let status = 'normal';
-  if (clockInMin > workStartMin + lateThreshold) status = 'late';
-
-  if (clockOutStr) {
-    const [coh, com] = clockOutStr.split(':').map(Number);
-    const clockOutMin = coh * 60 + com;
-    if (clockOutMin < workEndMin - lateThreshold && status !== 'late') status = 'early';
-  }
-
-  return status;
-}
-
-
-/* =============================================
-   مسارات المصادقة
-   ============================================= */
-
-// تسجيل دخول المتطوع
+// User Login (Email or Phone)
 app.post('/api/login', (req, res) => {
-  try {
-    const { user, password } = req.body;
-
-    if (!user || !password) {
-      return res.status(400).json({ success: false, message: 'اسم المستخدم وكلمة المرور مطلوبان' });
-    }
-
-    const volunteers = readJSON('volunteers.json', []);
-    const found = volunteers.find(v => v.user === user);
-
-    if (!found) {
-      return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-    }
-
-    const isMatch = bcrypt.compareSync(password, found.password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-    }
-
-    const token = jwt.sign(
-      { id: found.id, user: found.user, name: found.name, isAdmin: false },
-      JWT_SECRET,
-      { expiresIn: '24h' }
+    const { identifier, password } = req.body; // identifier can be email or phone
+    const volunteers = readJSON(FILES.volunteers);
+    const user = volunteers.find(u => 
+        (u.email === identifier || u.phone === identifier) && u.password === password
     );
-
-    logActivity('تسجيل دخول', `المتطوع ${found.name} سجل الدخول`);
-
-    res.json({
-      success: true,
-      message: 'تم تسجيل الدخول بنجاح',
-      token,
-      user: { id: found.id, name: found.name, user: found.user, department: found.department }
-    });
-  } catch (err) {
-    console.error('خطأ في تسجيل الدخول:', err);
-    res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
-  }
-});
-
-// تسجيل دخول المدير
-app.post('/api/admin-login', (req, res) => {
-  try {
-    const { user, password } = req.body;
-
-    if (!user || !password) {
-      return res.status(400).json({ success: false, message: 'البيانات مطلوبة' });
-    }
-
-    const admins = readJSON('admins.json', []);
-    let foundAdmin = admins.find(a => a.user === user);
-
-    // مدير افتراضي إذا لم يكن هناك مديرين
-    if (!foundAdmin && admins.length === 0) {
-      const defaultHash = bcrypt.hashSync('admin123', 10);
-      foundAdmin = { id: 1, user: 'admin', password: defaultHash, name: 'المدير العام' };
-      writeJSON('admins.json', [foundAdmin]);
-    }
-
-    if (!foundAdmin) {
-      return res.status(401).json({ success: false, message: 'بيانات المدير غير صحيحة' });
-    }
-
-    const isMatch = bcrypt.compareSync(password, foundAdmin.password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'بيانات المدير غير صحيحة' });
-    }
-
-    const token = jwt.sign(
-      { id: foundAdmin.id, user: foundAdmin.user, name: foundAdmin.name, isAdmin: true },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    logActivity('تسجيل دخول', 'المدير سجل الدخول');
-
-    res.json({
-      success: true,
-      message: 'تم تسجيل الدخول بنجاح',
-      token,
-      user: { id: foundAdmin.id, name: foundAdmin.name, user: foundAdmin.user }
-    });
-  } catch (err) {
-    console.error('خطأ في تسجيل دخول المدير:', err);
-    res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
-  }
-});
-
-// التحقق من التوكن
-app.get('/api/verify', authMiddleware, (req, res) => {
-  res.json({ success: true, user: req.user });
-});
-
-
-/* =============================================
-   مسارات المتطوعين (CRUD)
-   ============================================= */
-
-// جلب كل المتطوعين
-app.get('/api/volunteers', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const volunteers = readJSON('volunteers.json', []);
-    const activeSessions = readJSON('active_sessions.json', {});
-    const result = volunteers.map(v => ({
-      id: v.id,
-      name: v.name,
-      user: v.user,
-      department: v.department,
-      phone: v.phone || '',
-      role: v.role || 'متطوع',
-      createdAt: v.createdAt,
-      isActive: !!activeSessions[v.id]
-    }));
-    res.json({ success: true, data: result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في جلب البيانات' });
-  }
-});
-
-// إضافة متطوع
-app.post('/api/volunteers', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const { name, user, password, phone, department, role } = req.body;
-
-    if (!name || !user || !password || !department) {
-      return res.status(400).json({ success: false, message: 'الاسم واسم المستخدم وكلمة المرور والقسم مطلوبان' });
-    }
-
-    const volunteers = readJSON('volunteers.json', []);
-
-    // التحقق من تكرار اسم المستخدم
-    if (volunteers.find(v => v.user === user)) {
-      return res.status(409).json({ success: false, message: 'اسم المستخدم مستخدم بالفعل' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const newVol = {
-      id: Date.now(),
-      name: name.trim(),
-      user: user.trim(),
-      password: hashedPassword,
-      phone: (phone || '').trim(),
-      department: department.trim(),
-      role: (role || 'متطوع').trim(),
-      createdAt: getTodayStr()
-    };
-
-    volunteers.push(newVol);
-    writeJSON('volunteers.json', volunteers);
-
-    logActivity('إضافة متطوع', `تم إضافة ${newVol.name} كمتطوع جديد`);
-
-    res.status(201).json({ success: true, message: 'تم إضافة المتطوع بنجاح', data: { id: newVol.id, name: newVol.name } });
-  } catch (err) {
-    console.error('خطأ في إضافة متطوع:', err);
-    res.status(500).json({ success: false, message: 'خطأ في إضافة المتطوع' });
-  }
-});
-
-// تعديل متطوع
-app.put('/api/volunteers/:id', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const volId = parseInt(req.params.id);
-    const { name, user, password, phone, department, role } = req.body;
-
-    const volunteers = readJSON('volunteers.json', []);
-    const idx = volunteers.findIndex(v => v.id === volId);
-    if (idx === -1) {
-      return res.status(404).json({ success: false, message: 'المتطوع غير موجود' });
-    }
-
-    // التحقق من تكرار اسم المستخدم
-    if (user && user !== volunteers[idx].user) {
-      if (volunteers.find(v => v.user === user)) {
-        return res.status(409).json({ success: false, message: 'اسم المستخدم مستخدم بالفعل' });
-      }
-    }
-
-    if (name) volunteers[idx].name = name.trim();
-    if (user) volunteers[idx].user = user.trim();
-    if (password) volunteers[idx].password = bcrypt.hashSync(password, 10);
-    if (phone !== undefined) volunteers[idx].phone = phone.trim();
-    if (department) volunteers[idx].department = department.trim();
-    if (role) volunteers[idx].role = role.trim();
-
-    writeJSON('volunteers.json', volunteers);
-
-    logActivity('تعديل متطوع', `تم تعديل بيانات ${volunteers[idx].name}`);
-
-    res.json({ success: true, message: 'تم تعديل البيانات بنجاح' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في تعديل المتطوع' });
-  }
-});
-
-// حذف متطوع
-app.delete('/api/volunteers/:id', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const volId = parseInt(req.params.id);
-    let volunteers = readJSON('volunteers.json', []);
-    const vol = volunteers.find(v => v.id === volId);
-    if (!vol) {
-      return res.status(404).json({ success: false, message: 'المتطوع غير موجود' });
-    }
-
-    volunteers = volunteers.filter(v => v.id !== volId);
-    writeJSON('volunteers.json', volunteers);
-
-    // حذف سجلات الحضور
-    let attendance = readJSON('attendance.json', []);
-    attendance = attendance.filter(a => a.volunteerId !== volId);
-    writeJSON('attendance.json', attendance);
-
-    // حذف الجلسة النشطة
-    let sessions = readJSON('active_sessions.json', {});
-    if (sessions[volId]) {
-      delete sessions[volId];
-      writeJSON('active_sessions.json', sessions);
-    }
-
-    logActivity('حذف متطوع', `تم حذف المتطوع ${vol.name}`);
-
-    res.json({ success: true, message: 'تم حذف المتطوع بنجاح' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في حذف المتطوع' });
-  }
-});
-
-
-/* =============================================
-   مسارات الحضور والانصراف
-   ============================================= */
-
-// تسجيل حضور
-app.post('/api/clock-in', authMiddleware, (req, res) => {
-  try {
-    const userId = req.user.id;
-    const sessions = readJSON('active_sessions.json', {});
-
-    if (sessions[userId]) {
-      return res.status(400).json({ success: false, message: 'أنت مسجل الحضور بالفعل' });
-    }
-
-    const now = new Date();
-    sessions[userId] = now.toISOString();
-    writeJSON('active_sessions.json', sessions);
-
-    logActivity('تسجيل حضور', `${req.user.name} سجل الحضور في ${now.toLocaleTimeString('ar-EG')}`);
-
-    res.json({
-      success: true,
-      message: 'تم تسجيل الحضور بنجاح',
-      data: {
-        clockIn: now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: now.toISOString()
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في تسجيل الحضور' });
-  }
-});
-
-// تسجيل انصراف
-app.post('/api/clock-out', authMiddleware, (req, res) => {
-  try {
-    const userId = req.user.id;
-    const sessions = readJSON('active_sessions.json', {});
-
-    if (!sessions[userId]) {
-      return res.status(400).json({ success: false, message: 'لم تقم بتسجيل الحضور بعد' });
-    }
-
-    const clockInTime = new Date(sessions[userId]);
-    const now = new Date();
-    const clockInStr = `${String(clockInTime.getHours()).padStart(2, '0')}:${String(clockInTime.getMinutes()).padStart(2, '0')}`;
-    const clockOutStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const durationMin = Math.round((now - clockInTime) / 60000);
-    const dateStr = now.toISOString().split('T')[0];
-
-    // تحديد الحالة
-    const settings = readJSON('settings.json', {});
-    const status = determineStatus(clockInStr, clockOutStr, settings);
-
-    // جلب بيانات المتطوع
-    const volunteers = readJSON('volunteers.json', []);
-    const vol = volunteers.find(v => v.id === userId);
-
-    // حفظ سجل الحضور
-    const attendance = readJSON('attendance.json', []);
-    attendance.push({
-      id: Date.now() + Math.random(),
-      volunteerId: userId,
-      volunteerName: vol ? vol.name : req.user.name,
-      department: vol ? vol.department : '',
-      date: dateStr,
-      clockIn: clockInStr,
-      clockOut: clockOutStr,
-      duration: durationMin,
-      status
-    });
-    writeJSON('attendance.json', attendance);
-
-    // حذف الجلسة النشطة
-    delete sessions[userId];
-    writeJSON('active_sessions.json', sessions);
-
-    logActivity('تسجيل انصراف', `${vol ? vol.name : req.user.name} سجل الانصراف في ${clockOutStr} (مدة ${formatDuration(durationMin)})`);
-
-    res.json({
-      success: true,
-      message: 'تم تسجيل الانصراف بنجاح',
-      data: { clockIn: clockInStr, clockOut: clockOutStr, duration: durationMin, durationFormatted: formatDuration(durationMin), status }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في تسجيل الانصراف' });
-  }
-});
-
-// حالة المستخدم الحالي
-app.get('/api/clock-status', authMiddleware, (req, res) => {
-  try {
-    const userId = req.user.id;
-    const sessions = readJSON('active_sessions.json', {});
-
-    if (sessions[userId]) {
-      const clockInTime = new Date(sessions[userId]);
-      const elapsed = Date.now() - clockInTime.getTime();
-      res.json({
-        success: true,
-        data: {
-          isClockedIn: true,
-          clockIn: sessions[userId],
-          elapsed: elapsed,
-          clockInFormatted: clockInTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
-        }
-      });
+    if (user) {
+        const { password, ...safeUser } = user;
+        res.json(safeUser);
     } else {
-      res.json({ success: true, data: { isClockedIn: false } });
+        res.json(null);
     }
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ' });
-  }
 });
 
+// User Register
+app.post('/api/register', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const { name, email, phone, password } = req.body;
 
-/* =============================================
-   مسارات سجل الحضور
-   ============================================= */
-
-// جلب سجل الحضور (مع فلاتر)
-app.get('/api/attendance', authMiddleware, (req, res) => {
-  try {
-    let attendance = readJSON('attendance.json', []);
-    const { dateFrom, dateTo, volunteerId, status, limit } = req.query;
-
-    if (dateFrom) attendance = attendance.filter(a => a.date >= dateFrom);
-    if (dateTo) attendance = attendance.filter(a => a.date <= dateTo);
-    if (volunteerId) attendance = attendance.filter(a => a.volunteerId == volunteerId);
-    if (status) attendance = attendance.filter(a => a.status === status);
-
-    // ترتيب تنازلي
-    attendance.sort((a, b) => b.date.localeCompare(a.date) || b.clockIn.localeCompare(a.clockIn));
-
-    // للمستخدم العادي: إرجاع سجلاته فقط
-    if (!req.user.isAdmin) {
-      attendance = attendance.filter(a => a.volunteerId === req.user.id);
+    if (volunteers.find(u => u.email === email || u.phone === phone)) {
+        return res.status(400).json({ error: 'Email or Phone already exists' });
     }
 
-    if (limit) attendance = attendance.slice(0, parseInt(limit));
-
-    res.json({ success: true, data: attendance, total: attendance.length });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في جلب السجلات' });
-  }
-});
-
-// إحصائيات الحضور للمستخدم الحالي
-app.get('/api/my-stats', authMiddleware, (req, res) => {
-  try {
-    const userId = req.user.id;
-    const attendance = readJSON('attendance.json', []);
-    const sessions = readJSON('active_sessions.json', {});
-    const today = getTodayStr();
-    const currentMonth = today.slice(0, 7);
-
-    const todayRecords = attendance.filter(a => a.volunteerId === userId && a.date === today);
-    const monthRecords = attendance.filter(a => a.volunteerId === userId && a.date.startsWith(currentMonth));
-    const monthDays = new Set(monthRecords.map(a => a.date)).size;
-
-    let todayClockIn = '--:--';
-    let todayDuration = 0;
-
-    if (sessions[userId]) {
-      todayClockIn = new Date(sessions[userId]).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      todayDuration = Math.round((Date.now() - new Date(sessions[userId]).getTime()) / 60000);
-    } else if (todayRecords.length > 0) {
-      const last = todayRecords[todayRecords.length - 1];
-      todayClockIn = last.clockIn;
-      todayDuration = last.duration || 0;
-    }
-
-    const totalHours = attendance
-      .filter(a => a.volunteerId === userId)
-      .reduce((sum, a) => sum + (a.duration || 0), 0);
-
-    res.json({
-      success: true,
-      data: {
-        todayClockIn,
-        todayDuration,
-        todayDurationFormatted: formatDuration(todayDuration),
-        monthDays,
-        totalHours: (totalHours / 60).toFixed(1),
-        isClockedIn: !!sessions[userId]
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في جلب الإحصائيات' });
-  }
-});
-
-
-/* =============================================
-   مسارات الإحصائيات (المدير)
-   ============================================= */
-
-app.get('/api/stats/overview', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const volunteers = readJSON('volunteers.json', []);
-    const attendance = readJSON('attendance.json', []);
-    const sessions = readJSON('active_sessions.json', {});
-    const today = getTodayStr();
-
-    const totalVolunteers = volunteers.length;
-    const activeNow = Object.keys(sessions).length;
-    const todayAttendance = [...new Set(attendance.filter(a => a.date === today).map(a => a.volunteerId))].length;
-    const totalMinutes = attendance.reduce((sum, a) => sum + (a.duration || 0), 0);
-
-    // إحصائيات أسبوعية
-    const weekly = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const dayName = d.toLocaleDateString('ar-EG', { weekday: 'short' });
-      const count = attendance.filter(a => a.date === dateStr).length;
-      weekly.push({ date: dateStr, day: dayName, count });
-    }
-
-    // توزيع الأقسام
-    const deptMap = {};
-    attendance.forEach(a => {
-      const dept = a.department || 'غير محدد';
-      deptMap[dept] = (deptMap[dept] || 0) + 1;
-    });
-    const departments = Object.entries(deptMap).map(([name, count]) => ({ name, count }));
-
-    res.json({
-      success: true,
-      data: { totalVolunteers, activeNow, todayAttendance, totalHours: (totalMinutes / 60).toFixed(1), weekly, departments }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في جلب الإحصائيات' });
-  }
-});
-
-
-/* =============================================
-   مسارات الإعدادات
-   ============================================= */
-
-// جلب الإعدادات
-app.get('/api/settings', authMiddleware, (req, res) => {
-  try {
-    const settings = readJSON('settings.json', {});
-    res.json({
-      success: true,
-      data: {
-        workStart: settings.workStart || '08:00',
-        workEnd: settings.workEnd || '16:00',
-        lateThreshold: settings.lateThreshold || 15
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ' });
-  }
-});
-
-// حفظ الإعدادات
-app.put('/api/settings', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const { workStart, workEnd, lateThreshold } = req.body;
-    const settings = {
-      workStart: workStart || '08:00',
-      workEnd: workEnd || '16:00',
-      lateThreshold: parseInt(lateThreshold) || 15
+    const user = { 
+        id: Date.now().toString(), 
+        name, email, phone, password, 
+        avatar: null, activity: '', 
+        createdAt: new Date().toISOString() 
     };
-    writeJSON('settings.json', settings);
-
-    logActivity('تعديل إعدادات', `تم تحديث إعدادات ساعات العمل: ${settings.workStart} - ${settings.workEnd}`);
-
-    res.json({ success: true, message: 'تم حفظ الإعدادات بنجاح' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في حفظ الإعدادات' });
-  }
+    volunteers.push(user);
+    writeJSON(FILES.volunteers, volunteers);
+    const { password: pwd, ...safeUser } = user;
+    res.json(safeUser);
 });
 
-
-/* =============================================
-   مسارات سجل الأنشطة
-   ============================================= */
-
-app.get('/api/activities', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const activities = readJSON('activities.json', []);
-    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    const limit = parseInt(req.query.limit) || 100;
-    res.json({ success: true, data: activities.slice(0, limit), total: activities.length });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ' });
-  }
-});
-
-app.delete('/api/activities', authMiddleware, adminMiddleware, (req, res) => {
-  writeJSON('activities.json', []);
-  res.json({ success: true, message: 'تم مسح سجل الأنشطة' });
-});
-
-
-/* =============================================
-   مسارات التصدير
-   ============================================= */
-
-// تصدير CSV
-app.get('/api/export/attendance-csv', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const attendance = readJSON('attendance.json', []);
-    if (attendance.length === 0) {
-      return res.status(404).json({ success: false, message: 'لا توجد بيانات للتصدير' });
+// Admin Login
+app.post('/api/admin/login', (req, res) => {
+    const { email, password } = req.body;
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        res.json({ success: true, email: email });
+    } else {
+        res.json({ success: false });
     }
-
-    const statusMap = { normal: 'عادي', late: 'متأخر', early: 'انصراف مبكر' };
-    const BOM = '\uFEFF';
-    const headers = ['المتطوع', 'القسم', 'التاريخ', 'وقت الدخول', 'وقت الخروج', 'المدة (دقيقة)', 'الحالة'];
-    const rows = attendance.map(a => [
-      a.volunteerName, a.department || '', a.date, a.clockIn, a.clockOut || '', a.duration || '', statusMap[a.status] || a.status
-    ]);
-
-    const csv = BOM + [headers, ...rows].map(r => r.map(cell => `"${cell}"`).join(',')).join('\n');
-
-    logActivity('تصدير بيانات', 'تم تصدير سجل الحضور كملف CSV');
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename=attendance_export.csv');
-    res.send(csv);
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في التصدير' });
-  }
 });
 
-// تصدير نسخة احتياطية كاملة
-app.get('/api/export/full-backup', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    const backup = {
-      volunteers: readJSON('volunteers.json', []),
-      attendance: readJSON('attendance.json', []),
-      activities: readJSON('activities.json', []),
-      settings: readJSON('settings.json', {}),
-      activeSessions: readJSON('active_sessions.json', {}),
-      exportDate: new Date().toISOString(),
-      version: '1.0.0'
-    };
+// ===================
+// DATA ROUTES
+// ===================
 
-    logActivity('تصدير بيانات', 'تم تصدير نسخة احتياطية كاملة');
+app.get('/api/activities', (req, res) => res.json(readJSON(FILES.activities)));
+app.get('/api/settings', (req, res) => res.json(readJSON(FILES.settings)));
 
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename=mersal_backup.json');
-    res.json(backup);
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في التصدير' });
-  }
+// ===================
+// ADMIN ROUTES
+// ===================
+
+// Get All Data (Users, Attendance, Logs)
+app.get('/api/admin/data', (req, res) => {
+    res.json({
+        volunteers: readJSON(FILES.volunteers),
+        attendance: readJSON(FILES.attendance),
+        activities: readJSON(FILES.activities),
+        logs: readJSON(FILES.auditLog)
+    });
 });
 
-
-/* =============================================
-   مسارات إعادة التعيين
-   ============================================= */
-
-app.post('/api/reset-all', authMiddleware, adminMiddleware, (req, res) => {
-  try {
-    writeJSON('volunteers.json', []);
-    writeJSON('attendance.json', []);
-    writeJSON('activities.json', []);
-    writeJSON('active_sessions.json', {});
-    writeJSON('settings.json', {});
-
-    res.json({ success: true, message: 'تم إعادة تعيين جميع البيانات' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'خطأ في إعادة التعيين' });
-  }
+// Stats
+app.get('/api/admin/stats', (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const attendance = readJSON(FILES.attendance);
+    const settings = readJSON(FILES.settings);
+    const today = new Date().toISOString().split('T')[0];
+    
+    res.json({
+        totalVolunteers: volunteers.length,
+        totalHours: attendance.reduce((s, r) => s + (r.duration || 0), 0).toFixed(1),
+        activeToday: attendance.filter(r => r.dateStr === today && !r.checkOut).length,
+        hoursTarget: settings.hoursTarget
+    });
 });
 
-
-/* =============================================
-   مسارات الصفحات (fallback)
-   ============================================= */
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Admin: Edit User
+app.post('/api/admin/user/edit', (req, res) => {
+    const { adminEmail, userId, name, email, phone, activity } = req.body;
+    let volunteers = readJSON(FILES.volunteers);
+    const index = volunteers.findIndex(v => v.id === userId);
+    
+    if (index !== -1) {
+        const oldName = volunteers[index].name;
+        volunteers[index].name = name;
+        volunteers[index].email = email;
+        volunteers[index].phone = phone;
+        volunteers[index].activity = activity;
+        writeJSON(FILES.volunteers, volunteers);
+        
+        logAction(adminEmail, "Edit User", `Updated details for ${oldName}`);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
 });
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+// Admin: Delete User
+app.delete('/api/admin/user/delete', (req, res) => {
+    const { adminEmail, userId } = req.body;
+    let volunteers = readJSON(FILES.volunteers);
+    let attendance = readJSON(FILES.attendance);
+    const user = volunteers.find(v => v.id === userId);
+    
+    volunteers = volunteers.filter(v => v.id !== userId);
+    attendance = attendance.filter(a => a.volunteerId !== userId);
+    
+    writeJSON(FILES.volunteers, volunteers);
+    writeJSON(FILES.attendance, attendance);
+    
+    logAction(adminEmail, "Delete User", `Deleted user ${user ? user.name : userId}`);
+    res.json({ success: true });
 });
 
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+// Admin: Add Activity
+app.post('/api/admin/activity', (req, res) => {
+    const { adminEmail, name } = req.body;
+    const activities = readJSON(FILES.activities);
+    activities.push({ id: Date.now().toString(), name });
+    writeJSON(FILES.activities, activities);
+    logAction(adminEmail, "Add Activity", `Added activity: ${name}`);
+    res.json(activities);
 });
 
-app.get('/admin-dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+// Admin: Delete Activity
+app.delete('/api/admin/activity', (req, res) => {
+    const { adminEmail, id } = req.body;
+    let activities = readJSON(FILES.activities);
+    const act = activities.find(a => a.id === id);
+    activities = activities.filter(a => a.id !== id);
+    writeJSON(FILES.activities, activities);
+    logAction(adminEmail, "Delete Activity", `Deleted activity: ${act ? act.name : id}`);
+    res.json(activities);
 });
 
-// للمسارات غير الموجودة
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'المسار غير موجود' });
+// Admin: Manual Attendance Entry
+app.post('/api/admin/attendance/manual', (req, res) => {
+    const { adminEmail, volunteerId, date, checkIn, checkOut, activityName } = req.body;
+    const attendance = readJSON(FILES.attendance);
+    
+    const start = new Date(`${date}T${checkIn}`);
+    const end = new Date(`${date}T${checkOut}`);
+    const duration = Math.round((end - start) / 3600000 * 10) / 10;
+
+    attendance.push({
+        id: Date.now().toString(),
+        volunteerId, dateStr: date, checkIn, checkOut, duration,
+        type: 'manual_admin', activityName: activityName || 'General'
+    });
+
+    writeJSON(FILES.attendance, attendance);
+    logAction(adminEmail, "Manual Attendance", `Logged ${duration}h for user ${volunteerId} on ${date}`);
+    res.json({ success: true });
 });
 
-// معالجة الأخطاء العامة
-app.use((err, req, res, next) => {
-  console.error('خطأ غير متوقع:', err);
-  res.status(500).json({ success: false, message: 'حدث خطأ داخلي في الخادم' });
+// Export Excel
+app.get('/api/export', async (req, res) => {
+    const volunteers = readJSON(FILES.volunteers);
+    const attendance = readJSON(FILES.attendance);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Mersal Report');
+    
+    worksheet.columns = [
+        { header: 'Date', key: 'date', width: 12 }, { header: 'Name', key: 'name', width: 20 },
+        { header: 'Activity', key: 'activityName', width: 20 }, { header: 'In', key: 'in', width: 8 },
+        { header: 'Out', key: 'out', width: 8 }, { header: 'Hours', key: 'hours', width: 8 }
+    ];
+    
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563eb' } };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    
+    attendance.forEach(log => {
+        const user = volunteers.find(v => v.id === log.volunteerId) || {};
+        worksheet.addRow({ date: log.dateStr, name: user.name, activityName: log.activityName, in: log.checkIn, out: log.checkOut || '-', hours: log.duration });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Mersal_Report.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
 });
 
+// ===================
+// USER ATTENDANCE ROUTES
+// ===================
 
-/* =============================================
-   بدء الخادم
-   ============================================= */
-
-app.listen(PORT, () => {
-  console.log(`
-  ╔══════════════════════════════════════════╗
-  ║   Mersal Time Keeper - الخادم يعمل      ║
-  ╠══════════════════════════════════════════╣
-  ║  العنوان: http://localhost:${PORT}          ║
-  ║  البيئة:  ${process.env.NODE_ENV || 'تطوير'}                        ║
-  ║  البيانات: ${DATA_DIR}              ║
-  ╚══════════════════════════════════════════╝
-  `);
+app.post('/api/attendance/checkin', (req, res) => {
+    const attendance = readJSON(FILES.attendance);
+    const { volunteerId, activityName } = req.body;
+    const now = new Date();
+    attendance.push({
+        id: Date.now().toString(), volunteerId,
+        dateStr: now.toISOString().split('T')[0],
+        checkIn: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        checkInTime: now.getTime(), checkOut: null, duration: 0, type: 'live', activityName
+    });
+    writeJSON(FILES.attendance, attendance);
+    res.json({ success: true });
 });
+
+app.post('/api/attendance/checkout', (req, res) => {
+    const attendance = readJSON(FILES.attendance);
+    const { volunteerId } = req.body;
+    const now = new Date();
+    const record = attendance.find(r => r.volunteerId === volunteerId && !r.checkOut);
+    if (!record) return res.status(400).json({ error: 'No active session' });
+    
+    record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    record.duration = Math.round((now.getTime() - record.checkInTime) / 3600000 * 10) / 10;
+    writeJSON(FILES.attendance, attendance);
+    res.json(record);
+});
+
+app.get('/api/attendance/:id', (req, res) => {
+    res.json(readJSON(FILES.attendance).filter(r => r.volunteerId === req.params.id).reverse());
+});
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
