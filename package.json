@@ -1,19 +1,23 @@
 {
-  "name": "mersal-tracker",
-  "version": "1.2.0",
-  "description": "نظام تتبع ساعات التطوع باستخدام Excel",
+  "name": "mersal-time-keeper",
+  "version": "1.0.0",
+  "description": "نظام تسجيل وحضور المتطوعين - مرسال",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "cors": "^2.8.5"
+    "multer": "^1.4.5-lts.1",
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   }
 }
