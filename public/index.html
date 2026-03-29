@@ -3,632 +3,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersal Volunteer System</title>
+    <title>Mersal System</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- Variables & Themes --- */
         :root {
-            --primary: #2563eb; --primary-light: #dbeafe; --primary-dark: #1d4ed8;
+            --primary: #2563eb; --primary-light: #dbeafe; --primary-dark: #1e40af;
             --bg: #f8fafc; --bg-card: #ffffff; --text: #1e293b; --muted: #64748b; --border: #e2e8f0";
-            --radius: 12px; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --radius: 10px;
         }
         [data-theme="dark"] {
             --bg: #0f172a; --bg-card: #1e293b; --text: #f1f5f9"; --muted: #94a3b8"; --border: #334155";
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+            --primary-light: #1e3a8a;
         }
-
+        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
         
         /* --- Layout --- */
-        .app-container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: var(--bg-card); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; }
+        .container { width: 100%; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--bg-card); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
         
-        /* --- Auth Screens --- */
-        .auth-view { width: 100%; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, var(--bg), #e0e7ff); }
-        [data-theme="dark"] .auth-view { background: linear-gradient(135deg, var(--bg), #1e1b4b); }
-        .auth-box { background: var(--bg-card); padding: 40px; border-radius: 20px; width: 420px; box-shadow: var(--shadow); text-align: center; position: relative; overflow: hidden; }
-        .auth-box.admin-border { border: 2px solid var(--primary); }
-        .auth-header h1 { font-size: 28px; margin-bottom: 5px; }
-        .auth-header p { color: var(--muted); font-size: 14px; margin-bottom: 30px; }
-        
-        /* --- Components --- */
-        .btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        
+        /* --- Auth --- */
+        .auth-box { background: var(--bg-card); padding: 40px; border-radius: 15px; width: 400px; box-shadow: var(--shadow); text-align: center; }
         .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: var(--muted); }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; color: var(--muted); }
         .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-        .input-group input:focus { outline: none; border-color: var(--primary); }
+        
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 
-        /* User Dashboard Styles */
-        .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-        .profile-badge { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; overflow: hidden; cursor: pointer; }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .points-badge { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        
-        .card { background: var(--bg-card); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-        .timer-display { font-size: 42px; font-weight: 800; color: var(--primary); margin: 10px 0; font-family: 'monospace'; }
-        
-        /* Activity Colors */
-        .activity-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; }
-        
-        /* Admin Sidebar */
-        .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; margin-bottom: 5px; transition: 0.2s; font-weight: 500; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover { background: var(--bg); }
-        .nav-item.active { background: var(--primary-light); color: var(--primary); }
-        
-        /* Stats Cards */
+        /* --- Components --- */
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--shadow); }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .stat-card { padding: 20px; border-radius: 12px; background: var(--primary); color: white; }
-        .stat-card h3 { font-size: 28px; margin-bottom: 5px; }
-
-        /* Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); }
-        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 15px; width: 500px; max-width: 95%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-
-        /* Toast Notification */
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 25px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); display: none; z-index: 200; }
-        .toast.show { display: block; animation: slideUp 0.5s ease; }
-        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
+        .stat-box { background: var(--primary); color: white; padding: 20px; border-radius: 12px; }
+        .stat-box.success { background: #059669; }
+        .stat-box.warning { background: #d97706; }
+        
+        .nav-item { padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; width: 400px; }
 
         .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 50px; display: none; }
+        .show { display: block; }
     </style>
 </head>
 <body>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
-    <!-- AUTH VIEW -->
-    <div id="auth-view" class="auth-view">
-        <div id="auth-box" class="auth-box">
-            <!-- Login Form -->
-            <div id="login-form">
-                <div class="auth-header">
-                    <h1>Mersal</h1>
-                    <p>Volunteer Time Tracking</p>
-                </div>
-                
-                <form onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label>Email or Phone</label>
-                        <input type="text" id="login-id" placeholder="admin or user@mail.com" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Password</label>
-                        <input type="password" id="login-pass" placeholder="********" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </form>
-                
-                <div style="margin: 20px 0; text-align: center; color: var(--muted); font-size: 13px;">
-                    OR
-                </div>
-                
-                <button onclick="toggleAuthMode('register')" class="btn btn-outline">Create Account</button>
-                
-                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border);">
-                    <p style="font-size: 13px; color: var(--muted);">Admin Login?</p>
-                    <button onclick="toggleAuthMode('admin')" class="btn btn-outline" style="margin-top: 5px; border-color: var(--primary); color: var(--primary);">Admin Portal</button>
-                </div>
-            </div>
-
-            <!-- Register Form -->
-            <div id="register-form" class="hidden">
-                <div class="auth-header">
-                    <h1>New Volunteer</h1>
-                    <p>Join our community</p>
-                </div>
-                <form onsubmit="handleRegister(event)">
-                    <div class="input-group"><label>Name</label><input type="text" id="reg-name" required></div>
-                    <div class="input-group"><label>Email</label><input type="email" id="reg-email" required></div>
-                    <div class="input-group"><label>Phone</label><input type="tel" id="reg-phone"></div>
-                    <div class="input-group"><label>Password</label><input type="password" id="reg-pass" required></div>
-                    <button type="submit" class="btn btn-success">Register</button>
-                </form>
-                <p style="margin-top: 15px; text-align: center; font-size: 13px; cursor: pointer;" onclick="toggleAuthMode('login')">Back to Login</p>
-            </div>
-
-            <!-- Admin Form -->
-            <div id="admin-form" class="hidden">
-                 <div class="auth-header">
-                    <h1 style="color: var(--primary);">Admin Access</h1>
-                    <p>Restricted Area</p>
-                </div>
-                <form onsubmit="handleLogin(event, true)">
-                    <div class="input-group"><label>Admin ID / Email</label><input type="text" id="admin-id" required></div>
-                    <div class="input-group"><label>Password</label><input type="password" id="admin-pass" required></div>
-                    <button type="submit" class="btn btn-primary">Enter Dashboard</button>
-                </form>
-                <p style="margin-top: 15px; text-align: center; font-size: 13px; cursor: pointer;" onclick="toggleAuthMode('login')">Back to User Login</p>
+<!-- AUTH VIEW -->
+<div id="auth-view" style="width:100%; display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #eff6ff, #fff);">
+    <div class="auth-box">
+        <h1 style="color:var(--primary); margin-bottom: 20px;">Mersal</h1>
+        <div id="login-form">
+            <div class="input-group"><label>Email / Phone</label><input type="text" id="login-id"></div>
+            <div class="input-group"><label>Password</label><input type="password" id="login-pass"></div>
+            <button class="btn btn-primary" onclick="login()">Login</button>
+            <div style="margin-top:15px; display:flex; justify-content:space-between;">
+                <a onclick="toggleAuth('reg')" style="font-size:12px; cursor:pointer; color:var(--primary)">Sign Up</a>
+                <a onclick="toggleAuth('admin')" style="font-size:12px; cursor:pointer; color:var(--muted)">Admin</a>
             </div>
         </div>
+        
+        <div id="reg-form" class="hidden">
+            <h3 style="margin-bottom:15px;">New Account</h3>
+            <div class="input-group"><label>Name</label><input type="text" id="r-name"></div>
+            <div class="input-group"><label>Email</label><input type="email" id="r-email"></div>
+            <div class="input-group"><label>Phone</label><input type="tel" id="r-phone"></div>
+            <div class="input-group"><label>Password</label><input type="password" id="r-pass"></div>
+            <button class="btn btn-primary" onclick="register()">Register</button>
+        </div>
+
+        <div id="admin-form" class="hidden">
+            <h3 style="margin-bottom:15px; color:var(--primary);">Admin Access</h3>
+            <div class="input-group"><label>ID</label><input type="text" id="a-id"></div>
+            <div class="input-group"><label>Password</label><input type="password" id="a-pass"></div>
+            <button class="btn btn-primary" onclick="login(true)">Enter</button>
+        </div>
     </div>
+</div>
 
-    <!-- USER DASHBOARD VIEW -->
-    <div id="user-view" class="app-container hidden">
-        <div class="main-content">
-            <!-- Header -->
-            <div class="user-header">
-                <div class="profile-badge">
-                    <div class="avatar" onclick="openModal('profile-modal')">
-                        <img id="user-avatar-img" src="" style="display:none;">
-                        <span id="user-avatar-letter">U</span>
-                    </div>
-                    <div>
-                        <h2 id="u-name-display">User Name</h2>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span class="points-badge" id="user-points-display">0 Points</span>
-                            <span style="font-size:12px; color:var(--muted);" id="u-badges-display"></span>
-                        </div>
-                    </div>
+<!-- USER DASHBOARD -->
+<div id="user-dash" class="container hidden">
+    <div class="sidebar">
+        <h2 style="text-align:center; margin-bottom:20px;">Mersal</h2>
+        <div class="nav-item active" onclick="show('u-home')">Dashboard</div>
+        <div class="nav-item" onclick="show('u-history')">History</div>
+        <div class="nav-item" onclick="openModal('edit-profile')">Profile</div>
+        <div style="margin-top:auto;">
+            <div class="nav-item" onclick="toggleTheme()">Theme</div>
+            <div class="nav-item" onclick="logout()" style="color:#ef4444;">Logout</div>
+        </div>
+    </div>
+    <div class="main">
+        <div id="u-home">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 id="u-name">User</h2>
+                    <p style="font-size:12px; color:var(--muted);" id="u-points">Points: 0</p>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="toggleTheme()" class="btn btn-outline" style="width:auto; padding: 5px 10px;">&#9728;</button>
-                    <select onchange="changeLang(this.value)" class="btn btn-outline" style="width:auto; padding: 5px 10px;">
-                        <option value="ar">AR</option>
-                        <option value="en">EN</option>
+                <div>
+                    <button class="btn btn-danger" style="width:auto; padding:10px 20px;" onclick="openModal('apology-modal')">Apology</button>
+                </div>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <p style="font-size:12px; color:var(--muted);">STATUS</p>
+                <h1 id="u-status" style="font-size:30px; color:var(--primary); margin:10px 0;">INACTIVE</h1>
+                <div class="input-group" style="max-width:300px; margin:0 auto;">
+                    <select id="u-activity" class="input-group input">
+                        <option>Loading...</option>
                     </select>
-                    <button onclick="logout()" class="btn btn-outline" style="width:auto;">Logout</button>
                 </div>
+                <button id="clock-btn" onclick="toggleClock()" class="btn btn-primary" style="margin-top:15px; background:#10b981;">Clock In</button>
             </div>
 
-            <!-- Stats -->
-            <div class="stats-grid" style="margin-bottom: 20px;">
-                <div class="card" style="text-align:center;">
-                    <h3 style="color: var(--primary); font-size:32px;" id="u-total-hours">0.0</h3>
-                    <p style="color:var(--muted); font-size:12px;">Total Hours</p>
-                </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="color: var(--success); font-size:32px;" id="u-sessions">0</h3>
-                    <p style="color:var(--muted); font-size:12px;">Sessions</p>
-                </div>
-            </div>
-
-            <!-- Clock In/Out -->
-            <div class="card">
-                <div style="text-align: center;">
-                    <p style="color:var(--muted); font-size:13px;" id="u-status-text">Ready to start</p>
-                    <div class="timer-display" id="u-timer">00:00:00</div>
-                    <div class="input-group" style="max-width: 400px; margin: 0 auto 15px;">
-                        <select id="u-activity-select" class="input-group input"></select>
-                    </div>
-                    <button id="u-action-btn" onclick="toggleClock()" class="btn btn-success">Clock In</button>
-                </div>
-            </div>
-
-            <!-- Manual / Apology Section -->
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <h3>Log Missed Shift</h3>
-                    <button onclick="openModal('apology-modal')" class="btn btn-outline" style="width:auto; padding: 5px 10px; border-color:var(--danger); color:var(--danger);">Apology</button>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <input type="date" id="m-date" class="input-group input">
-                    <select id="m-activity" class="input-group input"></select>
-                    <input type="time" id="m-start" class="input-group input">
-                    <input type="time" id="m-end" class="input-group input">
-                </div>
-                <button onclick="submitManual()" class="btn btn-primary" style="margin-top:10px;">Add Entry</button>
-            </div>
-
-            <!-- History -->
+            <h3 style="margin-bottom:10px;">Upcoming Activities</h3>
+            <div id="upcoming-list"></div>
+        </div>
+        
+        <div id="u-history" class="hidden">
             <div class="card">
                 <h3>Attendance History</h3>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; margin-top:10px; font-size:13px;">
-                        <thead><tr><th>Date</th><th>Activity</th><th>Duration</th><th>Status</th></tr></thead>
-                        <tbody id="u-history-table"></tbody>
-                    </table>
-                </div>
+                <table id="u-history-table"></table>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ADMIN DASHBOARD VIEW -->
-    <div id="admin-view" class="app-container hidden">
-        <div class="sidebar">
-            <h2 style="text-align:center; margin-bottom:20px; color:var(--primary);">Mersal Admin</h2>
-            <div class="nav-item active" onclick="showSection('a-home')">Dashboard</div>
-            <div class="nav-item" onclick="showSection('a-users')">Users</div>
-            <div class="nav-item" onclick="showSection('a-activities')">Activities</div>
-            <div class="nav-item" onclick="showSection('a-reports')">Reports</div>
-            <div style="margin-top:auto;">
-                <button onclick="toggleTheme()" class="btn btn-outline" style="width:auto;">Theme</button>
-                <button onclick="logout()" class="btn btn-danger" style="margin-top:10px;">Logout</button>
+<!-- ADMIN DASHBOARD -->
+<div id="admin-dash" class="container hidden">
+    <div class="sidebar" style="background:#1e293b; color:white;">
+        <h2 style="text-align:center; margin-bottom:20px; color:#60a5fa;">Admin Panel</h2>
+        <div class="nav-item active" style="color:white;" onclick="show('a-home')">Overview</div>
+        <div class="nav-item" style="color:white;" onclick="show('a-users')">Users</div>
+        <div class="nav-item" style="color:white;" onclick="show('a-acts')">Activities</div>
+        <div class="nav-item" style="color:white;" onclick="show('a-logs')">Logs</div>
+        <div style="margin-top:auto;">
+            <a href="/api/export" class="btn btn-primary" style="width:100%; margin-bottom:10px;">Export Excel</a>
+            <div class="nav-item" style="color:white;" onclick="logout()">Logout</div>
+        </div>
+    </div>
+    <div class="main">
+        <div id="a-home">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2>Dashboard</h2>
+                <button onclick="toggleTheme()" class="btn btn-outline" style="width:auto;">Dark/Light</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box"><h3 id="stat-users">0</h3><p>Volunteers</p></div>
+                <div class="stat-box success"><h3 id="stat-hours">0</h3><p>Hours</p></div>
+                <div class="stat-box warning"><h3 id="stat-active">0</h3><p>Active</p></div>
+            </div>
+
+            <div class="card">
+                <h3>Attendance Distribution</h3>
+                <canvas id="chart-pie" height="200"></canvas>
             </div>
         </div>
-        <div class="main-content">
-            <!-- Admin Home -->
-            <div id="a-home" class="section">
-                <div class="stats-grid">
-                    <div class="stat-card"><h3 id="stat-vols">0</h3><p>Volunteers</p></div>
-                    <div class="stat-card" style="background:var(--success);"><h3 id="stat-hours">0</h3><p>Total Hours</p></div>
-                    <div class="stat-card" style="background:var(--warning);"><h3 id="stat-active">0</h3><p>Active Today</p></div>
-                    <div class="stat-card" style="background:#ef4444;"><h3 id="stat-apologies">0</h3><p>Pending Apologies</p></div>
-                </div>
-                <div class="card">
-                    <h3>Recent Activity</h3>
-                    <div id="recent-log-table"></div>
-                </div>
-            </div>
 
-            <!-- Admin Users -->
-            <div id="a-users" class="section hidden">
-                <div class="card">
-                    <h3>Manage Volunteers</h3>
-                    <table id="users-table" style="width:100%; margin-top:15px;">
-                        <thead><tr><th>Name</th><th>Contact</th><th>Activity</th><th>Points</th><th>Action</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+        <div id="a-users" class="hidden">
+            <h3 style="margin-bottom:10px;">Manage Users</h3>
+            <div class="card">
+                <table id="users-table">
+                    <thead><tr><th>Name</th><th>Contact</th><th>Points</th><th>Action</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- Admin Activities -->
-            <div id="a-activities" class="section hidden">
-                <div class="card">
-                    <h3>Manage Activities</h3>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:15px 0;">
-                        <input type="text" id="new-act-name" placeholder="Activity Name" class="input-group input">
-                        <input type="color" id="new-act-color" value="#3b82f6" class="input-group input" style="padding:0;">
-                    </div>
-                    <button onclick="addActivity()" class="btn btn-success">Add Activity</button>
-                    <div id="act-list" style="margin-top:15px;"></div>
+        <div id="a-acts" class="hidden">
+            <h3 style="margin-bottom:10px;">Activities</h3>
+            <div class="card">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <input type="text" id="new-act-name" placeholder="Name" class="input-group input">
+                    <input type="text" id="new-act-sch" placeholder="Schedule (Sun, Mon)" class="input-group input">
                 </div>
+                <button onclick="addActivity()" class="btn btn-primary" style="width:auto; margin-top:10px;">Add Activity</button>
             </div>
-            
-            <!-- Admin Reports -->
-            <div id="a-reports" class="section hidden">
-                <div class="card">
-                    <h3>Reports</h3>
-                    <button onclick="exportData()" class="btn btn-primary">Download Excel</button>
-                </div>
+            <div id="acts-list"></div>
+        </div>
+
+        <div id="a-logs" class="hidden">
+            <div class="card">
+                <h3>Audit Logs</h3>
+                <table id="logs-table"></table>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modals -->
-    <!-- Profile Modal -->
-    <div id="profile-modal" class="modal">
-        <div class="modal-content">
-            <h3>Edit Profile</h3>
-            <div style="text-align:center; margin:15px 0;">
-                <div class="avatar" style="width:80px; height:80px; margin:0 auto; cursor:pointer;" onclick="document.getElementById('file-input').click()">
-                    <img id="edit-avatar-img" src="" style="display:none;">
-                    <span id="edit-avatar-letter">?</span>
-                </div>
-                <input type="file" id="file-input" style="display:none" onchange="uploadAvatar(this)">
-            </div>
-            <div class="input-group"><label>Name</label><input type="text" id="edit-name"></div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="saveProfile()" class="btn btn-success">Save</button>
-                <button onclick="closeModal('profile-modal')" class="btn btn-outline">Cancel</button>
-            </div>
-        </div>
+<!-- MODALS -->
+<div id="feedback-modal" class="modal">
+    <div class="modal-content">
+        <h3>Session Summary</h3>
+        <p style="margin:10px 0;">You worked for <b id="session-time">0</b> hours.</p>
+        <textarea id="feedback-txt" class="input-group input" placeholder="Feedback (Optional)"></textarea>
+        <button class="btn btn-danger" onclick="checkout()">End Session</button>
     </div>
+</div>
 
-    <!-- Feedback Modal -->
-    <div id="feedback-modal" class="modal">
-        <div class="modal-content">
-            <h3>Session Summary</h3>
-            <p style="margin:10px 0; color:var(--muted);">You worked for <span id="session-hours" style="font-weight:bold; color:var(--primary);">0</span> hours.</p>
-            <div class="input-group">
-                <label>Feedback (Optional)</label>
-                <textarea id="checkout-feedback" class="input-group input" rows="3"></textarea>
-            </div>
-            <button onclick="confirmCheckOut()" class="btn btn-danger">End Session</button>
-        </div>
+<div id="apology-modal" class="modal">
+    <div class="modal-content">
+        <h3>Submit Apology</h3>
+        <div class="input-group"><label>Date</label><input type="date" id="apology-date"></div>
+        <div class="input-group"><label>Activity</label><select id="apology-act" class="input-group input"></select></div>
+        <div class="input-group"><label>Reason</label><textarea id="apology-reason" class="input-group input"></textarea></div>
+        <button class="btn btn-danger" onclick="submitApology()">Submit</button>
     </div>
+</div>
 
-    <!-- Apology Modal -->
-    <div id="apology-modal" class="modal">
-        <div class="modal-content">
-            <h3>Submit Apology</h3>
-            <div class="input-group"><label>Date</label><input type="date" id="apology-date"></div>
-            <div class="input-group"><label>Reason</label><textarea id="apology-reason" class="input-group input" rows="2"></textarea></div>
-            <button onclick="submitApology()" class="btn btn-danger">Submit</button>
-        </div>
+<div id="edit-profile" class="modal">
+    <div class="modal-content">
+        <h3>Edit Profile</h3>
+        <div class="input-group"><label>Name</label><input type="text" id="edit-name"></div>
+        <div class="input-group"><label>Avatar URL</label><input type="text" id="edit-av" placeholder="Paste Image URL"></div>
+        <button class="btn btn-primary" onclick="saveProfile()">Save</button>
     </div>
+</div>
 
 <script>
-    // --- Core Setup ---
     const $ = id => document.getElementById(id);
     const get = url => fetch(url).then(r => r.json());
-    const post = (url, data) => fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}).then(r => r.json());
-    
-    let currentUser = null;
-    let isAdmin = false;
-    let adminEmail = '';
-    let dataStore = {};
-    let timerInterval = null;
+    const post = (url, d) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}).then(r => r.json());
 
-    // --- Language & Theme ---
-    let lang = 'ar';
-    const T = { ar: { welcome: 'مرحباً', login: 'دخول' }, en: { welcome: 'Welcome', login: 'Login' } };
-    
-    function changeLang(l) { lang = l; /* Apply translations logic here */ }
-    function toggleTheme() {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.body.setAttribute('data-theme', isDark ? '' : 'dark');
+    let user = null, isAdmin = false, data = {};
+
+    // --- Auth ---
+    function toggleAuth(id) {
+        document.querySelectorAll('.auth-box > div').forEach(e => e.classList.add('hidden'));
+        $(id).classList.remove('hidden');
     }
 
-    // --- Auth Logic ---
-    function toggleAuthMode(mode) {
-        document.querySelectorAll('.auth-box > div').forEach(d => d.classList.add('hidden'));
-        $(mode + '-form').classList.remove('hidden');
+    async function login(forceAdmin = false) {
+        const id = forceAdmin ? $('a-id').value : $('login-id').value;
+        const pass = forceAdmin ? $('a-pass').value : $('login-pass').value;
+        const res = await post('/api/login', {identifier: id, password: pass});
+        if (res.error) return showToast('Invalid credentials');
+        
+        if (res.role === 'admin') { isAdmin = true; loadAdmin(); } 
+        else { user = res; loadUser(); }
     }
 
-    async function handleLogin(e, forceAdmin = false) {
-        e.preventDefault();
-        const id = forceAdmin ? $('admin-id').value : $('login-id').value;
-        const pass = forceAdmin ? $('admin-pass').value : $('login-pass').value;
-        
-        const res = await post('/api/login', { identifier: id, password: pass });
-        
-        if (res.error) return showToast(res.error, 'danger');
-        
-        if (res.role === 'admin') {
-            isAdmin = true; adminEmail = res.email;
-            loadAdminDashboard();
-        } else {
-            currentUser = res; isAdmin = false;
-            loadUserDashboard();
-        }
-    }
-
-    async function handleRegister(e) {
-        e.preventDefault();
+    async function register() {
         const res = await post('/api/register', {
-            name: $('reg-name').value, email: $('reg-email').value,
-            phone: $('reg-phone').value, password: $('reg-pass').value
+            name: $('r-name').value, email: $('r-email').value,
+            phone: $('r-phone').value, password: $('r-pass').value
         });
-        if (res.error) return showToast(res.error, 'danger');
-        currentUser = res;
-        loadUserDashboard();
+        if (res.error) return showToast(res.error);
+        user = res; loadUser();
     }
 
-    function logout() {
-        currentUser = null; isAdmin = false;
-        clearInterval(timerInterval);
-        $('auth-view').classList.remove('hidden');
-        $('user-view').classList.add('hidden');
-        $('admin-view').classList.add('hidden');
-        toggleAuthMode('login');
-    }
+    function logout() { location.reload(); }
 
-    // --- User Functions ---
-    async function loadUserDashboard() {
+    // --- User ---
+    async function loadUser() {
         $('auth-view').classList.add('hidden');
-        $('user-view').classList.remove('hidden');
+        $('user-dash').classList.remove('hidden');
+        $('u-name').textContent = user.name;
+        $('u-points').textContent = `Points: ${user.points || 0}`;
         
         const acts = await get('/api/activities');
-        populateActivities(acts);
-        
-        refreshUserStats();
-        checkRunningTimer();
+        populateSelect(acts);
+        renderUpcoming(acts);
+        refreshUser();
     }
 
-    function populateActivities(acts) {
-        const opts = acts.map(a => `<option style="color:${a.color}" value="${a.name}">${a.name}</option>`).join('');
-        $('u-activity-select').innerHTML = opts;
-        $('m-activity').innerHTML = opts;
+    function populateSelect(acts) {
+        const html = acts.map(a => `<option style="color:${a.color}">${a.name}</option>`).join('');
+        $('u-activity').innerHTML = html;
+        $('apology-act').innerHTML = html;
     }
 
-    async function refreshUserStats() {
-        const logs = await get('/api/attendance/' + currentUser.id);
-        const presentLogs = logs.filter(l => l.status === 'present');
+    function renderUpcoming(acts) {
+        $('upcoming-list').innerHTML = acts.map(a => `
+            <div class="card" style="border-right: 5px solid ${a.color}">
+                <h4>${a.name}</h4>
+                <p style="font-size:12px; color:var(--muted);">${a.days?.join(', ')} | ${a.time}</p>
+            </div>
+        `).join('');
+    }
+
+    async function refreshUser() {
+        const logs = await get('/api/attendance/' + user.id);
+        const active = logs.find(l => !l.checkOut && l.status === 'present');
         
-        const total = presentLogs.reduce((s, l) => s + (l.duration || 0), 0);
-        $('u-total-hours').textContent = total.toFixed(1);
-        $('u-sessions').textContent = presentLogs.length;
-        $('user-points-display').textContent = (currentUser.points || 0) + ' Points';
-        
-        // History Table
+        if (active) {
+            $('u-status').textContent = 'ACTIVE';
+            $('u-status').style.color = 'green';
+            $('clock-btn').textContent = 'Clock Out';
+            $('clock-btn').style.background = '#ef4444';
+        } else {
+            $('u-status').textContent = 'INACTIVE';
+            $('u-status').style.color = 'var(--primary)';
+            $('clock-btn').textContent = 'Clock In';
+            $('clock-btn').style.background = '#10b981';
+        }
+
         $('u-history-table').innerHTML = logs.map(l => `
-            <tr>
+            <tr style="color:${l.status === 'apologized' ? 'orange' : 'inherit'}">
                 <td>${l.dateStr}</td>
-                <td><span class="activity-tag" style="background:${getActivityColor(l.activityName)}">${l.activityName}</span></td>
+                <td>${l.activityName}</td>
                 <td>${l.duration || 0}h</td>
-                <td style="color:${l.status === 'apologized' ? 'var(--warning)' : 'var(--success)'}">${l.status}</td>
+                <td>${l.status}</td>
             </tr>
         `).join('');
     }
 
-    function checkRunningTimer() {
-        // Simple check for active session
-        get('/api/attendance/' + currentUser.id).then(logs => {
-            const active = logs.find(l => !l.checkOut && l.status === 'present');
-            if (active) {
-                $('u-status-text').textContent = "Currently Active";
-                $('u-action-btn').textContent = "Clock Out";
-                $('u-action-btn').className = "btn btn-danger";
-                startTimerDisplay(active.checkInTime);
-            } else {
-                $('u-status-text').textContent = "Not Checked In";
-                $('u-action-btn').textContent = "Clock In";
-                $('u-action-btn').className = "btn btn-success";
-                $('u-timer').textContent = "00:00:00";
-            }
-        });
-    }
-
     async function toggleClock() {
-        const activity = $('u-activity-select').value;
-        const logs = await get('/api/attendance/' + currentUser.id);
-        const active = logs.find(l => !l.checkOut && l.status === 'present');
-
+        const active = (await get('/api/attendance/' + user.id)).find(l => !l.checkOut);
         if (active) {
-            // Show Feedback Modal
-            $('session-hours').textContent = ((Date.now() - active.checkInTime) / 3600000).toFixed(2);
+            $('session-time').textContent = ((Date.now() - active.checkInTime)/3600000).toFixed(2);
             openModal('feedback-modal');
         } else {
-            const res = await post('/api/attendance/checkin', { volunteerId: currentUser.id, activityName: activity });
-            showToast(`Started: ${activity}`, 'success');
-            checkRunningTimer();
+            await post('/api/attendance/checkin', {volunteerId: user.id, activityName: $('u-activity').value});
+            showToast('Started Session', 'success');
+            refreshUser();
         }
     }
 
-    async function confirmCheckOut() {
-        const fb = $('checkout-feedback').value;
-        const res = await post('/api/attendance/checkout', { volunteerId: currentUser.id, feedback: fb });
-        currentUser.points = res.points || currentUser.points; // Update local points
+    async function checkout() {
+        await post('/api/attendance/checkout', {volunteerId: user.id, feedback: $('feedback-txt').value});
         closeModal('feedback-modal');
-        showToast('Session Ended. Points Added!', 'success');
-        refreshUserStats();
-        checkRunningTimer();
-    }
-
-    function startTimerDisplay(startTime) {
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            const diff = Date.now() - startTime;
-            const h = Math.floor(diff/3600000).toString().padStart(2,'0');
-            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
-            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
-            $('u-timer').textContent = `${h}:${m}:${s}`;
-        }, 1000);
-    }
-
-    async function submitManual() {
-        await post('/api/attendance/manual', {
-            volunteerId: currentUser.id,
-            date: $('m-date').value,
-            checkIn: $('m-start').value,
-            checkOut: $('m-end').value,
-            activityName: $('m-activity').value
-        });
-        showToast('Manual entry added', 'success');
-        refreshUserStats();
+        showToast('Session Ended', 'success');
+        user.points += 10; // Mock update
+        $('u-points').textContent = `Points: ${user.points}`;
+        refreshUser();
     }
 
     async function submitApology() {
         await post('/api/attendance/apology', {
-            volunteerId: currentUser.id,
-            date: $('apology-date').value,
-            reason: $('apology-reason').value
+            volunteerId: user.id, date: $('apology-date').value,
+            reason: $('apology-reason').value, activityName: $('apology-act').value
         });
         closeModal('apology-modal');
-        showToast('Apology submitted', 'warning');
-        refreshUserStats();
-    }
-
-    function getActivityColor(name) {
-        const a = (dataStore.activities || []).find(a => a.name === name);
-        return a ? a.color : '#64748b';
-    }
-
-    // --- Profile ---
-    function uploadAvatar(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const res = await post('/api/user/profile', { userId: currentUser.id, avatar: e.target.result });
-                if(res.avatar) {
-                    $('user-avatar-img').src = res.avatar;
-                    $('user-avatar-img').style.display = 'block';
-                    $('user-avatar-letter').style.display = 'none';
-                }
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
+        showToast('Apology Sent', 'warning');
+        refreshUser();
     }
 
     async function saveProfile() {
-        const res = await post('/api/user/profile', { userId: currentUser.id, name: $('edit-name').value });
-        currentUser = res;
-        $('u-name-display').textContent = res.name;
-        closeModal('profile-modal');
+        const res = await post('/api/user/profile', {userId: user.id, name: $('edit-name').value, avatar: $('edit-av').value});
+        user = res;
+        $('u-name').textContent = user.name;
+        closeModal('edit-profile');
     }
 
-    // --- Admin Functions ---
-    async function loadAdminDashboard() {
+    // --- Admin ---
+    async function loadAdmin() {
         $('auth-view').classList.add('hidden');
-        $('admin-view').classList.remove('hidden');
+        $('admin-dash').classList.remove('hidden');
         
-        dataStore = await get('/api/admin/data');
         const stats = await get('/api/admin/stats');
-        
-        $('stat-vols').textContent = stats.totalVolunteers;
+        $('stat-users').textContent = stats.totalUsers;
         $('stat-hours').textContent = stats.totalHours;
         $('stat-active').textContent = stats.activeToday;
-        $('stat-apologies').textContent = stats.apologiesCount;
         
-        renderAdminUI();
+        data = await get('/api/admin/data');
+        renderAdmin();
+        renderChart();
     }
 
-    function renderAdminUI() {
-        // Users
-        $('users-table').querySelector('tbody').innerHTML = dataStore.volunteers.map(u => `
+    function renderAdmin() {
+        $('users-table').querySelector('tbody').innerHTML = data.volunteers.map(u => `
             <tr>
                 <td>${u.name}</td>
                 <td>${u.email || u.phone}</td>
-                <td>${u.activity || '-'}</td>
                 <td>${u.points || 0}</td>
-                <td><button onclick="deleteUser('${u.id}')" class="btn btn-danger" style="padding:2px 8px; font-size:11px;">Delete</button></td>
+                <td><button onclick="delUser('${u.id}')" style="color:red; border:none; background:none; cursor:pointer;">Delete</button></td>
             </tr>
         `).join('');
 
-        // Activities
-        $('act-list').innerHTML = dataStore.activities.map(a => `
-            <div style="display:flex; justify-content:space-between; padding:10px; margin:5px 0; border-radius:8px; border-left: 4px solid ${a.color}; background:var(--bg);">
-                <span>${a.name}</span>
-                <span style="font-size:11px; color:var(--muted);">${a.schedule?.days?.join(', ') || 'Flexible'}</span>
+        $('acts-list').innerHTML = data.activities.map(a => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-right:5px solid ${a.color}">
+                <div>
+                    <h4>${a.name}</h4>
+                    <p style="font-size:12px; color:var(--muted)">${a.days?.join(',')} | ${a.time}</p>
+                </div>
+                <span style="background:${a.color}; color:white; padding:5px 10px; border-radius:20px; font-size:11px;">Active</span>
             </div>
         `).join('');
-        
-        // Recent Log
-        $('recent-log-table').innerHTML = `<table style="width:100%; margin-top:10px;">
-            <tbody>${dataStore.attendance.slice(-5).reverse().map(l => {
-                const u = dataStore.volunteers.find(v => v.id === l.volunteerId);
-                return `<tr><td>${u ? u.name : 'Unknown'}</td><td>${l.activityName}</td><td>${l.duration}h</td></tr>`;
-            }).join('')}</tbody>
-        </table>`;
+
+        $('logs-table').innerHTML = data.logs.map(l => `
+            <tr><td>${new Date(l.timestamp).toLocaleString()}</td><td>${l.actor}</td><td>${l.action}</td><td>${l.details}</td></tr>
+        `).join('');
     }
 
-    function showSection(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-        $(id).classList.remove('hidden');
+    async function renderChart() {
+        const ctx = document.getElementById('chart-pie').getContext('2d');
+        // Process data for chart
+        const actNames = data.activities.map(a => a.name);
+        const actHours = data.activities.map(a => 
+            data.attendance.filter(att => att.activityName === a.name).reduce((s, i) => s + (i.duration || 0), 0)
+        );
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: actNames,
+                datasets: [{
+                    label: 'Hours',
+                    data: actHours,
+                    backgroundColor: data.activities.map(a => a.color || '#3b82f6')
+                }]
+            }
+        });
     }
 
     async function addActivity() {
         const name = $('new-act-name').value;
-        const color = $('new-act-color').value;
+        const sch = $('new-act-sch').value;
         if(!name) return;
-        dataStore.activities = await post('/api/admin/activity', { adminEmail, name, color, schedule: { days: ['All'] } });
-        renderAdminUI();
-        showToast('Activity Added', 'success');
+        data.activities = await post('/api/admin/activity', {name, days: sch.split(','), time: 'Flexible', adminEmail: 'admin'});
+        renderAdmin();
+        showToast('Activity Added');
     }
 
-    async function deleteUser(id) {
-        if(confirm('Delete user?')) {
-            await fetch('/api/admin/user', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ adminEmail, userId: id }) });
-            loadAdminDashboard();
+    async function delUser(id) {
+        if(confirm('Delete this user?')) {
+            await fetch('/api/admin/user', {method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({adminEmail:'admin', userId: id})});
+            loadAdmin();
         }
     }
 
-    function exportData() {
-        window.location.href = '/api/export';
+    // --- UI Helpers ---
+    function show(id) {
+        document.querySelectorAll('.main > div, .sidebar + .main > div').forEach(e => e.classList.add('hidden'));
+        $(id).classList.remove('hidden');
     }
-
-    // --- Helpers ---
     function openModal(id) { $(id).style.display = 'flex'; }
     function closeModal(id) { $(id).style.display = 'none'; }
-    function showToast(msg, type = 'success') {
+    function showToast(msg, type='success') {
         const t = $('toast');
-        t.textContent = msg;
-        t.style.background = type === 'success' ? '#10b981' : (type === 'danger' ? '#ef4444' : '#f59e0b');
-        t.classList.add('show');
+        t.textContent = msg; t.style.background = type === 'success' ? '#10b981' : '#f59e0b'; t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3000);
     }
-
+    function toggleTheme() {
+        document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? '' : 'dark');
+    }
 </script>
 </body>
 </html>
