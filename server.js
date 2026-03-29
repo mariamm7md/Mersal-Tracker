@@ -7,13 +7,17 @@ const ExcelJS = require('exceljs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
 // --- Configuration ---
-const ADMIN_CREDENTIALS = { email: 'mariameltras@gmail.com', password: 'mariam2003' };
+// Admin can login with "admin" or "mariameltras@gmail.com"
+const ADMIN_ACCOUNTS = [
+    { username: 'admin', email: 'admin', password: 'mersal2026' },
+    { username: 'mariameltras@gmail.com', email: 'mariameltras@gmail.com', password: 'mersal2026' }
+];
+
 const DATA_DIR = path.join(__dirname, 'data');
 const FILES = {
     volunteers: path.join(DATA_DIR, 'volunteers.json'),
@@ -27,44 +31,50 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const readJSON = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
-// Initialize Default Data
 if (!fs.existsSync(FILES.activities)) writeJSON(FILES.activities, [
     { id: '1', name: 'Medical Services' }, { id: '2', name: 'Education' }, { id: '3', name: 'Social Services' }
 ]);
 if (!fs.existsSync(FILES.logs)) writeJSON(FILES.logs, []);
 
-// --- Logger Function ---
 function logAction(adminEmail, action, details) {
     const logs = readJSON(FILES.logs);
-    logs.push({
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        adminEmail,
-        action,
-        details
-    });
+    logs.push({ id: Date.now().toString(), timestamp: new Date().toISOString(), adminEmail, action, details });
     writeJSON(FILES.logs, logs);
 }
 
 // ===================
-// AUTH ROUTES
+// SMART LOGIN ROUTE
 // ===================
-
-// User Login
 app.post('/api/login', (req, res) => {
-    const { identifier, password } = req.body;
+    const { identifier, password } = req.body; // identifier can be email or phone
+
+    // 1. Check if Admin
+    const admin = ADMIN_ACCOUNTS.find(acc => 
+        (acc.username === identifier || acc.email === identifier) && acc.password === password
+    );
+    if (admin) {
+        return res.json({ role: 'admin', name: 'Admin', email: admin.email });
+    }
+
+    // 2. Check if User (Volunteer)
     const volunteers = readJSON(FILES.volunteers);
     const user = volunteers.find(u => 
         (u.email === identifier || u.phone === identifier) && u.password === password
     );
+    
     if (user) {
         const { password, ...safeUser } = user;
-        return res.json(safeUser);
+        return res.json({ role: 'user', ...safeUser });
     }
-    res.json(null);
+
+    // 3. Not found
+    res.status(401).json({ error: 'Invalid credentials' });
 });
 
-// User Register
+// ===================
+// USER ROUTES
+// ===================
+
 app.post('/api/register', (req, res) => {
     const volunteers = readJSON(FILES.volunteers);
     const { name, email, phone, password } = req.body;
@@ -83,21 +93,8 @@ app.post('/api/register', (req, res) => {
     writeJSON(FILES.volunteers, volunteers);
     
     const { password: pwd, ...safeUser } = user;
-    res.json(safeUser);
+    res.json({ role: 'user', ...safeUser });
 });
-
-// Admin Login
-app.post('/api/admin/login', (req, res) => {
-    const { email, password } = req.body;
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-        return res.json({ success: true, email: email });
-    }
-    res.json({ success: false });
-});
-
-// ===================
-// USER ROUTES
-// ===================
 
 app.get('/api/activities', (req, res) => res.json(readJSON(FILES.activities)));
 
@@ -111,7 +108,7 @@ app.post('/api/attendance/checkin', (req, res) => {
         dateStr: now.toISOString().split('T')[0],
         checkIn: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
         checkInTime: now.getTime(),
-        checkOut: null, duration: 0, type: 'live'
+        checkOut: null, duration: 0, type: 'live', feedback: ''
     });
     writeJSON(FILES.attendance, attendance);
     res.json({ success: true });
@@ -119,13 +116,14 @@ app.post('/api/attendance/checkin', (req, res) => {
 
 app.post('/api/attendance/checkout', (req, res) => {
     const attendance = readJSON(FILES.attendance);
-    const { volunteerId } = req.body;
+    const { volunteerId, feedback } = req.body;
     const now = new Date();
     const record = attendance.find(r => r.volunteerId === volunteerId && !r.checkOut);
     if (!record) return res.status(400).json({ error: 'No active session' });
     
     record.checkOut = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     record.duration = Math.round((now.getTime() - record.checkInTime) / 3600000 * 10) / 10;
+    record.feedback = feedback || '';
     writeJSON(FILES.attendance, attendance);
     res.json(record);
 });
@@ -142,7 +140,6 @@ app.get('/api/admin/stats', (req, res) => {
     const volunteers = readJSON(FILES.volunteers);
     const attendance = readJSON(FILES.attendance);
     const today = new Date().toISOString().split('T')[0];
-    
     res.json({
         totalVolunteers: volunteers.length,
         totalHours: attendance.reduce((s, r) => s + (r.duration || 0), 0).toFixed(1),
@@ -164,7 +161,6 @@ app.post('/api/admin/user/edit', (req, res) => {
     const { adminEmail, userId, name, email, phone, activity } = req.body;
     let volunteers = readJSON(FILES.volunteers);
     const index = volunteers.findIndex(v => v.id === userId);
-    
     if (index !== -1) {
         volunteers[index].name = name;
         volunteers[index].email = email;
@@ -182,12 +178,10 @@ app.delete('/api/admin/user', (req, res) => {
     let volunteers = readJSON(FILES.volunteers);
     let attendance = readJSON(FILES.attendance);
     const user = volunteers.find(v => v.id === userId);
-    
     volunteers = volunteers.filter(v => v.id !== userId);
     attendance = attendance.filter(a => a.volunteerId !== userId);
     writeJSON(FILES.volunteers, volunteers);
     writeJSON(FILES.attendance, attendance);
-    
     logAction(adminEmail, "Delete User", `Deleted ${user ? user.name : userId}`);
     res.json({ success: true });
 });
@@ -214,7 +208,7 @@ app.delete('/api/admin/activity', (req, res) => {
 
 // Admin: Manual Log
 app.post('/api/admin/attendance/manual', (req, res) => {
-    const { adminEmail, volunteerId, date, checkIn, checkOut, activityName } = req.body;
+    const { adminEmail, volunteerId, date, checkIn, checkOut, activityName, feedback } = req.body;
     const attendance = readJSON(FILES.attendance);
     
     const start = new Date(`${date}T${checkIn}`);
@@ -224,31 +218,33 @@ app.post('/api/admin/attendance/manual', (req, res) => {
     attendance.push({
         id: Date.now().toString(),
         volunteerId, dateStr: date, checkIn, checkOut, duration,
-        type: 'manual_admin', activityName
+        type: 'manual_admin', activityName: activityName || 'General', feedback: feedback || ''
     });
 
     writeJSON(FILES.attendance, attendance);
-    logAction(adminEmail, "Manual Log", `Logged ${duration}h for user ${volunteerId}`);
+    logAction(adminEmail, "Manual Attendance", `Logged ${duration}h for user ${volunteerId}`);
     res.json({ success: true });
 });
 
-// Export Excel
 app.get('/api/export', async (req, res) => {
     const volunteers = readJSON(FILES.volunteers);
     const attendance = readJSON(FILES.attendance);
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Mersal Report');
-    
     worksheet.columns = [
         { header: 'Date', key: 'date', width: 12 }, { header: 'Name', key: 'name', width: 20 },
-        { header: 'Activity', key: 'activityName', width: 20 }, { header: 'Hours', key: 'hours', width: 8 }
+        { header: 'Activity', key: 'activityName', width: 20 }, { header: 'In', key: 'in', width: 8 },
+        { header: 'Out', key: 'out', width: 8 }, { header: 'Hours', key: 'hours', width: 8 }, { header: 'Feedback', key: 'feedback', width: 30 }
     ];
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4f46e5' } };
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563eb' } };
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     
     attendance.forEach(log => {
         const user = volunteers.find(v => v.id === log.volunteerId) || {};
-        worksheet.addRow({ date: log.dateStr, name: user.name, activityName: log.activityName, hours: log.duration });
+        worksheet.addRow({ 
+            date: log.dateStr, name: user.name, activityName: log.activityName, in: log.checkIn, 
+            out: log.checkOut || '-', hours: log.duration, feedback: log.feedback 
+        });
     });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
