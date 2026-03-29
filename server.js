@@ -1,119 +1,132 @@
+// ================================================
+//      MERSAL Volunteer Server - server.js
+// ================================================
+
 const express = require('express');
-const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const ExcelJS = require('exceljs');
-
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
+// --- Middleware ---
 app.use(cors());
-app.use(express.json({ limit: '20mb' }));
-app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-const DATA_DIR = path.join(__dirname, 'data');
-const FILES = {
-    volunteers: path.join(DATA_DIR, 'volunteers.json'),
-    attendance: path.join(DATA_DIR, 'attendance.json')
-};
+// --- Data Storage (JSON files) ---
+const DB_FILE = path.join(__dirname, 'data.json');
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-const readJSON = (f) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f)) : [];
-const writeJSON = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
+// Ensure data file exists
+if (!fs.existsSync(DB_FILE)) {
+    fs.writeFileSync(DB_FILE, JSON.stringify({
+        volunteers: [],
+        attendance: []
+    }, null, 2));
+}
 
-// --- 1. LOGIN & REGISTER ---
-app.post('/api/login', (req, res) => {
-    const { identifier, password, name } = req.body;
-    const vols = readJSON(FILES.volunteers);
-    const logs = readJSON(FILES.attendance);
+// --- Helper Functions ---
+function readDB() { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
+function writeDB(data) { fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2)); }
 
-    const matches = vols.filter(u => (u.email === identifier || u.phone === identifier) && u.password === password);
-    if (matches.length === 0) return res.status(401).json({ error: "بيانات خطأ" });
-    if (matches.length > 1 && !name) return res.json({ needName: true, profiles: matches.map(m => m.name) });
+// Hashing passwords (simple for demo, can upgrade to bcrypt)
+function simpleHash(pass) { return Buffer.from(pass).toString('base64'); }
 
-    const user = name ? matches.find(m => m.name === name) : matches[0];
-    const userLogs = logs.filter(a => a.volunteerId === user.id);
-    const totalHours = userLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
+// --- API Routes ---
 
-    res.json({ ...user, totalHours: parseFloat(totalHours.toFixed(1)), totalSessions: userLogs.length });
-});
-
+// Register new volunteer
 app.post('/api/register', (req, res) => {
     const { name, email, phone, password } = req.body;
-    const vols = readJSON(FILES.volunteers);
-    if (vols.find(u => u.name === name && (u.email === email || u.phone === phone))) {
-        return res.status(400).json({ error: "الاسم مسجل مسبقاً بهذا البريد" });
-    }
-    const newUser = { id: "V-" + Date.now(), name, email, phone, password, createdAt: new Date() };
-    vols.push(newUser);
-    writeJSON(FILES.volunteers, vols);
+    if (!name || !password || (!email && !phone)) return res.status(400).json({ error: "Missing required fields." });
+
+    const db = readDB();
+    const exists = db.volunteers.find(v => (v.email && v.email === email) || (v.phone && v.phone === phone));
+    if (exists) return res.status(400).json({ error: "User already exists." });
+
+    const newUser = {
+        id: Date.now(),
+        name, email, phone,
+        password: simpleHash(password),
+        totalHours: 0,
+        totalSessions: 0,
+        avatar: ""
+    };
+    db.volunteers.push(newUser);
+    writeDB(db);
+    res.status(200).json({ success: true, user: newUser });
+});
+
+// Login
+app.post('/api/login', (req, res) => {
+    const { identifier, password, name } = req.body; // identifier = email or phone
+    if (!identifier || !password) return res.status(400).json({ error: "Missing login info." });
+
+    const db = readDB();
+    const matches = db.volunteers.filter(v => (v.email && v.email === identifier) || (v.phone && v.phone === identifier));
+    if (!matches.length) return res.status(401).json({ error: "User not found." });
+
+    if (!name && matches.length > 1) return res.status(200).json({ needName: true, profiles: matches.map(v=>v.name) });
+
+    const user = name ? matches.find(v => v.name === name) : matches[0];
+    if (!user) return res.status(401).json({ error: "Profile not found." });
+
+    if (user.password !== simpleHash(password)) return res.status(401).json({ error: "Wrong password." });
+
+    res.status(200).json(user);
+});
+
+// Update avatar
+app.post('/api/avatar/:id', (req, res) => {
+    const { id } = req.params;
+    const { avatar } = req.body; // base64 string
+    const db = readDB();
+    const user = db.volunteers.find(v => v.id == id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    user.avatar = avatar;
+    writeDB(db);
     res.json({ success: true });
 });
 
-// --- 2. ATTENDANCE (THE FIXED LOGIC) ---
-app.post('/api/checkin', (req, res) => {
-    const logs = readJSON(FILES.attendance);
-    const newLog = {
-        id: "L-" + Date.now(),
-        volunteerId: req.body.volunteerId,
-        activity: req.body.activity,
-        startTime: Date.now(),
-        dateStr: new Date().toLocaleDateString('ar-EG'),
-        checkIn: new Date().toLocaleTimeString('ar-EG'),
-        duration: 0,
-        status: 'active'
+// Save attendance session
+app.post('/api/attendance/:id', (req, res) => {
+    const { id } = req.params;
+    const { activity, duration } = req.body; // duration in hours
+    const db = readDB();
+    const user = db.volunteers.find(v => v.id == id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const record = {
+        volunteerId: user.id,
+        name: user.name,
+        activity,
+        duration: parseFloat(duration),
+        timestamp: Date.now()
     };
-    logs.push(newLog);
-    writeJSON(FILES.attendance, logs);
-    res.json(newLog);
+    db.attendance.push(record);
+    user.totalHours += parseFloat(duration);
+    user.totalSessions += 1;
+    writeDB(db);
+    res.json({ success: true });
 });
 
-app.post('/api/checkout', (req, res) => {
-    const logs = readJSON(FILES.attendance);
-    const log = logs.find(l => l.volunteerId === req.body.vId && l.status === 'active');
-    if (!log) return res.status(400).send("No active session");
-
-    log.status = 'completed';
-    log.duration = parseFloat(((Date.now() - log.startTime) / 3600000).toFixed(2));
-    log.notes = req.body.notes || "";
-    writeJSON(FILES.attendance, logs);
-    res.json(log);
+// Admin panel data
+app.get('/api/admin/full-data', (req, res) => {
+    const db = readDB();
+    res.json(db);
 });
 
-// --- 3. ADMIN & EXCEL (FIXED DOWNLOAD) ---
-app.get('/api/admin/data', (req, res) => {
-    const vols = readJSON(FILES.volunteers);
-    const logs = readJSON(FILES.attendance);
-    res.json({
-        vols: vols.map(v => ({ ...v, h: logs.filter(l => l.volunteerId === v.id).reduce((s,l)=>s+l.duration,0) })),
-        activeCount: logs.filter(l => l.status === 'active').length
+// Export data as Excel
+app.get('/api/export', (req, res) => {
+    const db = readDB();
+    let csv = 'Name,Email,Phone,Total Hours,Total Sessions\n';
+    db.volunteers.forEach(v => {
+        csv += `"${v.name}","${v.email || ''}","${v.phone || ''}",${v.totalHours.toFixed(1)},${v.totalSessions}\n`;
     });
+    res.setHeader('Content-disposition', 'attachment; filename=volunteers.csv');
+    res.set('Content-Type', 'text/csv');
+    res.status(200).send(csv);
 });
 
-app.get('/api/export', async (req, res) => {
-    try {
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('ساعات المتطوعين');
-        sheet.columns = [
-            { header: 'التاريخ', key: 'date', width: 15 },
-            { header: 'الاسم', key: 'name', width: 25 },
-            { header: 'النشاط', key: 'act', width: 20 },
-            { header: 'الساعات', key: 'h', width: 10 }
-        ];
-
-        const logs = readJSON(FILES.attendance).filter(l => l.status === 'completed');
-        const vols = readJSON(FILES.volunteers);
-
-        logs.forEach(l => {
-            const v = vols.find(u => u.id === l.volunteerId);
-            sheet.addRow({ date: l.dateStr, name: v ? v.name : 'Unknown', act: l.activity, h: l.duration });
-        });
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Mersal_Report.xlsx');
-        await workbook.xlsx.write(res);
-        res.end();
-    } catch (e) { res.status(500).send(e.message); }
-});
-
-app.listen(PORT, () => console.log(`Mersal Server Live on http://localhost:${PORT}`));
+// --- Start Server ---
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
