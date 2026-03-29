@@ -13,8 +13,7 @@ app.use(express.static('public'));
 
 // --- Configuration ---
 const ADMIN_CREDENTIALS = [
-    { username: 'admin', password: 'mersal2026', name: 'System Admin' },
-    { username: 'mariameltras@gmail.com', password: 'mersal2026', name: 'Mariam Eltras' }
+    { username: 'admin', password: 'mersal2026', name: 'System Admin' }
 ];
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -22,8 +21,7 @@ const FILES = {
     volunteers: path.join(DATA_DIR, 'volunteers.json'),
     attendance: path.join(DATA_DIR, 'attendance.json'),
     activities: path.join(DATA_DIR, 'activities.json'),
-    logs: path.join(DATA_DIR, 'audit_logs.json'),
-    announcements: path.join(DATA_DIR, 'announcements.json')
+    logs: path.join(DATA_DIR, 'audit_logs.json')
 };
 
 // --- Helpers ---
@@ -31,15 +29,34 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const readJSON = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
-// Initialize Default Data
-if (!fs.existsSync(FILES.activities)) writeJSON(FILES.activities, [
-    { id: '1', name: 'فرز الملابس', color: '#3b82f6', schedule: { days: ['الأحد', 'الاثنين'], time: '09:00 - 12:00' } },
-    { id: '2', name: 'معرض الملابس', color: '#8b5cf6', schedule: { days: ['الثلاثاء'], time: '10:00 - 14:00' } },
-    { id: '3', name: 'صيدلية مرسال', color: '#10b981', schedule: { days: ['الأربعاء', 'الخميس'], time: '09:00 - 17:00' } },
-    { id: '4', name: 'دار الضيافة', color: '#f59e0b', schedule: { days: ['يومياً'], time: 'مرن' } }
-]);
-if (!fs.existsSync(FILES.logs)) writeJSON(FILES.logs, []);
-if (!fs.existsSync(FILES.announcements)) writeJSON(FILES.announcements, []);
+// --- Data Seeding (For Demo/Initial Start) ---
+function seedDatabase() {
+    if (!fs.existsSync(FILES.volunteers)) {
+        console.log("Seeding initial data...");
+        const demoUsers = [
+            { id: '101', name: 'Ahmed Ali', email: 'ahmed@mersal.com', phone: '0501112222', password: '123456', points: 120, createdAt: new Date().toISOString() },
+            { id: '102', name: 'Sara Khan', email: 'sara@mersal.com', phone: '0503334444', password: '123456', points: 85, createdAt: new Date().toISOString() },
+            { id: '103', name: 'Omar Hafez', email: 'omar@mersal.com', phone: '0505556666', password: '123456', points: 45, createdAt: new Date().toISOString() }
+        ];
+        writeJSON(FILES.volunteers, demoUsers);
+
+        const demoAttendance = [
+            { id: '201', volunteerId: '101', activityName: 'فرز الملابس', dateStr: '2023-10-10', checkIn: '09:00', checkOut: '12:00', duration: 3, status: 'present' },
+            { id: '202', volunteerId: '101', activityName: 'صيدلية مرسال', dateStr: '2023-10-12', checkIn: '10:00', checkOut: '14:00', duration: 4, status: 'present' },
+            { id: '203', volunteerId: '102', activityName: 'معرض الملابس', dateStr: '2023-10-11', checkIn: '11:00', checkOut: '15:00', duration: 4, status: 'present' }
+        ];
+        writeJSON(FILES.attendance, demoAttendance);
+    }
+    
+    // Default Activities
+    if (!fs.existsSync(FILES.activities)) writeJSON(FILES.activities, [
+        { id: '1', name: 'فرز الملابس', nameEn: 'Clothes Sorting', color: '#3b82f6', schedule: { days: ['الأحد', 'الاثنين'], time: '09:00 - 12:00' } },
+        { id: '2', name: 'معرض الملابس', nameEn: 'Clothes Exhibition', color: '#8b5cf6', schedule: { days: ['الثلاثاء'], time: '10:00 - 14:00' } },
+        { id: '3', name: 'صيدلية مرسال', nameEn: 'Mersal Pharmacy', color: '#10b981', schedule: { days: ['الأربعاء', 'الخميس'], time: '09:00 - 17:00' } },
+        { id: '4', name: 'دار الضيافة', nameEn: 'Guest House', color: '#f59e0b', schedule: { days: ['يومياً'], time: 'مرن' } }
+    ]);
+}
+seedDatabase();
 
 function logAction(actor, action, details) {
     const logs = readJSON(FILES.logs);
@@ -47,31 +64,25 @@ function logAction(actor, action, details) {
     writeJSON(FILES.logs, logs);
 }
 
-// ===================
-// AUTH ROUTE
-// ===================
+// =================== AUTH ROUTE
 app.post('/api/login', (req, res) => {
     const { identifier, password } = req.body;
-
-    // Check Admin
     const admin = ADMIN_CREDENTIALS.find(a => a.username === identifier && a.password === password);
     if (admin) return res.json({ role: 'admin', name: admin.name, email: admin.username });
 
-    // Check User
     const users = readJSON(FILES.volunteers);
     const user = users.find(u => (u.email === identifier || u.phone === identifier) && u.password === password);
     if (user) {
         const { password, ...safe } = user;
         return res.json({ role: 'user', ...safe });
     }
-
-    res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
+    res.status(401).json({ error: 'Invalid credentials' });
 });
 
 app.post('/api/register', (req, res) => {
     const users = readJSON(FILES.volunteers);
     const { name, email, phone, password } = req.body;
-    if (users.find(u => u.email === email)) return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً' });
+    if (users.find(u => u.email === email)) return res.status(400).json({ error: 'Email already exists' });
     
     const user = { id: Date.now().toString(), name, email, phone, password, avatar: null, points: 0, createdAt: new Date().toISOString() };
     users.push(user);
@@ -80,49 +91,84 @@ app.post('/api/register', (req, res) => {
     res.json({ role: 'user', ...safe });
 });
 
-// ===================
-// DATA ROUTES
-// ===================
+// =================== USER ROUTES
+app.get('/api/user/stats/:id', (req, res) => {
+    const users = readJSON(FILES.volunteers);
+    const att = readJSON(FILES.attendance);
+    const uid = req.params.id;
+    
+    const myLogs = att.filter(a => a.volunteerId === uid && a.status === 'present');
+    const hours = myLogs.reduce((s, l) => s + (l.duration || 0), 0);
+    const points = users.find(u => u.id === uid)?.points || 0;
+    
+    const sorted = users.sort((a, b) => (b.points || 0) - (a.points || 0));
+    const rank = sorted.findIndex(u => u.id === uid) + 1;
 
-app.get('/api/activities', (req, res) => res.json(readJSON(FILES.activities)));
+    const chartData = {};
+    myLogs.forEach(l => {
+        if(!chartData[l.activityName]) chartData[l.activityName] = 0;
+        chartData[l.activityName] += l.duration;
+    });
 
-// User Specific Data
+    res.json({ hours: hours.toFixed(1), points, rank, chartData });
+});
+
 app.get('/api/user/data/:id', (req, res) => {
     const logs = readJSON(FILES.attendance).filter(a => a.volunteerId === req.params.id).reverse();
     const user = readJSON(FILES.volunteers).find(u => u.id === req.params.id);
     res.json({ logs, points: user?.points || 0 });
 });
 
-// Leaderboard
-app.get('/api/leaderboard', (req, res) => {
-    const users = readJSON(FILES.volunteers);
-    const sorted = users.sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, 10);
-    res.json(sorted);
+app.post('/api/user/profile', (req, res) => {
+    let users = readJSON(FILES.volunteers);
+    const { userId, name, email, phone, password, avatar } = req.body;
+    const idx = users.findIndex(u => u.id === userId);
+    
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    if (users.find(u => u.email === email && u.id !== userId)) return res.status(400).json({ error: 'Email used' });
+
+    users[idx].name = name;
+    users[idx].email = email;
+    users[idx].phone = phone;
+    if (password) users[idx].password = password;
+    if (avatar !== undefined) users[idx].avatar = avatar;
+
+    writeJSON(FILES.volunteers, users);
+    const { password: p, ...safe } = users[idx];
+    res.json(safe);
 });
 
-// Announcements
-app.get('/api/announcements', (req, res) => res.json(readJSON(FILES.announcements).reverse()));
+app.delete('/api/user/delete', (req, res) => {
+    let users = readJSON(FILES.volunteers);
+    let att = readJSON(FILES.attendance);
+    const { userId } = req.body;
+    
+    users = users.filter(u => u.id !== userId);
+    att = att.filter(a => a.volunteerId !== userId);
+    
+    writeJSON(FILES.volunteers, users);
+    writeJSON(FILES.attendance, att);
+    res.json({ success: true });
+});
 
-// Attendance: Check In
+// Attendance Logic
 app.post('/api/attendance/checkin', (req, res) => {
     const att = readJSON(FILES.attendance);
-    const { volunteerId, activityName } = req.body;
-    const now = new Date();
-    if (att.find(a => a.volunteerId === volunteerId && !a.checkOut)) return res.status(400).json({ error: 'يوجد جلسة نشطة بالفعل' });
+    const { volunteerId, activityName, feedback } = req.body;
+    if (att.find(a => a.volunteerId === volunteerId && !a.checkOut)) return res.status(400).json({ error: 'Active session exists' });
     
-    const record = {
-        id: Date.now().toString(), volunteerId, activityName,
+    const now = new Date();
+    att.push({
+        id: Date.now().toString(), volunteerId, activityName, feedback,
         dateStr: now.toISOString().split('T')[0],
         checkIn: now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}),
         checkInTime: now.getTime(),
-        checkOut: null, duration: 0, status: 'present', type: 'live'
-    };
-    att.push(record);
+        checkOut: null, duration: 0, status: 'present'
+    });
     writeJSON(FILES.attendance, att);
-    res.json(record);
+    res.json({ success: true });
 });
 
-// Attendance: Check Out
 app.post('/api/attendance/checkout', (req, res) => {
     let att = readJSON(FILES.attendance);
     let users = readJSON(FILES.volunteers);
@@ -133,9 +179,8 @@ app.post('/api/attendance/checkout', (req, res) => {
     const now = new Date();
     record.checkOut = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
     record.duration = Math.round((now - record.checkInTime) / 3600000 * 100) / 100;
-    record.feedback = feedback || '';
+    if(feedback) record.feedback = feedback;
     
-    // Add Points
     const uIdx = users.findIndex(u => u.id === volunteerId);
     if (uIdx !== -1) {
         users[uIdx].points = (users[uIdx].points || 0) + Math.floor(record.duration * 10);
@@ -143,22 +188,19 @@ app.post('/api/attendance/checkout', (req, res) => {
     }
 
     writeJSON(FILES.attendance, att);
-    res.json({ ...record, newPoints: users[uIdx]?.points });
+    res.json({ success: true, duration: record.duration });
 });
 
-// Attendance: Manual Entry
 app.post('/api/attendance/manual', (req, res) => {
-    const att = readJSON(FILES.attendance);
     let users = readJSON(FILES.volunteers);
-    const { volunteerId, date, checkIn, checkOut, activityName } = req.body;
+    const att = readJSON(FILES.attendance);
+    const { volunteerId, date, checkIn, checkOut, activityName, feedback } = req.body;
     
     const start = new Date(`${date}T${checkIn}`);
     const end = new Date(`${date}T${checkOut}`);
     const duration = Math.round((end - start) / 3600000 * 100) / 100;
+    if (duration < 0) return res.status(400).json({ error: 'Invalid time' });
 
-    if (duration < 0) return res.status(400).json({ error: 'نطاق الوقت غير صالح' });
-    
-    // Update Points
     const uIdx = users.findIndex(u => u.id === volunteerId);
     if (uIdx !== -1) {
         users[uIdx].points = (users[uIdx].points || 0) + Math.floor(duration * 10);
@@ -167,44 +209,14 @@ app.post('/api/attendance/manual', (req, res) => {
 
     att.push({
         id: Date.now().toString(), volunteerId, dateStr: date,
-        checkIn, checkOut, duration, activityName,
+        checkIn, checkOut, duration, activityName, feedback,
         status: 'present', type: 'manual'
     });
     writeJSON(FILES.attendance, att);
     res.json({ success: true });
 });
 
-// Attendance: Edit Record
-app.put('/api/attendance/:id', (req, res) => {
-    let att = readJSON(FILES.attendance);
-    const { id } = req.params;
-    const { date, checkIn, checkOut, activityName } = req.body;
-    
-    const idx = att.findIndex(a => a.id === id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-
-    const start = new Date(`${date}T${checkIn}`);
-    const end = new Date(`${date}T${checkOut}`);
-    const duration = Math.round((end - start) / 3600000 * 100) / 100;
-
-    att[idx] = { ...att[idx], dateStr: date, checkIn, checkOut, duration, activityName, edited: true };
-    writeJSON(FILES.attendance, att);
-    res.json(att[idx]);
-});
-
-// Apology
-app.post('/api/attendance/apology', (req, res) => {
-    const att = readJSON(FILES.attendance);
-    const { volunteerId, date, activityName, reason } = req.body;
-    att.push({ id: Date.now().toString(), volunteerId, dateStr: date, activityName, reason, status: 'apologized', type: 'apology' });
-    writeJSON(FILES.attendance, att);
-    res.json({ success: true });
-});
-
-// ===================
-// ADMIN ROUTES
-// ===================
-
+// =================== ADMIN ROUTES
 app.get('/api/admin/stats', (req, res) => {
     const users = readJSON(FILES.volunteers);
     const att = readJSON(FILES.attendance);
@@ -220,8 +232,8 @@ app.get('/api/admin/stats', (req, res) => {
         totalUsers: users.length,
         totalHours: att.filter(a => a.status === 'present').reduce((s, a) => s + (a.duration || 0), 0).toFixed(1),
         activeNow: att.filter(a => a.dateStr === today && !a.checkOut).length,
-        apologies: att.filter(a => a.status === 'apologized').length,
-        activityStats
+        activityStats,
+        leaderboard: users.sort((a,b) => b.points - a.points).slice(0, 5)
     });
 });
 
@@ -232,75 +244,56 @@ app.get('/api/admin/data', (req, res) => res.json({
     logs: readJSON(FILES.logs)
 }));
 
-// Announcements Management
-app.post('/api/admin/announcement', (req, res) => {
-    const anns = readJSON(FILES.announcements);
-    const { text, adminEmail } = req.body;
-    anns.push({ id: Date.now().toString(), text, timestamp: new Date().toISOString() });
-    writeJSON(FILES.announcements, anns);
-    logAction(adminEmail, 'Post Announcement', text);
-    res.json(anns);
-});
+app.get('/api/activities', (req, res) => res.json(readJSON(FILES.activities)));
 
-// Activity Management
 app.post('/api/admin/activity', (req, res) => {
     const acts = readJSON(FILES.activities);
-    const { name, color, schedule, adminEmail } = req.body;
-    acts.push({ id: Date.now().toString(), name, color, schedule });
+    const { name, nameEn, color, schedule, adminEmail } = req.body;
+    acts.push({ id: Date.now().toString(), name, nameEn, color, schedule });
     writeJSON(FILES.activities, acts);
     logAction(adminEmail, 'Add Activity', name);
     res.json(acts);
 });
 
-app.put('/api/admin/activity/:id', (req, res) => {
+app.post('/api/admin/activity/edit/:id', (req, res) => {
     let acts = readJSON(FILES.activities);
     const { id } = req.params;
-    const { name, color, schedule, adminEmail } = req.body;
+    const { name, nameEn, color, schedule, adminEmail } = req.body;
     const idx = acts.findIndex(a => a.id === id);
     if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    acts[idx] = { ...acts[idx], name, color, schedule };
+    acts[idx] = { ...acts[idx], name, nameEn, color, schedule };
     writeJSON(FILES.activities, acts);
     logAction(adminEmail, 'Edit Activity', name);
     res.json(acts);
 });
 
-// User Management
+app.delete('/api/admin/activity/:id', (req, res) => {
+    let acts = readJSON(FILES.activities).filter(a => a.id !== req.params.id);
+    writeJSON(FILES.activities, acts);
+    res.json(acts);
+});
+
 app.delete('/api/admin/user', (req, res) => {
     let users = readJSON(FILES.volunteers).filter(u => u.id !== req.body.userId);
     let att = readJSON(FILES.attendance).filter(a => a.volunteerId !== req.body.userId);
     writeJSON(FILES.volunteers, users);
     writeJSON(FILES.attendance, att);
-    logAction(req.body.adminEmail, 'Delete User', req.body.userId);
     res.json({ success: true });
 });
 
-// Profile
-app.post('/api/user/profile', (req, res) => {
-    let users = readJSON(FILES.volunteers);
-    const idx = users.findIndex(u => u.id === req.body.userId);
-    if (idx !== -1) {
-        if (req.body.name) users[idx].name = req.body.name;
-        if (req.body.avatar) users[idx].avatar = req.body.avatar;
-        writeJSON(FILES.volunteers, users);
-        const { password, ...safe } = users[idx];
-        return res.json(safe);
-    }
-    res.status(404).json({ error: 'Not found' });
-});
-
-// Excel Export
+// Export
 app.get('/api/export', async (req, res) => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Report');
     ws.columns = [
         { header: 'Date', key: 'date', width: 12 }, { header: 'Name', key: 'name', width: 20 },
         { header: 'Activity', key: 'act', width: 15 }, { header: 'Hours', key: 'hrs', width: 8 },
-        { header: 'Status', key: 'status', width: 10 }, { header: 'Feedback', key: 'fb', width: 30 }
+        { header: 'Feedback', key: 'fb', width: 30 }
     ];
     const users = readJSON(FILES.volunteers);
     readJSON(FILES.attendance).forEach(r => {
         const u = users.find(u => u.id === r.volunteerId);
-        ws.addRow({ date: r.dateStr, name: u?.name || 'Unknown', act: r.activityName, hrs: r.duration, status: r.status, fb: r.feedback || r.reason });
+        ws.addRow({ date: r.dateStr, name: u?.name || 'Unknown', act: r.activityName, hrs: r.duration, fb: r.feedback || '' });
     });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="Mersal_Report.xlsx"');
