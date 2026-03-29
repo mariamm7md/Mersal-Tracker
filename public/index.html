@@ -1,730 +1,803 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mersal Time Keeper - تسجيل الدخول</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #009e8b;
-      --primary-dark: #007e71;
-      --primary-light: #05c4a8;
-      --accent: #f59e0b;
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --danger: #f43f5e;
-      --success: #10b981;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mersal Admin Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Core Variables & Reset --- */
+        :root {
+            --primary: #4f46e5; --primary-light: #eef2ff; --primary-dark: #3730a3;
+            --secondary: #0f172a; --secondary-light: #334155;
+            --accent: #06b6d4; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --bg-main: #f8fafc; --bg-card: #ffffff;
+            --text-main: #1e293b; --text-muted: #64748b;
+            --border: #e2e8f0"; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            --radius: 12px; --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        [data-theme="dark"] { --bg-main: #0f172a; --bg-card: #1e293b; --text-main: #f1f5f9; --text-muted: #94a3b8"; --border: #334155"; }
+        [data-lang="en"] { direction: ltr; font-family: 'Inter', sans-serif; }
+        [data-lang="ar"] { font-family: 'Cairo', sans-serif; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-main); color: var(--text-main); font-size: 15px; overflow-x: hidden; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #003330 0%, #007e71 40%, #05c4a8 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
+        /* --- Layout Structure --- */
+        .app-container { display: flex; min-height: 100vh; }
+        
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 280px; background: var(--secondary); color: white; padding: 24px 16px;
+            display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1); transition: transform 0.3s ease;
+        }
+        [data-lang="en"] .sidebar { right: auto; left: 0; }
+        
+        .sidebar-header { padding: 10px 16px 30px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; }
+        .logo-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .logo-text span { font-size: 11px; opacity: 0.6; font-weight: 500; }
 
-    /* === أشكال الخلفية المتحركة === */
-    .bg-shape {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.12;
-      pointer-events: none;
-    }
-    .bg-shape:nth-child(1) {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, #1ee0c3, transparent 70%);
-      top: -120px; right: -80px;
-      animation: shapeFloat1 12s ease-in-out infinite;
-    }
-    .bg-shape:nth-child(2) {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, #f59e0b, transparent 70%);
-      bottom: -100px; left: -60px;
-      animation: shapeFloat2 15s ease-in-out infinite;
-    }
-    .bg-shape:nth-child(3) {
-      width: 250px; height: 250px;
-      background: radial-gradient(circle, #fff, transparent 70%);
-      top: 50%; left: 10%;
-      animation: shapeFloat3 10s ease-in-out infinite;
-    }
-    .bg-shape:nth-child(4) {
-      width: 180px; height: 180px;
-      background: radial-gradient(circle, #1ee0c3, transparent 70%);
-      bottom: 20%; right: 15%;
-      animation: shapeFloat1 8s ease-in-out infinite reverse;
-    }
-    .bg-shape:nth-child(5) {
-      width: 120px; height: 120px;
-      background: radial-gradient(circle, #fbbf24, transparent 70%);
-      top: 15%; left: 30%;
-      animation: shapeFloat2 9s ease-in-out infinite reverse;
-    }
+        .nav-menu { flex: 1; overflow-y: auto; padding-right: 8px; }
+        [data-lang="en"] .nav-menu { padding-right: 0; padding-left: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius); margin-bottom: 6px; cursor: pointer; transition: var(--transition); color: rgba(255,255,255,0.7); font-weight: 500; }
+        .nav-item svg { width: 20px; height: 20px; opacity: 0.8; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .nav-item.active svg { opacity: 1; }
 
-    @keyframes shapeFloat1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(40px, 30px) scale(1.05); }
-      66% { transform: translate(-20px, -15px) scale(0.95); }
-    }
-    @keyframes shapeFloat2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-50px, -40px) scale(1.08); }
-    }
-    @keyframes shapeFloat3 {
-      0%, 100% { transform: translate(0, 0); }
-      25% { transform: translate(30px, -20px); }
-      75% { transform: translate(-15px, 25px); }
-    }
+        .sidebar-footer { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: auto; }
+        
+        /* --- Main Content --- */
+        .main-content { flex: 1; margin-right: 280px; padding: 30px 40px; background: var(--bg-main); min-height: 100vh; }
+        [data-lang="en"] .main-content { margin-right: 0; margin-left: 280px; }
 
-    /* === شبكة نقاط خلفية === */
-    .bg-dots {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
-      background-size: 30px 30px;
-      pointer-events: none;
-    }
+        /* --- Header --- */
+        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+        .page-title h2 { font-size: 26px; font-weight: 800; margin-bottom: 5px; background: linear-gradient(90deg, var(--text-main), var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .page-title p { color: var(--text-muted); font-size: 14px; }
+        
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .btn-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); transition: var(--transition); }
+        .btn-icon:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1); }
+        .user-profile { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bg-card); border-radius: 30px; border: 1px solid var(--border); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .user-name { font-weight: 600; font-size: 14px; }
 
-    /* === البطاقة === */
-    .auth-card {
-      background: rgba(255, 255, 255, 0.97);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 24px;
-      box-shadow:
-        0 25px 60px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      padding: 44px 40px;
-      width: 440px;
-      max-width: 94vw;
-      position: relative;
-      z-index: 2;
-      animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+        /* --- Stats Cards --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 35px; }
+        .stat-card { background: var(--bg-card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: transparent; }
+        .stat-card::before { content: ''; position: absolute; top: 0; right: 0; width: 120px; height: 120px; border-radius: 50%; margin-top: -60px; margin-right: -60px; }
+        .stat-card.purple::before { background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(139, 92, 246, 0.05)); }
+        .stat-card.green::before { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.05)); }
+        .stat-card.blue::before { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.05)); }
+        
+        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 1; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .stat-icon.purple { background: var(--primary-light); color: var(--primary); }
+        .stat-icon.green { background: #d1fae5; color: #059669; }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        
+        .stat-info h3 { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+        .stat-info p { color: var(--text-muted); font-size: 13px; font-weight: 500; }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(40px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
+        /* --- Content Cards (Tables) --- */
+        .card-box { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .card-header h3 { font-size: 18px; font-weight: 700; }
+        .card-body { padding: 10px 24px 24px; }
 
-    /* === الشعار === */
-    .logo-wrap {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-    .logo-icon {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      border-radius: 20px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-      box-shadow: 0 8px 24px rgba(0, 158, 139, 0.3);
-      position: relative;
-    }
-    .logo-icon::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, var(--primary-light), var(--accent));
-      z-index: -1;
-      opacity: 0.3;
-      filter: blur(8px);
-    }
-    .logo-icon i {
-      color: #fff;
-      font-size: 32px;
-    }
-    .logo-title {
-      font-size: 26px;
-      font-weight: 900;
-      color: var(--text);
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-    }
-    .logo-subtitle {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 6px;
-      font-weight: 400;
-    }
+        /* --- Table Styling --- */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: inherit; padding: 14px 16px; font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; font-weight: 600; background: var(--bg-main); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-main); }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #d1fae5; color: #059669; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
 
-    /* === الحقول === */
-    .form-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    .form-input {
-      width: 100%;
-      padding: 15px 18px 15px 46px;
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: #f8fafc;
-      outline: none;
-      direction: rtl;
-      color: var(--text);
-    }
-    .form-input::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-    .form-input:hover {
-      border-color: #cbd5e1;
-      background: #fff;
-    }
-    .form-input:focus {
-      border-color: var(--primary);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(0, 158, 139, 0.1);
-    }
-    .form-input.error {
-      border-color: var(--danger);
-      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.08);
-    }
-    .input-icon {
-      position: absolute;
-      right: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #94a3b8;
-      font-size: 16px;
-      transition: color 0.3s;
-      pointer-events: none;
-    }
-    .form-group:focus-within .input-icon {
-      color: var(--primary);
-    }
-    .form-group.has-error .input-icon {
-      color: var(--danger);
-    }
-    .field-error {
-      font-size: 12px;
-      color: var(--danger);
-      margin-top: 6px;
-      display: none;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-    }
-    .field-error.visible {
-      display: flex;
-    }
+        /* --- Buttons --- */
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .btn-ghost { background: transparent; color: var(--text-muted); }
+        .btn-ghost:hover { background: var(--bg-main); color: var(--text-main); }
+        
+        /* --- Forms & Inputs --- */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .form-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-main); color: var(--text-main); font-family: inherit; font-size: 14px; transition: var(--transition); }
+        .form-input:focus { outline: none; border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
 
-    /* === زر إظهار/إخفاء كلمة المرور === */
-    .toggle-pass {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #94a3b8;
-      font-size: 15px;
-      padding: 4px;
-      transition: color 0.2s;
-    }
-    .toggle-pass:hover { color: var(--muted); }
+        /* --- Modals --- */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .modal-backdrop.active { display: flex; animation: fadeIn 0.2s ease; }
+        .modal-content { background: var(--bg-card); border-radius: 20px; width: 500px; max-width: 95%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative; overflow: hidden; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg-main); display: flex; justify-content: flex-end; gap: 10px; }
 
-    /* === زر تسجيل الدخول === */
-    .btn-login {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 8px;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-login::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .btn-login:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 158, 139, 0.35);
-    }
-    .btn-login:hover::before { opacity: 1; }
-    .btn-login:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 12px rgba(0, 158, 139, 0.2);
-    }
-    .btn-login:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
+        /* --- Auth Screens --- */
+        .auth-wrapper { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+        .auth-card { background: var(--bg-card); width: 420px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); overflow: hidden; position: relative; z-index: 10; }
+        .auth-header { padding: 40px 40px 30px; text-align: center; }
+        .auth-header h2 { font-size: 24px; margin-top: 20px; font-weight: 800; }
+        .auth-header p { color: var(--text-muted); font-size: 14px; margin-top: 8px; }
+        .auth-body { padding: 0 40px 40px; }
+        
+        /* --- Utility --- */
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
 
-    /* === حالة التحميل === */
-    .btn-login .spinner {
-      display: none;
-      width: 20px;
-      height: 20px;
-      border: 2.5px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    .btn-login.loading .spinner { display: block; }
-    .btn-login.loading .btn-text { display: none; }
-    .btn-login.loading .btn-icon { display: none; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* === الروابط === */
-    .links-row {
-      display: flex;
-      justify-content: center;
-      margin-top: 24px;
-      gap: 24px;
-    }
-    .link-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--primary);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-      padding: 6px 12px;
-      border-radius: 8px;
-    }
-    .link-item:hover {
-      background: rgba(0, 158, 139, 0.06);
-      color: var(--primary-dark);
-    }
-    .link-item i { font-size: 13px; }
-
-    /* === صندوق المعلومات === */
-    .info-box {
-      margin-top: 20px;
-      padding: 14px 18px;
-      background: linear-gradient(135deg, #f0fdfa, #ecfdf5);
-      border: 1px solid #d1fae5;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .info-box i {
-      color: var(--primary);
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-    .info-box p {
-      font-size: 13px;
-      color: #475569;
-      line-height: 1.5;
-    }
-    .info-box strong {
-      color: var(--text);
-      font-weight: 700;
-      direction: ltr;
-      display: inline-block;
-    }
-
-    /* === تنبيهات === */
-    .toast-container {
-      position: fixed;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-      width: 400px;
-      max-width: 92vw;
-    }
-    .toast {
-      padding: 16px 22px;
-      border-radius: 14px;
-      color: #fff;
-      font-weight: 600;
-      font-size: 14px;
-      font-family: 'Inter', sans-serif;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
-      animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.4s ease 3.2s forwards;
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
-    .toast.error { background: linear-gradient(135deg, #f43f5e, #e11d48); }
-    .toast.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .toast.info { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes toastOut {
-      from { opacity: 1; transform: translateY(0) scale(1); }
-      to { opacity: 0; transform: translateY(-20px) scale(0.95); }
-    }
-
-    /* === ذرة الأمان === */
-    .security-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 20px;
-      font-size: 11px;
-      color: #94a3b8;
-    }
-    .security-badge i { font-size: 12px; color: var(--success); }
-
-    /* === ريسبونسف === */
-    @media (max-width: 480px) {
-      .auth-card {
-        padding: 32px 24px;
-        border-radius: 20px;
-      }
-      .logo-title { font-size: 22px; }
-      .logo-icon { width: 60px; height: 60px; border-radius: 16px; }
-      .logo-icon i { font-size: 26px; }
-      .links-row { flex-direction: column; gap: 8px; align-items: center; }
-      .info-box { flex-direction: column; text-align: center; }
-    }
-
-    /* === تقليل الحركة === */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(100%); }
+            [data-lang="en"] .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin: 0 !important; padding: 20px; }
+            .mobile-toggle { display: block !important; }
+        }
+        .mobile-toggle { display: none; }
+    </style>
 </head>
-<body>
+<body data-lang="ar">
 
-  <!-- أشكال الخلفية -->
-  <div class="bg-shape"></div>
-  <div class="bg-shape"></div>
-  <div class="bg-shape"></div>
-  <div class="bg-shape"></div>
-  <div class="bg-shape"></div>
-  <div class="bg-dots"></div>
-
-  <!-- حاوية التنبيهات -->
-  <div class="toast-container" id="toastContainer"></div>
-
-  <!-- بطاقة تسجيل الدخول -->
-  <div class="auth-card">
-    <!-- الشعار -->
-    <div class="logo-wrap">
-      <div class="logo-icon">
-        <i class="fas fa-clock"></i>
-      </div>
-      <h1 class="logo-title">Mersal Time Keeper</h1>
-      <p class="logo-subtitle">نظام تسجيل وحضور المتطوعين</p>
-    </div>
-
-    <!-- النموذج -->
-    <form id="loginForm" autocomplete="off" novalidate>
-      <!-- اسم المستخدم -->
-      <div class="form-group" id="userGroup">
-        <i class="fas fa-user input-icon"></i>
-        <input
-          type="text"
-          id="userInput"
-          class="form-input"
-          placeholder="اسم المستخدم"
-          required
-          autofocus
-          aria-label="اسم المستخدم"
-        >
-        <div class="field-error" id="userError">
-          <i class="fas fa-exclamation-circle"></i>
-          <span></span>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo">
+            <div class="logo-icon">M</div>
+            <div class="logo-text">
+                <h1>Mersal</h1>
+                <span>Admin Dashboard</span>
+            </div>
         </div>
-      </div>
-
-      <!-- كلمة المرور -->
-      <div class="form-group" id="passGroup">
-        <i class="fas fa-lock input-icon"></i>
-        <input
-          type="password"
-          id="passInput"
-          class="form-input"
-          placeholder="كلمة المرور"
-          required
-          aria-label="كلمة المرور"
-        >
-        <button type="button" class="toggle-pass" id="togglePass" aria-label="إظهار كلمة المرور">
-          <i class="fas fa-eye"></i>
-        </button>
-        <div class="field-error" id="passError">
-          <i class="fas fa-exclamation-circle"></i>
-          <span></span>
+    </div>
+    <nav class="nav-menu">
+        <div class="nav-item active" onclick="showSection('home')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>الرئيسية</span>
         </div>
-      </div>
+        <div class="nav-item" onclick="showSection('users')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <span>المستخدمون</span>
+        </div>
+        <div class="nav-item" onclick="showSection('activities')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span>الأنشطة</span>
+        </div>
+        <div class="nav-item" onclick="showSection('manual-log')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>تسجيل حضور</span>
+        </div>
+        <div class="nav-item" onclick="showSection('logs')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            <span>سجل التعديلات</span>
+        </div>
+        <div class="nav-item" onclick="showSection('reports')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>التقارير</span>
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="nav-item" onclick="logout()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <span>تسجيل خروج</span>
+        </div>
+    </div>
+</div>
 
-      <!-- زر الدخول -->
-      <button type="submit" class="btn-login" id="loginBtn">
-        <span class="btn-icon"><i class="fas fa-sign-in-alt"></i></span>
-        <span class="btn-text">تسجيل الدخول</span>
-        <span class="spinner"></span>
-      </button>
-    </form>
-
-    <!-- روابط -->
-    <div class="links-row">
-      <a href="/admin" class="link-item">
-        <i class="fas fa-shield-alt"></i>
-        دخول المدير
-      </a>
+<!-- Main App Container -->
+<div class="main-content" id="main-app">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="page-title">
+            <h2 id="page-title-text">لوحة التحكم</h2>
+            <p id="date-display">Loading date...</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon mobile-toggle" onclick="toggleSidebar()">
+                <svg style="width:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+            </button>
+            <button class="btn-icon" onclick="toggleLang()" title="Change Language">
+                <svg style="width:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+            </button>
+            <div class="user-profile">
+                <div class="user-avatar" id="header-avatar">A</div>
+                <span class="user-name" id="admin-name-display">Admin</span>
+            </div>
+        </div>
     </div>
 
-    <!-- شارة الأمان -->
-    <div class="security-badge">
-      <i class="fas fa-shield-alt"></i>
-      <span>اتصال آمن مشفر</span>
+    <!-- Dynamic Sections -->
+    
+    <!-- HOME -->
+    <div id="sec-home" class="section">
+        <div class="stats-grid">
+            <div class="stat-card purple">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3 id="stat-hours">0</h3>
+                        <p>مجموع الساعات</p>
+                    </div>
+                    <div class="stat-icon purple">
+                        <svg style="width:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3 id="stat-vols">0</h3>
+                        <p>المتطوعون</p>
+                    </div>
+                    <div class="stat-icon green">
+                        <svg style="width:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3 id="stat-active">0</h3>
+                        <p>نشط اليوم</p>
+                    </div>
+                    <div class="stat-icon blue">
+                        <svg style="width:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-box">
+            <div class="card-header">
+                <h3>أحدث النشاطات</h3>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x:auto">
+                    <table id="recent-table">
+                        <thead>
+                            <tr><th>المتطوع</th><th>النشاط</th><th>التاريخ</th><th>الساعات</th></tr>
+                        </thead>
+                        <tbody id="recent-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    /* =============================================
-       تسجيل دخول المتطوع - المنطق
-       ============================================= */
+    <!-- USERS -->
+    <div id="sec-users" class="section hidden">
+        <div class="card-box">
+            <div class="card-header">
+                <h3>إدارة المتطوعين</h3>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead><tr><th>الاسم</th><th>البريد</th><th>الهاتف</th><th>النشاط</th><th>إجراءات</th></tr></thead>
+                        <tbody id="users-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    const API_BASE = window.location.origin;
+    <!-- ACTIVITIES -->
+    <div id="sec-activities" class="section hidden">
+        <div class="card-box">
+            <div class="card-header">
+                <h3>الأنشطة المتاحة</h3>
+                <button class="btn btn-primary" onclick="openModal('modal-activity')">
+                    <svg style="width:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة نشاط
+                </button>
+            </div>
+            <div class="card-body" id="activities-list"></div>
+        </div>
+    </div>
 
-    // ===== العناصر =====
-    const form = document.getElementById('loginForm');
-    const userInput = document.getElementById('userInput');
-    const passInput = document.getElementById('passInput');
-    const loginBtn = document.getElementById('loginBtn');
-    const togglePassBtn = document.getElementById('togglePass');
-    const userGroup = document.getElementById('userGroup');
-    const passGroup = document.getElementById('passGroup');
-    const userError = document.getElementById('userError');
-    const passError = document.getElementById('passError');
+    <!-- MANUAL LOG -->
+    <div id="sec-manual-log" class="section hidden">
+        <div class="card-box">
+            <div class="card-header">
+                <h3>تسجيل حضور يدوي (للمتطوعين)</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div class="form-group">
+                        <label class="form-label">اختر المتطوع</label>
+                        <select id="manual-user" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">النشاط</label>
+                        <select id="manual-activity" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التاريخ</label>
+                        <input type="date" id="manual-date" class="form-input">
+                    </div>
+                    <div class="form-group"></div>
+                    <div class="form-group">
+                        <label class="form-label">من الساعة</label>
+                        <input type="time" id="manual-start" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">إلى الساعة</label>
+                        <input type="time" id="manual-end" class="form-input">
+                    </div>
+                </div>
+                <div style="margin-top:20px;">
+                    <button class="btn btn-success" onclick="submitManualLog()">حفظ الحضور</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // ===== التحقق من الجلسة الموجودة =====
-    (function checkExistingSession() {
-      const token = localStorage.getItem('mersal_token');
-      const userData = localStorage.getItem('mersal_user');
+    <!-- AUDIT LOGS -->
+    <div id="sec-logs" class="section hidden">
+        <div class="card-box">
+            <div class="card-header">
+                <h3>سجل تعديلات المشرفين</h3>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead><tr><th>التوقيت</th><th>المشرف</th><th>الإجراء</th><th>التفاصيل</th></tr></thead>
+                        <tbody id="logs-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      if (token && userData) {
-        // التحقق من صلاحية التوكن
-        fetch(API_BASE + '/api/verify', {
-          method: 'GET',
-          headers: { 'Authorization': 'Bearer ' + token }
-        })
-        .then(res => res.json())
-        .then(result => {
-          if (result.success) {
-            const user = JSON.parse(userData);
-            if (user.isAdmin) {
-              window.location.href = '/admin-dashboard';
-            } else {
-              window.location.href = '/dashboard';
-            }
-          } else {
-            // توكن منتهي - تنظيف
-            localStorage.removeItem('mersal_token');
-            localStorage.removeItem('mersal_user');
-          }
-        })
-        .catch(() => {
-          // خطأ في الشبكة - لا نفعل شيء، ندع المستخدم يسجل
-        });
-      }
-    })();
+    <!-- REPORTS -->
+    <div id="sec-reports" class="section hidden">
+        <div class="card-box" style="text-align:center; padding:60px;">
+            <div style="width:80px; height:80px; background: var(--primary-light); color: var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                 <svg style="width:40px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3>تصدير البيانات</h3>
+            <p style="color:var(--text-muted); margin:10px 0 20px;">قم بتنزيل ملف Excel شامل لكافة البيانات</p>
+            <button class="btn btn-primary" onclick="window.location.href='/api/export'">تنزيل التقرير</button>
+        </div>
+    </div>
 
-    // ===== إظهار/إخفاء كلمة المرور =====
-    togglePassBtn.addEventListener('click', function() {
-      const isPassword = passInput.type === 'password';
-      passInput.type = isPassword ? 'text' : 'password';
-      this.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
-    });
+</div>
 
-    // ===== مسح أخطاء الحقل عند الكتابة =====
-    userInput.addEventListener('input', () => clearFieldError(userGroup, userError));
-    passInput.addEventListener('input', () => clearFieldError(passGroup, passError));
+<!-- Auth Wrapper (Login/Register/User) -->
+<div id="auth-wrapper">
 
-    // ===== إرسال النموذج =====
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
+    <!-- User Login -->
+    <div id="page-user-login" class="auth-wrapper" style="display:none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-icon" style="width:60px; height:60px; margin:0 auto; font-size:24px;">M</div>
+                <h2>تسجيل الدخول</h2>
+                <p>مرحباً بعودتك! يرجى إدخال بياناتك</p>
+            </div>
+            <div class="auth-body">
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني أو الهاتف</label>
+                    <input type="text" id="login-identifier" class="form-input" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">كلمة المرور</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="********">
+                </div>
+                <button class="btn btn-primary" style="width:100%; margin-bottom:15px;" onclick="userLogin()">دخول</button>
+                <p style="text-align:center; font-size:14px; color:var(--text-muted);">ليس لديك حساب؟ <span onclick="showAuthPage('page-user-register')" style="color:var(--primary); cursor:pointer; font-weight:600;">سجل الآن</span></p>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="btn btn-outline" style="width:auto; font-size:13px;" onclick="showAuthPage('page-admin-login')">دخول المشرفين</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      // مسح الأخطاء السابقة
-      clearFieldError(userGroup, userError);
-      clearFieldError(passGroup, passError);
+    <!-- User Register -->
+    <div id="page-user-register" class="auth-wrapper" style="display:none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-icon" style="width:60px; height:60px; margin:0 auto; font-size:24px; background:var(--success);">+</div>
+                <h2>حساب جديد</h2>
+                <p>أنشئ حسابك للبدء في تسجيل ساعاتك</p>
+            </div>
+            <div class="auth-body">
+                <div class="form-group"><label class="form-label">الاسم الكامل</label><input type="text" id="reg-name" class="form-input"></div>
+                <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input type="email" id="reg-email" class="form-input"></div>
+                <div class="form-group"><label class="form-label">رقم الهاتف</label><input type="tel" id="reg-phone" class="form-input"></div>
+                <div class="form-group"><label class="form-label">كلمة المرور</label><input type="password" id="reg-pass" class="form-input"></div>
+                <button class="btn btn-success" style="width:100%; margin-bottom:15px;" onclick="userRegister()">إنشاء حساب</button>
+                <p style="text-align:center; font-size:14px; color:var(--text-muted);">لديك حساب؟ <span onclick="showAuthPage('page-user-login')" style="color:var(--primary); cursor:pointer; font-weight:600;">سجل دخول</span></p>
+            </div>
+        </div>
+    </div>
 
-      const user = userInput.value.trim();
-      const password = passInput.value.trim();
+    <!-- Admin Login -->
+    <div id="page-admin-login" class="auth-wrapper" style="display:none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <svg style="width:60px; color:var(--secondary);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <h2>دخول المشرفين</h2>
+                <p>هذه المنطقة مخصصة للمشرفين فقط</p>
+            </div>
+            <div class="auth-body">
+                <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input type="email" id="admin-user" class="form-input"></div>
+                <div class="form-group"><label class="form-label">كلمة المرور</label><input type="password" id="admin-pass" class="form-input"></div>
+                <button class="btn btn-primary" style="width:100%; margin-bottom:15px;" onclick="adminLogin()">دخول</button>
+                <div style="text-align:center;">
+                    <button class="btn btn-ghost" style="font-size:13px;" onclick="showAuthPage('page-user-login')">رجوع</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      // تحقق محلي
-      let hasError = false;
+    <!-- User Dashboard -->
+    <div id="page-user-dash" class="main-content" style="display:none; padding-top:50px;">
+        <div class="card-box" style="max-width:600px; margin:0 auto;">
+            <div class="card-header" style="background:var(--primary); color:white; border:none;">
+                <h3 style="color:white;">مرحباً، <span id="user-name-display">User</span></h3>
+                <button class="btn btn-ghost" style="color:white;" onclick="logout()">خروج</button>
+            </div>
+            <div class="card-body">
+                <div style="text-align:center; margin:20px 0;">
+                    <h3 style="font-size:14px; color:var(--text-muted);">ساعاتك التطوعية</h3>
+                    <h1 style="font-size:42px; color:var(--primary); font-weight:800;" id="user-hours">0.00</h1>
+                    <div id="user-status" class="badge badge-warning" style="margin-top:10px;">Offline</div>
+                </div>
 
-      if (!user) {
-        showFieldError(userGroup, userError, 'يرجى إدخال اسم المستخدم');
-        hasError = true;
-      } else if (user.length < 2) {
-        showFieldError(userGroup, userError, 'اسم المستخدم قصير جداً');
-        hasError = true;
-      }
+                <div style="background:var(--bg-main); padding:20px; border-radius:12px; margin-top:20px;">
+                    <div class="form-group">
+                        <label class="form-label">اختر النشاط الحالي</label>
+                        <select id="current-activity-select" class="form-input"></select>
+                    </div>
+                    <button id="toggle-btn" class="btn btn-success" style="width:100%;" onclick="toggleUserClock()">تسجيل الحضور</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-      if (!password) {
-        showFieldError(passGroup, passError, 'يرجى إدخال كلمة المرور');
-        hasError = true;
-      } else if (password.length < 4) {
-        showFieldError(passGroup, passError, 'كلمة المرور قصيرة جداً');
-        hasError = true;
-      }
+<!-- Modals -->
+<!-- Edit User Modal -->
+<div class="modal-backdrop" id="modal-edit-user">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>تعديل بيانات المتطوع</h3>
+            <button class="btn-ghost" onclick="closeModal('modal-edit-user')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-group"><label class="form-label">الاسم</label><input type="text" id="edit-name" class="form-input"></div>
+            <div class="form-group"><label class="form-label">البريد</label><input type="email" id="edit-email" class="form-input"></div>
+            <div class="form-group"><label class="form-label">الهاتف</label><input type="tel" id="edit-phone" class="form-input"></div>
+            <div class="form-group"><label class="form-label">النشاط</label><input type="text" id="edit-activity" class="form-input"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-edit-user')">إلغاء</button>
+            <button class="btn btn-primary" onclick="saveUserEdit()">حفظ التعديلات</button>
+        </div>
+    </div>
+</div>
 
-      if (hasError) return;
+<!-- Activity Modal -->
+<div class="modal-backdrop" id="modal-activity">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>إضافة نشاط جديد</h3>
+            <button class="btn-ghost" onclick="closeModal('modal-activity')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">اسم النشاط</label><input type="text" id="new-activity-name" class="form-input" placeholder="مثال: الإسعافات الأولية"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveActivity()">إضافة</button>
+        </div>
+    </div>
+</div>
 
-      // تفعيل حالة التحميل
-      setLoading(true);
+<script>
+    // --- Core Logic ---
+    let currentLang = 'ar';
+    let currentUser = null;
+    let isAdmin = false;
+    let adminEmail = '';
+    let dataStore = { volunteers: [], attendance: [], activities: [], logs: [] };
+    let userTimer = null;
 
-      try {
-        const response = await fetch(API_BASE + '/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user, password })
-        });
+    const $ = id => document.getElementById(id);
 
-        const result = await response.json();
+    // --- Helpers ---
+    const showAuthPage = (id) => { document.querySelectorAll('.auth-wrapper, #page-user-dash').forEach(p => p.style.display='none'); $(id).style.display='flex'; };
+    const showSection = (id) => { document.querySelectorAll('.section').forEach(s => s.classList.add('hidden')); $('sec-'+id).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); event.target.closest('.nav-item').classList.add('active'); };
+    const openModal = (id) => $(id).classList.add('active');
+    const closeModal = (id) => $(id).classList.remove('active');
+    
+    const get = url => fetch(url).then(r => r.json());
+    const post = (url, data) => fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}).then(r => r.json());
 
-        if (result.success) {
-          // حفظ التوكن وبيانات المستخدم
-          localStorage.setItem('mersal_token', result.token);
-          localStorage.setItem('mersal_user', JSON.stringify(result.user));
+    // --- Language & UI ---
+    function toggleLang() {
+        currentLang = currentLang === 'ar' ? 'en' : 'ar';
+        document.body.setAttribute('data-lang', currentLang);
+        // Re-render dynamic content with translation if needed
+    }
 
-          toast('تم تسجيل الدخول بنجاح، جارٍ التحويل...', 'success');
+    function toggleSidebar() {
+        $('sidebar').classList.toggle('open');
+    }
 
-          // تأخير بسيط لعرض التنبيه
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 800);
+    // --- Authentication ---
+    async function userLogin() {
+        const identifier = $('login-identifier').value;
+        const password = $('login-password').value;
+        if(!identifier || !password) return alert('Fill all fields');
+        
+        const res = await post('/api/login', { identifier, password });
+        if(res) {
+            currentUser = res;
+            isAdmin = false;
+            loadUserDashboard();
         } else {
-          // فشل تسجيل الدخول
-          const msg = result.message || 'اسم المستخدم أو كلمة المرور غير صحيحة';
-
-          if (response.status === 401) {
-            showFieldError(userGroup, userError, msg);
-            showFieldError(passGroup, passError, msg);
-          } else {
-            toast(msg, 'error');
-          }
-
-          // اهتزاز خفيف للبطاقة
-          document.querySelector('.auth-card').style.animation = 'none';
-          void document.querySelector('.auth-card').offsetWidth;
-          document.querySelector('.auth-card').style.animation = 'shake 0.5s ease';
+            alert('Invalid credentials');
         }
-      } catch (err) {
-        console.error('خطأ في تسجيل الدخول:', err);
+    }
 
-        if (!navigator.onLine) {
-          toast('لا يوجد اتصال بالإنترنت', 'error');
+    async function userRegister() {
+        const name = $('reg-name').value;
+        const email = $('reg-email').value;
+        const phone = $('reg-phone').value;
+        const password = $('reg-pass').value;
+        if(!name || !email || !password) return alert('Fill required fields');
+        
+        const res = await post('/api/register', { name, email, phone, password });
+        if(res.error) return alert(res.error);
+        
+        currentUser = res;
+        isAdmin = false;
+        loadUserDashboard();
+    }
+
+    async function adminLogin() {
+        const email = $('admin-user').value;
+        const pass = $('admin-pass').value;
+        const res = await post('/api/admin/login', { email, password: pass });
+        
+        if(res.success) {
+            isAdmin = true;
+            adminEmail = email;
+            loadAdminDashboard();
         } else {
-          toast('حدث خطأ في الاتصال بالخادم، حاول مرة أخرى', 'error');
+            alert('Wrong Credentials');
         }
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    // ===== حالة التحميل =====
-    function setLoading(loading) {
-      loginBtn.disabled = loading;
-      loginBtn.classList.toggle('loading', loading);
     }
 
-    // ===== أخطاء الحقول =====
-    function showFieldError(group, errorEl, message) {
-      group.classList.add('has-error');
-      const input = group.querySelector('.form-input');
-      if (input) input.classList.add('error');
-      errorEl.querySelector('span').textContent = message;
-      errorEl.classList.add('visible');
+    function logout() {
+        currentUser = null; isAdmin = false; clearInterval(userTimer);
+        $('sidebar').classList.remove('open');
+        $('main-app').style.display = 'none';
+        $('auth-wrapper').style.display = 'block';
+        showAuthPage('page-user-login');
     }
 
-    function clearFieldError(group, errorEl) {
-      group.classList.remove('has-error');
-      const input = group.querySelector('.form-input');
-      if (input) input.classList.remove('error');
-      errorEl.classList.remove('visible');
+    // --- User Dashboard ---
+    async function loadUserDashboard() {
+        $('auth-wrapper').style.display = 'none';
+        $('page-user-dash').style.display = 'block';
+        $('user-name-display').textContent = currentUser.name;
+        
+        const acts = await get('/api/activities');
+        $('current-activity-select').innerHTML = acts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+        
+        const logs = await get('/api/attendance/' + currentUser.id);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const active = logs.find(l => l.dateStr === todayStr && !l.checkOut);
+        
+        if(active) startUserTimer(new Date(active.checkInTime));
+        
+        updateUserStats(logs);
     }
 
-    // ===== التنبيهات =====
-    function toast(message, type) {
-      const container = document.getElementById('toastContainer');
-      const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-times-circle',
-        warning: 'fa-exclamation-circle',
-        info: 'fa-info-circle'
-      };
+    async function toggleUserClock() {
+        const activity = $('current-activity-select').value;
+        const logs = await get('/api/attendance/' + currentUser.id);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const active = logs.find(l => l.dateStr === todayStr && !l.checkOut);
 
-      const el = document.createElement('div');
-      el.className = 'toast ' + type;
-      el.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span>' + message + '</span>';
-      container.appendChild(el);
-
-      setTimeout(() => {
-        if (el.parentNode) el.parentNode.removeChild(el);
-      }, 3800);
+        if(active) {
+            await post('/api/attendance/checkout', { volunteerId: currentUser.id });
+            clearInterval(userTimer);
+            $('user-status').textContent = 'Finished';
+            $('user-status').className = 'badge badge-success';
+            $('toggle-btn').textContent = 'تسجيل الحضور';
+            $('toggle-btn').className = 'btn btn-success';
+            alert('Checked out!');
+        } else {
+            await post('/api/attendance/checkin', { volunteerId: currentUser.id, activityName: activity });
+            startUserTimer(new Date());
+            $('user-status').textContent = 'Active';
+            $('user-status').className = 'badge badge-warning';
+            $('toggle-btn').textContent = 'تسجيل الانصراف';
+            $('toggle-btn').className = 'btn btn-danger';
+            alert('Checked in!');
+        }
+        const newLogs = await get('/api/attendance/' + currentUser.id);
+        updateUserStats(newLogs);
     }
 
-    // ===== أنيميشن الاهتزاز (يُضاف ديناميكياً) =====
-    const shakeStyle = document.createElement('style');
-    shakeStyle.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-8px)} 30%{transform:translateX(7px)} 45%{transform:translateX(-6px)} 60%{transform:translateX(5px)} 75%{transform:translateX(-3px)} 90%{transform:translateX(2px)} }';
-    document.head.appendChild(shakeStyle);
+    function startUserTimer(start) {
+        $('user-status').textContent = 'Active';
+        $('user-status').className = 'badge badge-success';
+        $('toggle-btn').textContent = 'تسجيل الانصراف';
+        $('toggle-btn').className = 'btn btn-danger';
+        userTimer = setInterval(() => {
+            const now = new Date();
+            const diff = now - start;
+            const h = Math.floor(diff/3600000);
+            const m = Math.floor((diff%3600000)/60000);
+            $('user-status').textContent = `Active: ${h}h ${m}m`;
+        }, 1000);
+    }
 
-    // ===== اختصارات لوحة المفاتيح =====
-    document.addEventListener('keydown', function(e) {
-      // Enter في أي مكان = تركيز على النموذج
-      if (e.key === 'Enter' && document.activeElement !== userInput && document.activeElement !== passInput) {
-        userInput.focus();
-      }
-    });
+    function updateUserStats(logs) {
+        const total = logs.reduce((s, l) => s + (l.duration || 0), 0);
+        $('user-hours').textContent = total.toFixed(1);
+    }
 
-    // ===== التركيز التلقائي =====
-    window.addEventListener('load', function() {
-      setTimeout(() => userInput.focus(), 300);
-    });
-  </script>
+    // --- Admin Dashboard ---
+    async function loadAdminDashboard() {
+        $('auth-wrapper').style.display = 'none';
+        $('main-app').style.display = 'block';
+        $('admin-name-display').textContent = adminEmail.split('@')[0];
+        $('date-display').textContent = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        await refreshData();
+        showSection('home');
+    }
+
+    async function refreshData() {
+        const stats = await get('/api/admin/stats');
+        dataStore = await get('/api/admin/data');
+        
+        $('stat-hours').textContent = stats.totalHours;
+        $('stat-vols').textContent = stats.totalVolunteers;
+        $('stat-active').textContent = stats.activeToday;
+        
+        renderUsersTable();
+        renderActivities();
+        renderLogs();
+        renderDropdowns();
+        renderRecentActivity();
+    }
+
+    function renderUsersTable() {
+        $('users-tbody').innerHTML = dataStore.volunteers.map(u => `
+            <tr>
+                <td><strong>${u.name}</strong></td>
+                <td>${u.email}</td>
+                <td>${u.phone || '-'}</td>
+                <td><span class="badge badge-success">${u.activity || 'General'}</span></td>
+                <td>
+                    <button class="btn btn-ghost" style="padding:5px 10px; font-size:12px;" onclick="editUser('${u.id}')">Edit</button>
+                    <button class="btn btn-ghost" style="padding:5px 10px; color:var(--danger); font-size:12px;" onclick="deleteUser('${u.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderActivities() {
+        $('activities-list').innerHTML = dataStore.activities.map(a => `
+            <div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border); align-items:center;">
+                <span style="font-weight:500;">${a.name}</span>
+                <button class="btn btn-ghost" style="color:var(--danger); font-size:12px; padding:5px 10px;" onclick="deleteActivity('${a.id}')">Delete</button>
+            </div>
+        `).join('');
+    }
+
+    function renderLogs() {
+        $('logs-tbody').innerHTML = dataStore.logs.slice(-15).reverse().map(l => `
+            <tr>
+                <td style="white-space:nowrap;">${new Date(l.timestamp).toLocaleString()}</td>
+                <td>${l.adminEmail}</td>
+                <td><span class="badge badge-warning">${l.action}</span></td>
+                <td>${l.details}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderRecentActivity() {
+        $('recent-tbody').innerHTML = dataStore.attendance.slice(-5).reverse().map(l => {
+            const u = dataStore.volunteers.find(v => v.id === l.volunteerId);
+            return `<tr><td>${u ? u.name : 'Unknown'}</td><td>${l.activityName}</td><td>${l.dateStr}</td><td>${l.duration}</td></tr>`;
+        }).join('');
+    }
+
+    function renderDropdowns() {
+        const userOpts = dataStore.volunteers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+        $('manual-user').innerHTML = userOpts;
+        const actOpts = dataStore.activities.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+        $('manual-activity').innerHTML = actOpts;
+    }
+
+    // --- Admin Actions ---
+    async function editUser(id) {
+        const user = dataStore.volunteers.find(u => u.id === id);
+        $('edit-user-id').value = id;
+        $('edit-name').value = user.name;
+        $('edit-email').value = user.email;
+        $('edit-phone').value = user.phone;
+        $('edit-activity').value = user.activity;
+        openModal('modal-edit-user');
+    }
+
+    async function saveUserEdit() {
+        const id = $('edit-user-id').value;
+        await post('/api/admin/user/edit', {
+            adminEmail: adminEmail,
+            userId: id,
+            name: $('edit-name').value,
+            email: $('edit-email').value,
+            phone: $('edit-phone').value,
+            activity: $('edit-activity').value
+        });
+        closeModal('modal-edit-user');
+        refreshData();
+    }
+
+    async function deleteUser(id) {
+        if(confirm('Are you sure?')) {
+            await fetch('/api/admin/user/delete', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminEmail: adminEmail, userId: id })
+            });
+            refreshData();
+        }
+    }
+
+    async function saveActivity() {
+        const name = $('new-activity-name').value;
+        if(!name) return;
+        await post('/api/admin/activity', { adminEmail: adminEmail, name });
+        closeModal('modal-activity');
+        refreshData();
+    }
+
+    async function deleteActivity(id) {
+        await fetch('/api/admin/activity', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ adminEmail: adminEmail, id })
+        });
+        refreshData();
+    }
+
+    async function submitManualLog() {
+        await post('/api/admin/attendance/manual', {
+            adminEmail: adminEmail,
+            volunteerId: $('manual-user').value,
+            date: $('manual-date').value,
+            checkIn: $('manual-start').value,
+            checkOut: $('manual-end').value,
+            activityName: $('manual-activity').value
+        });
+        alert('Attendance logged successfully!');
+        refreshData();
+    }
+
+    // Init
+    showAuthPage('page-user-login');
+</script>
 </body>
 </html>
