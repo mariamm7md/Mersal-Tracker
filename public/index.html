@@ -3,154 +3,365 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mersal Time Keeper</title>
+  <title>Mersal Time Keeper - تسجيل الدخول</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50:'#effefa', 100:'#c8fff4', 200:'#91fee9', 300:'#53f5d9', 400:'#1ee0c3', 500:'#05c4a8', 600:'#009e8b', 700:'#007e71', 800:'#06645b', 900:'#08534c', 950:'#003330' },
-            dark: { 800:'#1e293b', 900:'#0f172a', 950:'#020617' },
-            amber: { 400:'#fbbf24', 500:'#f59e0b' },
-          },
-          fontFamily: { inter: ['Inter','sans-serif'] }
-        }
-      }
-    }
-  </script>
   <style>
     :root {
       --primary: #009e8b;
       --primary-dark: #007e71;
+      --primary-light: #05c4a8;
       --accent: #f59e0b;
       --bg: #f1f5f9;
       --card: #ffffff;
       --text: #1e293b;
       --muted: #64748b;
       --border: #e2e8f0;
-      --success: #10b981;
       --danger: #f43f5e;
-      --warning: #f59e0b;
+      --success: #10b981;
     }
-    * { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
-    
-    /* إخفاء جميع الصفحات */
-    .view { display: none; }
-    .view.active { display: flex; }
-    
-    /* خلفية صفحات الدخول */
-    .auth-bg {
-      background: linear-gradient(135deg, #003330 0%, #007e71 50%, #05c4a8 100%);
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #003330 0%, #007e71 40%, #05c4a8 100%);
       min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       position: relative;
       overflow: hidden;
     }
-    .auth-bg::before {
-      content: '';
+
+    /* === أشكال الخلفية المتحركة === */
+    .bg-shape {
       position: absolute;
+      border-radius: 50%;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .bg-shape:nth-child(1) {
       width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(5,196,168,0.3) 0%, transparent 70%);
-      top: -100px; left: -100px;
-      border-radius: 50%;
-      animation: float1 8s ease-in-out infinite;
+      background: radial-gradient(circle, #1ee0c3, transparent 70%);
+      top: -120px; right: -80px;
+      animation: shapeFloat1 12s ease-in-out infinite;
     }
-    .auth-bg::after {
-      content: '';
-      position: absolute;
+    .bg-shape:nth-child(2) {
       width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%);
-      bottom: -80px; right: -80px;
-      border-radius: 50%;
-      animation: float2 10s ease-in-out infinite;
+      background: radial-gradient(circle, #f59e0b, transparent 70%);
+      bottom: -100px; left: -60px;
+      animation: shapeFloat2 15s ease-in-out infinite;
     }
-    @keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,40px)} }
-    @keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,-60px)} }
-    
-    /* بطاقة الدخول */
+    .bg-shape:nth-child(3) {
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, #fff, transparent 70%);
+      top: 50%; left: 10%;
+      animation: shapeFloat3 10s ease-in-out infinite;
+    }
+    .bg-shape:nth-child(4) {
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, #1ee0c3, transparent 70%);
+      bottom: 20%; right: 15%;
+      animation: shapeFloat1 8s ease-in-out infinite reverse;
+    }
+    .bg-shape:nth-child(5) {
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, #fbbf24, transparent 70%);
+      top: 15%; left: 30%;
+      animation: shapeFloat2 9s ease-in-out infinite reverse;
+    }
+
+    @keyframes shapeFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, 30px) scale(1.05); }
+      66% { transform: translate(-20px, -15px) scale(0.95); }
+    }
+    @keyframes shapeFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-50px, -40px) scale(1.08); }
+    }
+    @keyframes shapeFloat3 {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(30px, -20px); }
+      75% { transform: translate(-15px, 25px); }
+    }
+
+    /* === شبكة نقاط خلفية === */
+    .bg-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 30px 30px;
+      pointer-events: none;
+    }
+
+    /* === البطاقة === */
     .auth-card {
-      background: rgba(255,255,255,0.97);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
-      padding: 40px;
-      width: 420px;
-      max-width: 92vw;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 24px;
+      box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      padding: 44px 40px;
+      width: 440px;
+      max-width: 94vw;
       position: relative;
       z-index: 2;
+      animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    
-    /* حقول الإدخال */
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* === الشعار === */
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(0, 158, 139, 0.3);
+      position: relative;
+    }
+    .logo-icon::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      z-index: -1;
+      opacity: 0.3;
+      filter: blur(8px);
+    }
+    .logo-icon i {
+      color: #fff;
+      font-size: 32px;
+    }
+    .logo-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    .logo-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    /* === الحقول === */
+    .form-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
     .form-input {
       width: 100%;
-      padding: 14px 16px 14px 44px;
+      padding: 15px 18px 15px 46px;
       border: 2px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 15px;
       font-family: 'Inter', sans-serif;
-      transition: all 0.3s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       background: #f8fafc;
       outline: none;
       direction: rtl;
+      color: var(--text);
+    }
+    .form-input::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    .form-input:hover {
+      border-color: #cbd5e1;
+      background: #fff;
     }
     .form-input:focus {
       border-color: var(--primary);
       background: #fff;
-      box-shadow: 0 0 0 4px rgba(0,158,139,0.1);
+      box-shadow: 0 0 0 4px rgba(0, 158, 139, 0.1);
+    }
+    .form-input.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.08);
     }
     .input-icon {
       position: absolute;
-      right: 16px;
+      right: 18px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--muted);
+      color: #94a3b8;
       font-size: 16px;
       transition: color 0.3s;
+      pointer-events: none;
     }
-    .input-group:focus-within .input-icon { color: var(--primary); }
-    
-    /* أزرار */
-    .btn-primary {
+    .form-group:focus-within .input-icon {
+      color: var(--primary);
+    }
+    .form-group.has-error .input-icon {
+      color: var(--danger);
+    }
+    .field-error {
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 6px;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+    .field-error.visible {
+      display: flex;
+    }
+
+    /* === زر إظهار/إخفاء كلمة المرور === */
+    .toggle-pass {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 15px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .toggle-pass:hover { color: var(--muted); }
+
+    /* === زر تسجيل الدخول === */
+    .btn-login {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
       color: #fff;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Inter', sans-serif;
-      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,158,139,0.35); }
-    .btn-primary:active { transform: translateY(0); }
-    
-    .btn-admin {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
     }
-    .btn-admin:hover { box-shadow: 0 8px 25px rgba(245,158,11,0.35); }
-    
-    .btn-sm {
-      padding: 8px 16px;
-      font-size: 13px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 158, 139, 0.35);
+    }
+    .btn-login:hover::before { opacity: 1; }
+    .btn-login:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 12px rgba(0, 158, 139, 0.2);
+    }
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* === حالة التحميل === */
+    .btn-login .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn-login.loading .spinner { display: block; }
+    .btn-login.loading .btn-text { display: none; }
+    .btn-login.loading .btn-icon { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* === الروابط === */
+    .links-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+      gap: 24px;
+    }
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
       font-weight: 600;
-      font-family: 'Inter', sans-serif;
       transition: all 0.2s;
+      padding: 6px 12px;
+      border-radius: 8px;
     }
-    .btn-sm:hover { transform: translateY(-1px); }
-    
-    /* التنبيهات */
+    .link-item:hover {
+      background: rgba(0, 158, 139, 0.06);
+      color: var(--primary-dark);
+    }
+    .link-item i { font-size: 13px; }
+
+    /* === صندوق المعلومات === */
+    .info-box {
+      margin-top: 20px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #f0fdfa, #ecfdf5);
+      border: 1px solid #d1fae5;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .info-box i {
+      color: var(--primary);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .info-box p {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .info-box strong {
+      color: var(--text);
+      font-weight: 700;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    /* === تنبيهات === */
     .toast-container {
       position: fixed;
-      top: 20px;
+      top: 24px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10000;
@@ -158,15 +369,18 @@
       flex-direction: column;
       gap: 10px;
       pointer-events: none;
+      width: 400px;
+      max-width: 92vw;
     }
     .toast {
-      padding: 14px 24px;
-      border-radius: 12px;
+      padding: 16px 22px;
+      border-radius: 14px;
       color: #fff;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      animation: toastIn 0.4s ease, toastOut 0.4s ease 3s forwards;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+      animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.4s ease 3.2s forwards;
       pointer-events: auto;
       display: flex;
       align-items: center;
@@ -176,1707 +390,341 @@
     .toast.error { background: linear-gradient(135deg, #f43f5e, #e11d48); }
     .toast.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .toast.info { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-    @keyframes toastIn { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes toastOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-30px)} }
-    
-    /* شريط جانبي */
-    .sidebar {
-      width: 260px;
-      min-height: 100vh;
-      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-      color: #fff;
-      position: fixed;
-      right: 0;
-      top: 0;
-      z-index: 100;
-      transition: transform 0.3s;
-      overflow-y: auto;
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .sidebar-item {
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    }
+
+    /* === ذرة الأمان === */
+    .security-badge {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 13px 24px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-radius: 0;
-      font-size: 14px;
-      font-weight: 500;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 20px;
+      font-size: 11px;
       color: #94a3b8;
     }
-    .sidebar-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-    .sidebar-item.active {
-      background: rgba(0,158,139,0.2);
-      color: #1ee0c3;
-      border-right: 3px solid #1ee0c3;
+    .security-badge i { font-size: 12px; color: var(--success); }
+
+    /* === ريسبونسف === */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 32px 24px;
+        border-radius: 20px;
+      }
+      .logo-title { font-size: 22px; }
+      .logo-icon { width: 60px; height: 60px; border-radius: 16px; }
+      .logo-icon i { font-size: 26px; }
+      .links-row { flex-direction: column; gap: 8px; align-items: center; }
+      .info-box { flex-direction: column; text-align: center; }
     }
-    .sidebar-item i { width: 20px; text-align: center; font-size: 15px; }
-    
-    /* بطاقات الإحصائيات */
-    .stat-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      border: 1px solid var(--border);
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
+
+    /* === تقليل الحركة === */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 80px;
-      height: 80px;
-      border-radius: 0 0 0 80px;
-      opacity: 0.1;
-    }
-    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
-    
-    /* جدول */
-    .data-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    .data-table th {
-      background: #f8fafc;
-      padding: 14px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      text-align: right;
-      border-bottom: 2px solid var(--border);
-    }
-    .data-table td {
-      padding: 14px 16px;
-      font-size: 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .data-table tr:hover td { background: #f8fafc; }
-    
-    /* المودال */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
-      z-index: 9000;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      animation: fadeIn 0.2s;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: #fff;
-      border-radius: 20px;
-      padding: 32px;
-      width: 500px;
-      max-width: 92vw;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: modalIn 0.3s ease;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-    }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    @keyframes modalIn { from{opacity:0;transform:scale(0.9) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
-    
-    /* حالة التسجيل */
-    .clock-ring {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      cursor: pointer;
-      transition: all 0.4s;
-      position: relative;
-    }
-    .clock-ring.in {
-      background: conic-gradient(#10b981 0deg, #10b981 var(--progress, 0deg), #e2e8f0 var(--progress, 0deg));
-      box-shadow: 0 0 40px rgba(16,185,129,0.2);
-    }
-    .clock-ring.out {
-      background: #e2e8f0;
-      box-shadow: 0 0 40px rgba(0,0,0,0.05);
-    }
-    .clock-ring:hover { transform: scale(1.05); }
-    .clock-ring-inner {
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-    
-    /* حالة شارة */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .badge-success { background: #ecfdf5; color: #059669; }
-    .badge-danger { background: #fef2f2; color: #dc2626; }
-    .badge-warning { background: #fffbeb; color: #d97706; }
-    .badge-info { background: #eff6ff; color: #2563eb; }
-    
-    /* أنيميشن الظهور */
-    .fade-in { animation: fadeInUp 0.5s ease; }
-    @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    
-    /* ريسبونسف */
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(100%); }
-      .sidebar.open { transform: translateX(0); }
-      .main-content { margin-right: 0 !important; }
-      .stat-grid { grid-template-columns: 1fr !important; }
-      .chart-grid { grid-template-columns: 1fr !important; }
-    }
-    
-    /* سكرول بار */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    
-    /* تلميح */
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)} 70%{box-shadow:0 0 0 20px rgba(16,185,129,0)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
-    
-    .select-styled {
-      padding: 10px 14px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      background: #f8fafc;
-      outline: none;
-      cursor: pointer;
-      transition: all 0.3s;
-      direction: rtl;
-    }
-    .select-styled:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,158,139,0.1); }
   </style>
 </head>
 <body>
 
-<!-- حاوية التنبيهات -->
-<div class="toast-container" id="toastContainer"></div>
+  <!-- أشكال الخلفية -->
+  <div class="bg-shape"></div>
+  <div class="bg-shape"></div>
+  <div class="bg-shape"></div>
+  <div class="bg-shape"></div>
+  <div class="bg-shape"></div>
+  <div class="bg-dots"></div>
 
-<!-- ===== صفحة تسجيل دخول المستخدم ===== -->
-<div id="loginView" class="view active auth-bg" style="justify-content:center;align-items:center;">
-  <div class="auth-card fade-in">
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:64px;height:64px;background:linear-gradient(135deg,#009e8b,#05c4a8);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-        <i class="fas fa-clock" style="color:#fff;font-size:28px;"></i>
+  <!-- حاوية التنبيهات -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- بطاقة تسجيل الدخول -->
+  <div class="auth-card">
+    <!-- الشعار -->
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <i class="fas fa-clock"></i>
       </div>
-      <h1 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 6px;">Mersal Time Keeper</h1>
-      <p style="color:#64748b;font-size:14px;margin:0;">نظام تسجيل وحضور المتطوعين</p>
+      <h1 class="logo-title">Mersal Time Keeper</h1>
+      <p class="logo-subtitle">نظام تسجيل وحضور المتطوعين</p>
     </div>
-    <form id="loginForm" autocomplete="off">
-      <div class="input-group" style="position:relative;margin-bottom:16px;">
+
+    <!-- النموذج -->
+    <form id="loginForm" autocomplete="off" novalidate>
+      <!-- اسم المستخدم -->
+      <div class="form-group" id="userGroup">
         <i class="fas fa-user input-icon"></i>
-        <input type="text" name="user" class="form-input" placeholder="اسم المستخدم" required>
+        <input
+          type="text"
+          id="userInput"
+          class="form-input"
+          placeholder="اسم المستخدم"
+          required
+          autofocus
+          aria-label="اسم المستخدم"
+        >
+        <div class="field-error" id="userError">
+          <i class="fas fa-exclamation-circle"></i>
+          <span></span>
+        </div>
       </div>
-      <div class="input-group" style="position:relative;margin-bottom:24px;">
+
+      <!-- كلمة المرور -->
+      <div class="form-group" id="passGroup">
         <i class="fas fa-lock input-icon"></i>
-        <input type="password" name="password" class="form-input" placeholder="كلمة المرور" required>
+        <input
+          type="password"
+          id="passInput"
+          class="form-input"
+          placeholder="كلمة المرور"
+          required
+          aria-label="كلمة المرور"
+        >
+        <button type="button" class="toggle-pass" id="togglePass" aria-label="إظهار كلمة المرور">
+          <i class="fas fa-eye"></i>
+        </button>
+        <div class="field-error" id="passError">
+          <i class="fas fa-exclamation-circle"></i>
+          <span></span>
+        </div>
       </div>
-      <button type="submit" class="btn-primary">
-        <i class="fas fa-sign-in-alt" style="margin-left:8px;"></i>تسجيل الدخول
+
+      <!-- زر الدخول -->
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="btn-icon"><i class="fas fa-sign-in-alt"></i></span>
+        <span class="btn-text">تسجيل الدخول</span>
+        <span class="spinner"></span>
       </button>
     </form>
 
-<!-- ===== صفحة تسجيل دخول المدير ===== -->
-<div id="adminLoginView" class="view auth-bg" style="justify-content:center;align-items:center;">
-  <div class="auth-card fade-in">
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:64px;height:64px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-        <i class="fas fa-shield-alt" style="color:#fff;font-size:28px;"></i>
-      </div>
-      <h1 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 6px;">لوحة تحكم المدير</h1>
-      <p style="color:#64748b;font-size:14px;margin:0;">الدخول مخصص للمسؤولين فقط</p>
-    </div>
-    <form id="adminLoginForm" autocomplete="off">
-      <div class="input-group" style="position:relative;margin-bottom:16px;">
-        <i class="fas fa-user-shield input-icon"></i>
-        <input type="text" name="user" class="form-input" placeholder="اسم المدير" required>
-      </div>
-      <div class="input-group" style="position:relative;margin-bottom:24px;">
-        <i class="fas fa-lock input-icon"></i>
-        <input type="password" name="password" class="form-input" placeholder="كلمة المرور" required>
-      </div>
-      <button type="submit" class="btn-primary btn-admin">
-        <i class="fas fa-sign-in-alt" style="margin-left:8px;"></i>دخول المدير
-      </button>
-    </form>
-    <div style="text-align:center;margin-top:20px;">
-      <a href="#" onclick="App.navigate('login')" style="color:var(--primary);text-decoration:none;font-size:14px;font-weight:500;">
-        <i class="fas fa-arrow-right" style="margin-left:6px;"></i>العودة لتسجيل دخول المتطوع
+    <!-- روابط -->
+    <div class="links-row">
+      <a href="/admin" class="link-item">
+        <i class="fas fa-shield-alt"></i>
+        دخول المدير
       </a>
     </div>
-    <div style="text-align:center;margin-top:12px;padding:10px;background:#fffbeb;border-radius:8px;">
-      <p style="font-size:12px;color:#64748b;margin:0;">للتجربة: <strong>admin</strong> / <strong>admin123</strong></p>
+
+    <!-- شارة الأمان -->
+    <div class="security-badge">
+      <i class="fas fa-shield-alt"></i>
+      <span>اتصال آمن مشفر</span>
     </div>
   </div>
-</div>
 
-<!-- ===== لوحة تحكم المستخدم ===== -->
-<div id="userDashboardView" class="view" style="flex-direction:column;min-height:100vh;">
-  <!-- الشريط العلوي -->
-  <header style="background:#fff;border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:36px;height:36px;background:linear-gradient(135deg,#009e8b,#05c4a8);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-        <i class="fas fa-clock" style="color:#fff;font-size:16px;"></i>
-      </div>
-      <span style="font-weight:700;font-size:16px;color:#0f172a;">Mersal</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <span id="userClockDisplay" style="font-size:14px;color:var(--muted);font-weight:500;direction:ltr;"></span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:34px;height:34px;background:linear-gradient(135deg,#009e8b,#05c4a8);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <i class="fas fa-user" style="color:#fff;font-size:13px;"></i>
-        </div>
-        <span id="userNameDisplay" style="font-weight:600;font-size:14px;"></span>
-      </div>
-      <button onclick="App.logout()" style="background:none;border:1px solid var(--border);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Inter';font-size:13px;color:var(--muted);transition:all 0.2s;" onmouseover="this.style.borderColor='#f43f5e';this.style.color='#f43f5e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-        <i class="fas fa-sign-out-alt"></i>
-      </button>
-    </div>
-  </header>
+  <script>
+    /* =============================================
+       تسجيل دخول المتطوع - المنطق
+       ============================================= */
 
-  <!-- المحتوى الرئيسي -->
-  <main style="flex:1;padding:32px;max-width:1000px;margin:0 auto;width:100%;">
-    <!-- التاريخ -->
-    <div style="margin-bottom:28px;" class="fade-in">
-      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 4px;">مرحباً، <span id="greetingName"></span></h2>
-      <p id="userDateDisplay" style="color:var(--muted);font-size:14px;margin:0;"></p>
-    </div>
+    const API_BASE = window.location.origin;
 
-    <!-- قسم التسجيل -->
-    <div style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);margin-bottom:28px;text-align:center;" class="fade-in">
-      <div id="clockRing" class="clock-ring out" style="margin:0 auto 24px;" onclick="App.toggleClock()">
-        <div class="clock-ring-inner">
-          <i id="clockIcon" class="fas fa-play-circle" style="font-size:36px;color:#10b981;margin-bottom:8px;"></i>
-          <span id="clockStatus" style="font-size:15px;font-weight:700;color:#0f172a;">جاهز للتسجيل</span>
-          <span id="clockTimer" style="font-size:28px;font-weight:800;color:#0f172a;margin-top:4px;direction:ltr;">00:00:00</span>
-        </div>
-      </div>
-      <p id="clockHint" style="color:var(--muted);font-size:14px;">اضغط على الدائرة لتسجيل الحضور</p>
-    </div>
+    // ===== العناصر =====
+    const form = document.getElementById('loginForm');
+    const userInput = document.getElementById('userInput');
+    const passInput = document.getElementById('passInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const togglePassBtn = document.getElementById('togglePass');
+    const userGroup = document.getElementById('userGroup');
+    const passGroup = document.getElementById('passGroup');
+    const userError = document.getElementById('userError');
+    const passError = document.getElementById('passError');
 
-    <!-- إحصائيات اليوم -->
-    <div class="stat-grid fade-in" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
-      <div class="stat-card" style="border-top:3px solid #0ea5e9;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:40px;height:40px;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
-            <i class="fas fa-sign-in-alt" style="color:#0ea5e9;"></i>
-          </div>
-          <span style="font-size:13px;color:var(--muted);">وقت الدخول</span>
-        </div>
-        <p id="todayClockIn" style="font-size:20px;font-weight:800;margin:0;direction:ltr;">--:--</p>
-      </div>
-      <div class="stat-card" style="border-top:3px solid #10b981;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:40px;height:40px;background:#ecfdf5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
-            <i class="fas fa-hourglass-half" style="color:#10b981;"></i>
-          </div>
-          <span style="font-size:13px;color:var(--muted);">مدة العمل</span>
-        </div>
-        <p id="todayDuration" style="font-size:20px;font-weight:800;margin:0;direction:ltr;">00:00</p>
-      </div>
-      <div class="stat-card" style="border-top:3px solid #f59e0b;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:40px;height:40px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:center;">
-            <i class="fas fa-calendar-check" style="color:#f59e0b;"></i>
-          </div>
-          <span style="font-size:13px;color:var(--muted);">أيام هذا الشهر</span>
-        </div>
-        <p id="monthDays" style="font-size:20px;font-weight:800;margin:0;">0</p>
-      </div>
-    </div>
+    // ===== التحقق من الجلسة الموجودة =====
+    (function checkExistingSession() {
+      const token = localStorage.getItem('mersal_token');
+      const userData = localStorage.getItem('mersal_user');
 
-    <!-- سجل الحضور -->
-    <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;" class="fade-in">
-      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-        <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fas fa-history" style="margin-left:8px;color:var(--primary);"></i>سجل الحضور الأخير</h3>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="data-table">
-          <thead>
-            <tr><th>التاريخ</th><th>وقت الدخول</th><th>وقت الخروج</th><th>المدة</th><th>الحالة</th></tr>
-          </thead>
-          <tbody id="userAttendanceBody"></tbody>
-        </table>
-      </div>
-      <div id="userNoRecords" style="padding:40px;text-align:center;color:var(--muted);display:none;">
-        <i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.3;"></i>
-        لا توجد سجلات حضور بعد
-      </div>
-    </div>
-  </main>
-</div>
-
-<!-- ===== لوحة تحكم المدير ===== -->
-<div id="adminDashboardView" class="view" style="min-height:100vh;">
-  <!-- الشريط الجانبي -->
-  <aside class="sidebar" id="adminSidebar">
-    <div style="padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.08);">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:40px;height:40px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          <i class="fas fa-shield-alt" style="color:#fff;font-size:18px;"></i>
-        </div>
-        <div>
-          <p style="font-weight:700;font-size:15px;margin:0;">Mersal Admin</p>
-          <p style="font-size:11px;color:#64748b;margin:0;">لوحة الإدارة</p>
-        </div>
-      </div>
-    </div>
-    <nav style="padding:16px 0;">
-      <div class="sidebar-item active" data-section="overview" onclick="App.switchSection('overview')">
-        <i class="fas fa-chart-pie"></i><span>نظرة عامة</span>
-      </div>
-      <div class="sidebar-item" data-section="volunteers" onclick="App.switchSection('volunteers')">
-        <i class="fas fa-users"></i><span>المتطوعين</span>
-      </div>
-      <div class="sidebar-item" data-section="attendance" onclick="App.switchSection('attendance')">
-        <i class="fas fa-clipboard-list"></i><span>سجل الحضور</span>
-      </div>
-      <div class="sidebar-item" data-section="activities" onclick="App.switchSection('activities')">
-        <i class="fas fa-stream"></i><span>سجل الأنشطة</span>
-      </div>
-      <div class="sidebar-item" data-section="settings" onclick="App.switchSection('settings')">
-        <i class="fas fa-cog"></i><span>الإعدادات</span>
-      </div>
-    </nav>
-    <div style="position:absolute;bottom:0;right:0;left:0;padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08);">
-      <div class="sidebar-item" onclick="App.logout()" style="color:#f43f5e;padding:12px 24px;">
-        <i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span>
-      </div>
-    </div>
-  </aside>
-
-  <!-- المحتوى الرئيسي -->
-  <div class="main-content" style="margin-right:260px;min-height:100vh;">
-    <!-- الشريط العلوي -->
-    <header style="background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;">
-      <div style="display:flex;align-items:center;gap:16px;">
-        <button id="menuToggle" onclick="document.getElementById('adminSidebar').classList.toggle('open')" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text);">
-          <i class="fas fa-bars"></i>
-        </button>
-        <h2 id="sectionTitle" style="margin:0;font-size:18px;font-weight:700;">نظرة عامة</h2>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span id="adminClockDisplay" style="font-size:14px;color:var(--muted);direction:ltr;"></span>
-        <span style="font-size:14px;font-weight:600;color:var(--text);">المدير</span>
-        <div style="width:34px;height:34px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <i class="fas fa-user-shield" style="color:#fff;font-size:13px;"></i>
-        </div>
-      </div>
-    </header>
-
-    <main style="padding:28px;">
-      <!-- ===== نظرة عامة ===== -->
-      <div id="section-overview" class="admin-section fade-in">
-        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
-          <div class="stat-card" style="border-top:3px solid #0ea5e9;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <span style="font-size:13px;color:var(--muted);">إجمالي المتطوعين</span>
-              <div style="width:36px;height:36px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-users" style="color:#0ea5e9;font-size:14px;"></i>
-              </div>
-            </div>
-            <p id="statTotalVolunteers" style="font-size:28px;font-weight:800;margin:0;">0</p>
-          </div>
-          <div class="stat-card" style="border-top:3px solid #10b981;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <span style="font-size:13px;color:var(--muted);">حاضرون الآن</span>
-              <div style="width:36px;height:36px;background:#ecfdf5;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-user-check" style="color:#10b981;font-size:14px;"></i>
-              </div>
-            </div>
-            <p id="statActiveNow" style="font-size:28px;font-weight:800;margin:0;">0</p>
-          </div>
-          <div class="stat-card" style="border-top:3px solid #f59e0b;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <span style="font-size:13px;color:var(--muted);">حضور اليوم</span>
-              <div style="width:36px;height:36px;background:#fffbeb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-calendar-day" style="color:#f59e0b;font-size:14px;"></i>
-              </div>
-            </div>
-            <p id="statTodayAttendance" style="font-size:28px;font-weight:800;margin:0;">0</p>
-          </div>
-          <div class="stat-card" style="border-top:3px solid #8b5cf6;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <span style="font-size:13px;color:var(--muted);">إجمالي الساعات</span>
-              <div style="width:36px;height:36px;background:#f5f3ff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-clock" style="color:#8b5cf6;font-size:14px;"></i>
-              </div>
-            </div>
-            <p id="statTotalHours" style="font-size:28px;font-weight:800;margin:0;">0</p>
-          </div>
-        </div>
-        <div class="chart-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:28px;">
-          <div style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--border);">
-            <h3 style="margin:0 0 20px;font-size:15px;font-weight:700;">حضور الأسبوع</h3>
-            <canvas id="weeklyChart" height="120"></canvas>
-          </div>
-          <div style="background:#fff;border-radius:16px;padding:24px;border:1px solid var(--border);">
-            <h3 style="margin:0 0 20px;font-size:15px;font-weight:700;">توزيع الأقسام</h3>
-            <canvas id="deptChart" height="200"></canvas>
-          </div>
-        </div>
-        <!-- آخر الحضور -->
-        <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-          <div style="padding:18px 24px;border-bottom:1px solid var(--border);">
-            <h3 style="margin:0;font-size:15px;font-weight:700;"><i class="fas fa-list" style="margin-left:8px;color:var(--primary);"></i>آخر سجلات الحضور</h3>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead><tr><th>المتطوع</th><th>التاريخ</th><th>الدخول</th><th>الخروج</th><th>المدة</th><th>الحالة</th></tr></thead>
-              <tbody id="recentAttendanceBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== إدارة المتطوعين ===== -->
-      <div id="section-volunteers" class="admin-section" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <div style="position:relative;">
-              <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;"></i>
-              <input type="text" id="volunteerSearch" placeholder="بحث بالاسم أو القسم..." oninput="App.renderVolunteers()" style="padding:10px 36px 10px 14px;border:2px solid var(--border);border-radius:10px;font-family:'Inter';font-size:14px;width:260px;outline:none;transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
-            </div>
-          </div>
-          <button onclick="App.openVolunteerModal()" class="btn-sm" style="background:linear-gradient(135deg,#009e8b,#007e71);color:#fff;padding:10px 20px;font-size:14px;">
-            <i class="fas fa-plus" style="margin-left:6px;"></i>إضافة متطوع
-          </button>
-        </div>
-        <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>القسم</th><th>الهاتف</th><th>تاريخ الانضمام</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-              <tbody id="volunteersBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== سجل الحضور ===== -->
-      <div id="section-attendance" class="admin-section" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <input type="date" id="attDateFrom" class="select-styled" onchange="App.renderAttendance()">
-            <span style="color:var(--muted);">إلى</span>
-            <input type="date" id="attDateTo" class="select-styled" onchange="App.renderAttendance()">
-            <select id="attVolunteerFilter" class="select-styled" onchange="App.renderAttendance()">
-              <option value="">كل المتطوعين</option>
-            </select>
-            <select id="attStatusFilter" class="select-styled" onchange="App.renderAttendance()">
-              <option value="">كل الحالات</option>
-              <option value="normal">عادي</option>
-              <option value="late">متأخر</option>
-              <option value="early">انصراف مبكر</option>
-            </select>
-          </div>
-          <button onclick="App.exportAttendance()" class="btn-sm" style="background:#0f172a;color:#fff;padding:10px 20px;font-size:14px;">
-            <i class="fas fa-file-export" style="margin-left:6px;"></i>تصدير CSV
-          </button>
-        </div>
-        <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead><tr><th>المتطوع</th><th>القسم</th><th>التاريخ</th><th>الدخول</th><th>الخروج</th><th>المدة</th><th>الحالة</th></tr></thead>
-              <tbody id="attendanceBody"></tbody>
-            </table>
-          </div>
-          <div id="attNoRecords" style="padding:40px;text-align:center;color:var(--muted);display:none;">
-            <i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.3;"></i>
-            لا توجد سجلات مطابقة للفلاتر
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== سجل الأنشطة ===== -->
-      <div id="section-activities" class="admin-section" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-          <span style="font-size:14px;color:var(--muted);" id="activitiesCount"></span>
-          <button onclick="App.clearActivities()" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:8px 16px;">
-            <i class="fas fa-trash" style="margin-left:6px;"></i>مسح الكل
-          </button>
-        </div>
-        <div id="activitiesList" style="display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-
-      <!-- ===== الإعدادات ===== -->
-      <div id="section-settings" class="admin-section" style="display:none;">
-        <div style="max-width:600px;">
-          <div style="background:#fff;border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:20px;">
-            <h3 style="margin:0 0 24px;font-size:16px;font-weight:700;"><i class="fas fa-business-time" style="margin-left:8px;color:var(--primary);"></i>إعدادات ساعات العمل</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-              <div>
-                <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">بداية الدوام</label>
-                <input type="time" id="setWorkStart" class="form-input" style="padding:10px 14px;">
-              </div>
-              <div>
-                <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">نهاية الدوام</label>
-                <input type="time" id="setWorkEnd" class="form-input" style="padding:10px 14px;">
-              </div>
-            </div>
-            <div style="margin-bottom:20px;">
-              <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">هامش التأخير (بالدقائق)</label>
-              <input type="number" id="setLateThreshold" class="form-input" style="padding:10px 14px;" min="0" max="60">
-            </div>
-            <button onclick="App.saveSettings()" class="btn-sm" style="background:linear-gradient(135deg,#009e8b,#007e71);color:#fff;padding:10px 24px;font-size:14px;">
-              <i class="fas fa-save" style="margin-left:6px;"></i>حفظ الإعدادات
-            </button>
-          </div>
-          <div style="background:#fff;border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:20px;">
-            <h3 style="margin:0 0 24px;font-size:16px;font-weight:700;"><i class="fas fa-database" style="margin-left:8px;color:var(--primary);"></i>إدارة البيانات</h3>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
-              <button onclick="App.exportAllData()" class="btn-sm" style="background:#0f172a;color:#fff;padding:10px 20px;">
-                <i class="fas fa-download" style="margin-left:6px;"></i>تصدير كل البيانات
-              </button>
-              <button onclick="App.resetAllData()" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:10px 20px;">
-                <i class="fas fa-exclamation-triangle" style="margin-left:6px;"></i>إعادة تعيين البيانات
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-
-<!-- ===== المودال ===== -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal-box" id="modalBox"></div>
-</div>
-
-<script>
-/* =============================================
-   Mersal Time Keeper - النظام الكامل
-   ============================================= */
-const App = {
-  // ===== الحالة العامة =====
-  currentUser: null,
-  isAdmin: false,
-  timerInterval: null,
-  charts: {},
-  activeSessions: {}, // تخزين الجلسات النشطة { volunteerId: clockInTime }
-
-  // ===== الإعدادات الافتراضية =====
-  defaultSettings: {
-    workStart: '08:00',
-    workEnd: '16:00',
-    lateThreshold: 15
-  },
-
-  // ===== بيانات تجريبية =====
-  defaultVolunteers: [
-    { id: 1, user: 'user1', name: 'أحمد محمد عبدالله', password: '123456', department: 'الخدمات الاجتماعية', phone: '0501234567', role: 'متطوع', createdAt: '2024-01-15' },
-    { id: 2, user: 'user2', name: 'فاطمة علي حسن', password: '123456', department: 'التعليم والتدريب', phone: '0507654321', role: 'متطوع', createdAt: '2024-02-20' },
-    { id: 3, user: 'user3', name: 'خالد حسن أحمد', password: '123456', department: 'الصحة والإسعاف', phone: '0509876543', role: 'متطوع', createdAt: '2024-03-10' },
-    { id: 4, user: 'user4', name: 'نورة سعد الدين', password: '123456', department: 'الخدمات الاجتماعية', phone: '0503456789', role: 'متطوعة', createdAt: '2024-04-05' },
-    { id: 5, user: 'user5', name: 'محمد فيصل العتيبي', password: '123456', department: 'اللوجستيات', phone: '0502345678', role: 'متطوع', createdAt: '2024-05-12' },
-  ],
-
-  // ===== التهيئة =====
-  init() {
-    this.seedData();
-    this.checkSession();
-    this.updateClock();
-    setInterval(() => this.updateClock(), 1000);
-    this.bindEvents();
-    this.checkResponsive();
-    window.addEventListener('resize', () => this.checkResponsive());
-  },
-
-  // ===== زرع البيانات الأولية =====
-  seedData() {
-    if (!localStorage.getItem('mersal_volunteers')) {
-      localStorage.setItem('mersal_volunteers', JSON.stringify(this.defaultVolunteers));
-    }
-    if (!localStorage.getItem('mersal_attendance')) {
-      // إنشاء بيانات حضور تجريبية لآخر 7 أيام
-      const attendance = [];
-      const volunteers = this.defaultVolunteers;
-      const now = new Date();
-      for (let d = 6; d >= 0; d--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - d);
-        if (date.getDay() === 5) continue; // تجاوز الجمعة
-        const dateStr = date.toISOString().split('T')[0];
-        // كل متطوع يحضر بشكل عشوائي
-        const count = 2 + Math.floor(Math.random() * (volunteers.length - 1));
-        const shuffled = [...volunteers].sort(() => Math.random() - 0.5).slice(0, count);
-        shuffled.forEach(v => {
-          const baseHour = 7 + Math.floor(Math.random() * 2);
-          const baseMin = Math.floor(Math.random() * 60);
-          const clockIn = `${String(baseHour).padStart(2,'0')}:${String(baseMin).padStart(2,'0')}`;
-          const workHours = 5 + Math.floor(Math.random() * 5);
-          const outHour = baseHour + workHours;
-          const outMin = Math.floor(Math.random() * 60);
-          const clockOut = `${String(Math.min(outHour, 23)).padStart(2,'0')}:${String(outMin).padStart(2,'0')}`;
-          const durationMin = (outHour * 60 + outMin) - (baseHour * 60 + baseMin);
-          const settings = this.getSettings();
-          const lateThreshold = settings.lateThreshold || 15;
-          const [wh, wm] = settings.workStart.split(':').map(Number);
-          const workStartMin = wh * 60 + wm;
-          const clockInMin = baseHour * 60 + baseMin;
-          let status = 'normal';
-          if (clockInMin > workStartMin + lateThreshold) status = 'late';
-          attendance.push({
-            id: Date.now() + Math.random(),
-            volunteerId: v.id,
-            volunteerName: v.name,
-            department: v.department,
-            date: dateStr,
-            clockIn,
-            clockOut,
-            duration: durationMin,
-            status
-          });
+      if (token && userData) {
+        // التحقق من صلاحية التوكن
+        fetch(API_BASE + '/api/verify', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            const user = JSON.parse(userData);
+            if (user.isAdmin) {
+              window.location.href = '/admin-dashboard';
+            } else {
+              window.location.href = '/dashboard';
+            }
+          } else {
+            // توكن منتهي - تنظيف
+            localStorage.removeItem('mersal_token');
+            localStorage.removeItem('mersal_user');
+          }
+        })
+        .catch(() => {
+          // خطأ في الشبكة - لا نفعل شيء، ندع المستخدم يسجل
         });
       }
-      localStorage.setItem('mersal_attendance', JSON.stringify(attendance));
-    }
-    if (!localStorage.getItem('mersal_activities')) {
-      localStorage.setItem('mersal_activities', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('mersal_settings')) {
-      localStorage.setItem('mersal_settings', JSON.stringify(this.defaultSettings));
-    }
-    if (!localStorage.getItem('mersal_active_sessions')) {
-      localStorage.setItem('mersal_active_sessions', JSON.stringify({}));
-    }
-  },
+    })();
 
-  // ===== قراءة/كتابة البيانات =====
-  getData(key) {
-    try { return JSON.parse(localStorage.getItem('mersal_' + key)) || []; }
-    catch { return []; }
-  },
-  setData(key, data) {
-    localStorage.setItem('mersal_' + key, JSON.stringify(data));
-  },
-  getSettings() {
-    try { return JSON.parse(localStorage.getItem('mersal_settings')) || this.defaultSettings; }
-    catch { return this.defaultSettings; }
-  },
-  getActiveSessions() {
-    try { return JSON.parse(localStorage.getItem('mersal_active_sessions')) || {}; }
-    catch { return {}; }
-  },
-  setActiveSessions(sessions) {
-    localStorage.setItem('mersal_active_sessions', JSON.stringify(sessions));
-  },
+    // ===== إظهار/إخفاء كلمة المرور =====
+    togglePassBtn.addEventListener('click', function() {
+      const isPassword = passInput.type === 'password';
+      passInput.type = isPassword ? 'text' : 'password';
+      this.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
 
-  // ===== ربط الأحداث =====
-  bindEvents() {
-    // تسجيل دخول المستخدم
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    // ===== مسح أخطاء الحقل عند الكتابة =====
+    userInput.addEventListener('input', () => clearFieldError(userGroup, userError));
+    passInput.addEventListener('input', () => clearFieldError(passGroup, passError));
+
+    // ===== إرسال النموذج =====
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const user = fd.get('user').trim();
-      const pass = fd.get('password').trim();
-      this.userLogin(user, pass);
-    });
-    // تسجيل دخول المدير
-    document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const user = fd.get('user').trim();
-      const pass = fd.get('password').trim();
-      this.adminLogin(user, pass);
-    });
-    // إغلاق المودال بالضغط خارجه
-    document.getElementById('modalOverlay').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) this.closeModal();
-    });
-    // إغلاق المودال بزر Escape
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.closeModal();
-    });
-  },
 
-  // ===== التنقل بين الصفحات =====
-  navigate(view) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const viewMap = {
-      login: 'loginView',
-      adminLogin: 'adminLoginView',
-      userDashboard: 'userDashboardView',
-      adminDashboard: 'adminDashboardView'
-    };
-    const el = document.getElementById(viewMap[view]);
-    if (el) {
-      el.classList.add('active');
-      // إعادة التوجيه
-      if (view === 'userDashboard') this.initUserDashboard();
-      if (view === 'adminDashboard') this.initAdminDashboard();
-    }
-  },
+      // مسح الأخطاء السابقة
+      clearFieldError(userGroup, userError);
+      clearFieldError(passGroup, passError);
 
-  // ===== التحقق من الجلسة =====
-  checkSession() {
-    const session = localStorage.getItem('mersal_session');
-    if (session) {
+      const user = userInput.value.trim();
+      const password = passInput.value.trim();
+
+      // تحقق محلي
+      let hasError = false;
+
+      if (!user) {
+        showFieldError(userGroup, userError, 'يرجى إدخال اسم المستخدم');
+        hasError = true;
+      } else if (user.length < 2) {
+        showFieldError(userGroup, userError, 'اسم المستخدم قصير جداً');
+        hasError = true;
+      }
+
+      if (!password) {
+        showFieldError(passGroup, passError, 'يرجى إدخال كلمة المرور');
+        hasError = true;
+      } else if (password.length < 4) {
+        showFieldError(passGroup, passError, 'كلمة المرور قصيرة جداً');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // تفعيل حالة التحميل
+      setLoading(true);
+
       try {
-        const s = JSON.parse(session);
-        if (s.isAdmin) {
-          this.isAdmin = true;
-          this.navigate('adminDashboard');
+        const response = await fetch(API_BASE + '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, password })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // حفظ التوكن وبيانات المستخدم
+          localStorage.setItem('mersal_token', result.token);
+          localStorage.setItem('mersal_user', JSON.stringify(result.user));
+
+          toast('تم تسجيل الدخول بنجاح، جارٍ التحويل...', 'success');
+
+          // تأخير بسيط لعرض التنبيه
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 800);
         } else {
-          this.currentUser = s.user;
-          this.navigate('userDashboard');
-        }
-      } catch {
-        localStorage.removeItem('mersal_session');
-      }
-    }
-  },
+          // فشل تسجيل الدخول
+          const msg = result.message || 'اسم المستخدم أو كلمة المرور غير صحيحة';
 
-  // ===== تسجيل دخول المستخدم =====
-  userLogin(user, pass) {
-    const volunteers = this.getData('volunteers');
-    const found = volunteers.find(v => v.user === user && v.password === pass);
-    if (found) {
-      this.currentUser = found;
-      this.isAdmin = false;
-      localStorage.setItem('mersal_session', JSON.stringify({ userId: found.id, user: found, isAdmin: false }));
-      this.addActivity('تسجيل دخول', `المتطوع ${found.name} سجل الدخول`);
-      this.toast('تم تسجيل الدخول بنجاح', 'success');
-      this.navigate('userDashboard');
-    } else {
-      this.toast('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
-    }
-  },
-
-  // ===== تسجيل دخول المدير =====
-  adminLogin(user, pass) {
-    if (user === 'admin' && pass === 'admin123') {
-      this.isAdmin = true;
-      localStorage.setItem('mersal_session', JSON.stringify({ isAdmin: true }));
-      this.addActivity('تسجيل دخول', 'المدير سجل الدخول');
-      this.toast('مرحباً بك في لوحة التحكم', 'success');
-      this.navigate('adminDashboard');
-    } else {
-      this.toast('بيانات المدير غير صحيحة', 'error');
-    }
-  },
-
-  // ===== تسجيل الخروج =====
-  logout() {
-    // إنهاء الجلسة النشطة إن وجدت
-    if (this.currentUser && !this.isAdmin) {
-      const sessions = this.getActiveSessions();
-      if (sessions[this.currentUser.id]) {
-        this.endClockSession(this.currentUser.id);
-      }
-    }
-    this.currentUser = null;
-    this.isAdmin = false;
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-    localStorage.removeItem('mersal_session');
-    // تدمير الرسوم البيانية
-    Object.values(this.charts).forEach(c => { if (c && c.destroy) c.destroy(); });
-    this.charts = {};
-    this.toast('تم تسجيل الخروج', 'info');
-    this.navigate('login');
-  },
-
-  // ===== تحديث الساعة =====
-  updateClock() {
-    const now = new Date();
-    const time = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const date = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const el1 = document.getElementById('userClockDisplay');
-    const el2 = document.getElementById('adminClockDisplay');
-    const el3 = document.getElementById('userDateDisplay');
-    if (el1) el1.textContent = time;
-    if (el2) el2.textContent = time;
-    if (el3) el3.textContent = date;
-  },
-
-  // ===== تهيئة لوحة المستخدم =====
-  initUserDashboard() {
-    if (!this.currentUser) return;
-    const name = this.currentUser.name;
-    document.getElementById('userNameDisplay').textContent = name;
-    document.getElementById('greetingName').textContent = name;
-    this.updateUserClockUI();
-    this.renderUserAttendance();
-    this.updateUserStats();
-  },
-
-  // ===== تحديث واجهة التسجيل =====
-  updateUserClockUI() {
-    if (!this.currentUser) return;
-    const sessions = this.getActiveSessions();
-    const ring = document.getElementById('clockRing');
-    const icon = document.getElementById('clockIcon');
-    const status = document.getElementById('clockStatus');
-    const timer = document.getElementById('clockTimer');
-    const hint = document.getElementById('clockHint');
-
-    if (sessions[this.currentUser.id]) {
-      // مسجل دخول
-      ring.className = 'clock-ring in pulse';
-      icon.className = 'fas fa-stop-circle';
-      icon.style.color = '#f43f5e';
-      status.textContent = 'تعمل الآن';
-      status.style.color = '#10b981';
-      hint.textContent = 'اضغط لتسجيل الخروج';
-      hint.style.color = '#f43f5e';
-      // بدء المؤقت
-      if (this.timerInterval) clearInterval(this.timerInterval);
-      this.timerInterval = setInterval(() => {
-        const sessions = this.getActiveSessions();
-        const clockInTime = sessions[this.currentUser.id];
-        if (!clockInTime) { clearInterval(this.timerInterval); return; }
-        const elapsed = Date.now() - clockInTime;
-        const h = Math.floor(elapsed / 3600000);
-        const m = Math.floor((elapsed % 3600000) / 60000);
-        const s = Math.floor((elapsed % 60000) / 1000);
-        timer.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        // تحديث التقدم الدائري
-        const progress = Math.min((elapsed / (8 * 3600000)) * 360, 360);
-        ring.style.setProperty('--progress', progress + 'deg');
-      }, 1000);
-    } else {
-      // غير مسجل
-      ring.className = 'clock-ring out';
-      icon.className = 'fas fa-play-circle';
-      icon.style.color = '#10b981';
-      status.textContent = 'جاهز للتسجيل';
-      status.style.color = '#0f172a';
-      timer.textContent = '00:00:00';
-      hint.textContent = 'اضغط على الدائرة لتسجيل الحضور';
-      hint.style.color = 'var(--muted)';
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-      }
-    }
-  },
-
-  // ===== تبديل التسجيل (دخول/خروج) =====
-  toggleClock() {
-    if (!this.currentUser) return;
-    const sessions = this.getActiveSessions();
-    if (sessions[this.currentUser.id]) {
-      this.clockOut();
-    } else {
-      this.clockIn();
-    }
-  },
-
-  // ===== تسجيل الحضور =====
-  clockIn() {
-    if (!this.currentUser) return;
-    const sessions = this.getActiveSessions();
-    const now = new Date();
-    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    sessions[this.currentUser.id] = Date.now();
-    this.setActiveSessions(sessions);
-    this.addActivity('تسجيل حضور', `${this.currentUser.name} سجل الحضور في ${timeStr}`);
-    this.toast(`تم تسجيل الحضور في ${timeStr}`, 'success');
-    this.updateUserClockUI();
-    this.updateUserStats();
-  },
-
-  // ===== تسجيل الانصراف =====
-  clockOut() {
-    if (!this.currentUser) return;
-    this.endClockSession(this.currentUser.id);
-    this.toast('تم تسجيل الانصراف بنجاح', 'success');
-    this.updateUserClockUI();
-    this.updateUserStats();
-    this.renderUserAttendance();
-  },
-
-  // ===== إنهاء جلسة تسجيل =====
-  endClockSession(volunteerId) {
-    const sessions = this.getActiveSessions();
-    const clockInTime = sessions[volunteerId];
-    if (!clockInTime) return;
-
-    const now = new Date();
-    const clockInDate = new Date(clockInTime);
-    const clockInStr = `${String(clockInDate.getHours()).padStart(2,'0')}:${String(clockInDate.getMinutes()).padStart(2,'0')}`;
-    const clockOutStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const durationMin = Math.round((Date.now() - clockInTime) / 60000);
-    const dateStr = now.toISOString().split('T')[0];
-
-    // تحديد الحالة
-    const settings = this.getSettings();
-    const [wh, wm] = settings.workStart.split(':').map(Number);
-    const workStartMin = wh * 60 + wm;
-    const [eh, em] = settings.workEnd.split(':').map(Number);
-    const workEndMin = eh * 60 + em;
-    const lateThreshold = settings.lateThreshold || 15;
-    const clockInMin = clockInDate.getHours() * 60 + clockInDate.getMinutes();
-    const clockOutMin = now.getHours() * 60 + now.getMinutes();
-
-    let status = 'normal';
-    if (clockInMin > workStartMin + lateThreshold) status = 'late';
-    if (clockOutMin < workEndMin - lateThreshold && status !== 'late') status = 'early';
-
-    // البحث عن بيانات المتطوع
-    const volunteers = this.getData('volunteers');
-    const vol = volunteers.find(v => v.id === volunteerId);
-
-    const attendance = this.getData('attendance');
-    attendance.push({
-      id: Date.now() + Math.random(),
-      volunteerId,
-      volunteerName: vol ? vol.name : 'غير معروف',
-      department: vol ? vol.department : '',
-      date: dateStr,
-      clockIn: clockInStr,
-      clockOut: clockOutStr,
-      duration: durationMin,
-      status
-    });
-    this.setData('attendance', attendance);
-
-    // حذف الجلسة النشطة
-    delete sessions[volunteerId];
-    this.setActiveSessions(sessions);
-
-    // تسجيل النشاط
-    this.addActivity('تسجيل انصراف', `${vol ? vol.name : 'متطوع'} سجل الانصراف في ${clockOutStr} (مدة ${this.formatDuration(durationMin)})`);
-  },
-
-  // ===== تحديث إحصائيات المستخدم =====
-  updateUserStats() {
-    if (!this.currentUser) return;
-    const attendance = this.getData('attendance');
-    const today = new Date().toISOString().split('T')[0];
-    const todayRecord = attendance.filter(a => a.volunteerId === this.currentUser.id && a.date === today);
-    const sessions = this.getActiveSessions();
-
-    // وقت الدخول اليوم
-    const clockInEl = document.getElementById('todayClockIn');
-    if (sessions[this.currentUser.id]) {
-      const t = new Date(sessions[this.currentUser.id]);
-      clockInEl.textContent = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
-    } else if (todayRecord.length > 0) {
-      clockInEl.textContent = todayRecord[todayRecord.length - 1].clockIn;
-    } else {
-      clockInEl.textContent = '--:--';
-    }
-
-    // مدة العمل اليوم
-    const durationEl = document.getElementById('todayDuration');
-    if (sessions[this.currentUser.id]) {
-      const elapsed = Math.round((Date.now() - sessions[this.currentUser.id]) / 60000);
-      durationEl.textContent = this.formatDuration(elapsed);
-    } else if (todayRecord.length > 0) {
-      durationEl.textContent = this.formatDuration(todayRecord[todayRecord.length - 1].duration);
-    } else {
-      durationEl.textContent = '00:00';
-    }
-
-    // أيام الشهر
-    const month = new Date().toISOString().slice(0, 7);
-    const monthDays = new Set(attendance.filter(a => a.volunteerId === this.currentUser.id && a.date.startsWith(month)).map(a => a.date));
-    document.getElementById('monthDays').textContent = monthDays.size + ' يوم';
-  },
-
-  // ===== عرض سجل حضور المستخدم =====
-  renderUserAttendance() {
-    if (!this.currentUser) return;
-    const attendance = this.getData('attendance')
-      .filter(a => a.volunteerId === this.currentUser.id)
-      .sort((a, b) => b.date.localeCompare(a.date) || b.clockIn.localeCompare(a.clockIn))
-      .slice(0, 15);
-
-    const tbody = document.getElementById('userAttendanceBody');
-    const noRecords = document.getElementById('userNoRecords');
-
-    if (attendance.length === 0) {
-      tbody.innerHTML = '';
-      noRecords.style.display = 'block';
-      return;
-    }
-    noRecords.style.display = 'none';
-    tbody.innerHTML = attendance.map(a => `
-      <tr>
-        <td>${this.formatDateAr(a.date)}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockIn}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockOut || '—'}</td>
-        <td style="direction:ltr;text-align:right;">${this.formatDuration(a.duration)}</td>
-        <td>${this.statusBadge(a.status)}</td>
-      </tr>
-    `).join('');
-  },
-
-  // ===== تهيئة لوحة المدير =====
-  initAdminDashboard() {
-    this.switchSection('overview');
-    this.loadSettingsUI();
-  },
-
-  // ===== التبديل بين أقسام المدير =====
-  switchSection(section) {
-    const titles = {
-      overview: 'نظرة عامة',
-      volunteers: 'إدارة المتطوعين',
-      attendance: 'سجل الحضور',
-      activities: 'سجل الأنشطة',
-      settings: 'الإعدادات'
-    };
-    document.getElementById('sectionTitle').textContent = titles[section] || '';
-    document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
-    const el = document.getElementById('section-' + section);
-    if (el) {
-      el.style.display = 'block';
-      el.classList.remove('fade-in');
-      void el.offsetWidth; // إعادة تشغيل الأنيميشن
-      el.classList.add('fade-in');
-    }
-    document.querySelectorAll('.sidebar-item[data-section]').forEach(i => {
-      i.classList.toggle('active', i.dataset.section === section);
-    });
-    // تحميل بيانات القسم
-    if (section === 'overview') this.renderOverview();
-    if (section === 'volunteers') this.renderVolunteers();
-    if (section === 'attendance') this.renderAttendance();
-    if (section === 'activities') this.renderActivities();
-    if (section === 'settings') this.loadSettingsUI();
-    // إغلاق القائمة في الموبايل
-    document.getElementById('adminSidebar').classList.remove('open');
-  },
-
-  // ===== عرض نظرة عامة =====
-  renderOverview() {
-    const volunteers = this.getData('volunteers');
-    const attendance = this.getData('attendance');
-    const sessions = this.getActiveSessions();
-    const today = new Date().toISOString().split('T')[0];
-
-    document.getElementById('statTotalVolunteers').textContent = volunteers.length;
-    document.getElementById('statActiveNow').textContent = Object.keys(sessions).length;
-    document.getElementById('statTodayAttendance').textContent = attendance.filter(a => a.date === today).length;
-    const totalMin = attendance.reduce((sum, a) => sum + (a.duration || 0), 0);
-    document.getElementById('statTotalHours').textContent = (totalMin / 60).toFixed(1) + ' س';
-
-    // آخر سجلات الحضور
-    const recent = attendance.sort((a, b) => b.date.localeCompare(a.date) || b.clockIn.localeCompare(a.clockIn)).slice(0, 8);
-    const tbody = document.getElementById('recentAttendanceBody');
-    tbody.innerHTML = recent.map(a => `
-      <tr>
-        <td style="font-weight:600;">${a.volunteerName}</td>
-        <td>${this.formatDateAr(a.date)}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockIn}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockOut || '—'}</td>
-        <td style="direction:ltr;text-align:right;">${this.formatDuration(a.duration)}</td>
-        <td>${this.statusBadge(a.status)}</td>
-      </tr>
-    `).join('');
-
-    // رسم بياني أسبوعي
-    this.renderWeeklyChart(attendance);
-    this.renderDeptChart(volunteers, attendance);
-  },
-
-  // ===== رسم بياني أسبوعي =====
-  renderWeeklyChart(attendance) {
-    const ctx = document.getElementById('weeklyChart');
-    if (!ctx) return;
-    if (this.charts.weekly) this.charts.weekly.destroy();
-
-    const labels = [];
-    const data = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      labels.push(d.toLocaleDateString('ar-EG', { weekday: 'short' }));
-      data.push(attendance.filter(a => a.date === dateStr).length);
-    }
-
-    this.charts.weekly = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'عدد الحاضرين',
-          data,
-          backgroundColor: 'rgba(0,158,139,0.7)',
-          borderColor: 'rgba(0,158,139,1)',
-          borderWidth: 2,
-          borderRadius: 8,
-          borderSkipped: false,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter' } }, grid: { color: '#f1f5f9' } },
-          x: { ticks: { font: { family: 'Inter' } }, grid: { display: false } }
-        }
-      }
-    });
-  },
-
-  // ===== رسم بياني الأقسام =====
-  renderDeptChart(volunteers, attendance) {
-    const ctx = document.getElementById('deptChart');
-    if (!ctx) return;
-    if (this.charts.dept) this.charts.dept.destroy();
-
-    const deptMap = {};
-    attendance.forEach(a => {
-      const dept = a.department || 'غير محدد';
-      deptMap[dept] = (deptMap[dept] || 0) + 1;
-    });
-
-    const labels = Object.keys(deptMap);
-    const data = Object.values(deptMap);
-    const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#84cc16'];
-
-    this.charts.dept = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: colors.slice(0, labels.length),
-          borderWidth: 0,
-          spacing: 3,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { font: { family: 'Inter', size: 12 }, padding: 12, usePointStyle: true, pointStyleWidth: 10 }
+          if (response.status === 401) {
+            showFieldError(userGroup, userError, msg);
+            showFieldError(passGroup, passError, msg);
+          } else {
+            toast(msg, 'error');
           }
-        },
-        cutout: '65%',
+
+          // اهتزاز خفيف للبطاقة
+          document.querySelector('.auth-card').style.animation = 'none';
+          void document.querySelector('.auth-card').offsetWidth;
+          document.querySelector('.auth-card').style.animation = 'shake 0.5s ease';
+        }
+      } catch (err) {
+        console.error('خطأ في تسجيل الدخول:', err);
+
+        if (!navigator.onLine) {
+          toast('لا يوجد اتصال بالإنترنت', 'error');
+        } else {
+          toast('حدث خطأ في الاتصال بالخادم، حاول مرة أخرى', 'error');
+        }
+      } finally {
+        setLoading(false);
       }
     });
-  },
 
-  // ===== عرض المتطوعين =====
-  renderVolunteers() {
-    const volunteers = this.getData('volunteers');
-    const search = (document.getElementById('volunteerSearch')?.value || '').trim().toLowerCase();
-    const sessions = this.getActiveSessions();
-
-    const filtered = volunteers.filter(v => {
-      if (!search) return true;
-      return v.name.toLowerCase().includes(search) || v.department.toLowerCase().includes(search) || v.user.toLowerCase().includes(search);
-    });
-
-    const tbody = document.getElementById('volunteersBody');
-    if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">لا توجد نتائج</td></tr>';
-      return;
+    // ===== حالة التحميل =====
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      loginBtn.classList.toggle('loading', loading);
     }
 
-    tbody.innerHTML = filtered.map((v, i) => {
-      const isActive = !!sessions[v.id];
-      return `
-      <tr>
-        <td style="color:var(--muted);font-weight:600;">${i + 1}</td>
-        <td style="font-weight:600;">${v.name}</td>
-        <td style="color:var(--muted);direction:ltr;text-align:right;">${v.user}</td>
-        <td><span class="badge badge-info">${v.department}</span></td>
-        <td style="direction:ltr;text-align:right;color:var(--muted);">${v.phone || '—'}</td>
-        <td style="color:var(--muted);">${this.formatDateAr(v.createdAt)}</td>
-        <td>${isActive ? '<span class="badge badge-success"><i class="fas fa-circle" style="font-size:7px;margin-left:4px;"></i>يعمل</span>' : '<span class="badge" style="background:#f1f5f9;color:#64748b;">غير متصل</span>'}</td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <button onclick="App.openVolunteerModal(${v.id})" class="btn-sm" style="background:#eff6ff;color:#2563eb;padding:6px 10px;" title="تعديل">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="App.deleteVolunteer(${v.id})" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:6px 10px;" title="حذف">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-  },
-
-  // ===== مودال إضافة/تعديل متطوع =====
-  openVolunteerModal(id) {
-    const isEdit = !!id;
-    const volunteer = isEdit ? this.getData('volunteers').find(v => v.id === id) : null;
-    const departments = ['الخدمات الاجتماعية', 'التعليم والتدريب', 'الصحة والإسعاف', 'اللوجستيات', 'الإعلام والتواصل', 'التمويل والموارد'];
-
-    const html = `
-      <h3 style="margin:0 0 24px;font-size:18px;font-weight:700;">
-        <i class="fas ${isEdit ? 'fa-user-edit' : 'fa-user-plus'}" style="margin-left:8px;color:var(--primary);"></i>
-        ${isEdit ? 'تعديل بيانات المتطوع' : 'إضافة متطوع جديد'}
-      </h3>
-      <form id="volunteerForm">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">الاسم الكامل *</label>
-            <input type="text" name="name" class="form-input" style="padding:10px 14px;" value="${volunteer?.name || ''}" required>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">اسم المستخدم *</label>
-            <input type="text" name="user" class="form-input" style="padding:10px 14px;" value="${volunteer?.user || ''}" required>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">كلمة المرور ${isEdit ? '(اتركها فارغة لعدم التغيير)' : '*'}</label>
-            <input type="password" name="password" class="form-input" style="padding:10px 14px;" ${isEdit ? '' : 'required'}>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">رقم الهاتف</label>
-            <input type="text" name="phone" class="form-input" style="padding:10px 14px;" value="${volunteer?.phone || ''}">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;">
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">القسم *</label>
-            <select name="department" class="select-styled" style="width:100%;" required>
-              ${departments.map(d => `<option value="${d}" ${volunteer?.department === d ? 'selected' : ''}>${d}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">الدور</label>
-            <select name="role" class="select-styled" style="width:100%;">
-              <option value="متطوع" ${volunteer?.role === 'متطوع' ? 'selected' : ''}>متطوع</option>
-              <option value="متطوعة" ${volunteer?.role === 'متطوعة' ? 'selected' : ''}>متطوعة</option>
-              <option value="مشرف" ${volunteer?.role === 'مشرف' ? 'selected' : ''}>مشرف</option>
-              <option value="منسق" ${volunteer?.role === 'منسق' ? 'selected' : ''}>منسق</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;justify-content:flex-start;">
-          <button type="submit" class="btn-sm" style="background:linear-gradient(135deg,#009e8b,#007e71);color:#fff;padding:10px 28px;font-size:14px;">
-            <i class="fas fa-save" style="margin-left:6px;"></i>${isEdit ? 'حفظ التعديلات' : 'إضافة المتطوع'}
-          </button>
-          <button type="button" onclick="App.closeModal()" class="btn-sm" style="background:#f1f5f9;color:#64748b;padding:10px 24px;font-size:14px;">إلغاء</button>
-        </div>
-      </form>
-    `;
-
-    this.openModal(html);
-
-    document.getElementById('volunteerForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      this.saveVolunteer(id, {
-        name: fd.get('name').trim(),
-        user: fd.get('user').trim(),
-        password: fd.get('password').trim(),
-        phone: fd.get('phone').trim(),
-        department: fd.get('department'),
-        role: fd.get('role'),
-      });
-    });
-  },
-
-  // ===== حفظ متطوع =====
-  saveVolunteer(id, data) {
-    const volunteers = this.getData('volunteers');
-
-    // التحقق من تكرار اسم المستخدم
-    const duplicate = volunteers.find(v => v.user === data.user && v.id !== id);
-    if (duplicate) {
-      this.toast('اسم المستخدم مستخدم بالفعل', 'error');
-      return;
+    // ===== أخطاء الحقول =====
+    function showFieldError(group, errorEl, message) {
+      group.classList.add('has-error');
+      const input = group.querySelector('.form-input');
+      if (input) input.classList.add('error');
+      errorEl.querySelector('span').textContent = message;
+      errorEl.classList.add('visible');
     }
 
-    if (id) {
-      // تعديل
-      const idx = volunteers.findIndex(v => v.id === id);
-      if (idx === -1) return;
-      volunteers[idx] = { ...volunteers[idx], ...data };
-      if (!data.password) volunteers[idx].password = volunteers[idx].password; // الاحتفاظ بكلمة المرور القديمة
-      this.addActivity('تعديل متطوع', `تم تعديل بيانات ${data.name}`);
-      this.toast('تم تعديل بيانات المتطوع بنجاح', 'success');
-    } else {
-      // إضافة
-      if (!data.password) {
-        this.toast('كلمة المرور مطلوبة', 'error');
-        return;
-      }
-      const newVol = {
-        id: Date.now(),
-        ...data,
-        createdAt: new Date().toISOString().split('T')[0]
+    function clearFieldError(group, errorEl) {
+      group.classList.remove('has-error');
+      const input = group.querySelector('.form-input');
+      if (input) input.classList.remove('error');
+      errorEl.classList.remove('visible');
+    }
+
+    // ===== التنبيهات =====
+    function toast(message, type) {
+      const container = document.getElementById('toastContainer');
+      const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-times-circle',
+        warning: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
       };
-      volunteers.push(newVol);
-      this.addActivity('إضافة متطوع', `تم إضافة ${data.name} كمتطوع جديد`);
-      this.toast('تم إضافة المتطوع بنجاح', 'success');
+
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span>' + message + '</span>';
+      container.appendChild(el);
+
+      setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 3800);
     }
 
-    this.setData('volunteers', volunteers);
-    this.closeModal();
-    this.renderVolunteers();
-  },
+    // ===== أنيميشن الاهتزاز (يُضاف ديناميكياً) =====
+    const shakeStyle = document.createElement('style');
+    shakeStyle.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-8px)} 30%{transform:translateX(7px)} 45%{transform:translateX(-6px)} 60%{transform:translateX(5px)} 75%{transform:translateX(-3px)} 90%{transform:translateX(2px)} }';
+    document.head.appendChild(shakeStyle);
 
-  // ===== حذف متطوع =====
-  deleteVolunteer(id) {
-    const volunteers = this.getData('volunteers');
-    const vol = volunteers.find(v => v.id === id);
-    if (!vol) return;
-
-    const html = `
-      <div style="text-align:center;padding:16px 0;">
-        <div style="width:64px;height:64px;background:#fef2f2;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-          <i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:28px;"></i>
-        </div>
-        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;">تأكيد الحذف</h3>
-        <p style="color:var(--muted);margin:0 0 24px;">هل أنت متأكد من حذف المتطوع "<strong>${vol.name}</strong>"؟<br>سيتم حذف جميع سجلات الحضور الخاصة به.</p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <button onclick="App.confirmDeleteVolunteer(${id})" class="btn-sm" style="background:#dc2626;color:#fff;padding:10px 28px;">نعم، احذف</button>
-          <button onclick="App.closeModal()" class="btn-sm" style="background:#f1f5f9;color:#64748b;padding:10px 24px;">إلغاء</button>
-        </div>
-      </div>
-    `;
-    this.openModal(html);
-  },
-
-  confirmDeleteVolunteer(id) {
-    let volunteers = this.getData('volunteers');
-    const vol = volunteers.find(v => v.id === id);
-    volunteers = volunteers.filter(v => v.id !== id);
-    this.setData('volunteers', volunteers);
-
-    // حذف سجلات الحضور
-    let attendance = this.getData('attendance');
-    attendance = attendance.filter(a => a.volunteerId !== id);
-    this.setData('attendance', attendance);
-
-    // إنهاء الجلسة النشطة إن وجدت
-    const sessions = this.getActiveSessions();
-    if (sessions[id]) {
-      delete sessions[id];
-      this.setActiveSessions(sessions);
-    }
-
-    this.addActivity('حذف متطوع', `تم حذف المتطوع ${vol?.name || ''}`);
-    this.toast('تم حذف المتطوع بنجاح', 'success');
-    this.closeModal();
-    this.renderVolunteers();
-  },
-
-  // ===== عرض سجل الحضور (المدير) =====
-  renderAttendance() {
-    const attendance = this.getData('attendance');
-    const volunteers = this.getData('volunteers');
-
-    // تحديث قائمة المتطوعين في الفلتر
-    const volFilter = document.getElementById('attVolunteerFilter');
-    if (volFilter && volFilter.options.length <= 1) {
-      volunteers.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.id;
-        opt.textContent = v.name;
-        volFilter.appendChild(opt);
-      });
-    }
-
-    const dateFrom = document.getElementById('attDateFrom')?.value || '';
-    const dateTo = document.getElementById('attDateTo')?.value || '';
-    const volId = document.getElementById('attVolunteerFilter')?.value || '';
-    const statusFilter = document.getElementById('attStatusFilter')?.value || '';
-
-    let filtered = [...attendance];
-    if (dateFrom) filtered = filtered.filter(a => a.date >= dateFrom);
-    if (dateTo) filtered = filtered.filter(a => a.date <= dateTo);
-    if (volId) filtered = filtered.filter(a => a.volunteerId == volId);
-    if (statusFilter) filtered = filtered.filter(a => a.status === statusFilter);
-
-    filtered.sort((a, b) => b.date.localeCompare(a.date) || b.clockIn.localeCompare(a.clockIn));
-
-    const tbody = document.getElementById('attendanceBody');
-    const noRecords = document.getElementById('attNoRecords');
-
-    if (filtered.length === 0) {
-      tbody.innerHTML = '';
-      noRecords.style.display = 'block';
-      return;
-    }
-    noRecords.style.display = 'none';
-    tbody.innerHTML = filtered.map(a => `
-      <tr>
-        <td style="font-weight:600;">${a.volunteerName}</td>
-        <td><span class="badge badge-info">${a.department || '—'}</span></td>
-        <td>${this.formatDateAr(a.date)}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockIn}</td>
-        <td style="direction:ltr;text-align:right;">${a.clockOut || '—'}</td>
-        <td style="direction:ltr;text-align:right;font-weight:600;">${this.formatDuration(a.duration)}</td>
-        <td>${this.statusBadge(a.status)}</td>
-      </tr>
-    `).join('');
-  },
-
-  // ===== تصدير الحضور CSV =====
-  exportAttendance() {
-    const attendance = this.getData('attendance');
-    if (attendance.length === 0) {
-      this.toast('لا توجد بيانات للتصدير', 'warning');
-      return;
-    }
-    const headers = ['المتطوع', 'القسم', 'التاريخ', 'وقت الدخول', 'وقت الخروج', 'المدة (دقيقة)', 'الحالة'];
-    const statusMap = { normal: 'عادي', late: 'متأخر', early: 'انصراف مبكر' };
-    const rows = attendance.map(a => [
-      a.volunteerName, a.department || '', a.date, a.clockIn, a.clockOut || '', a.duration || '', statusMap[a.status] || a.status
-    ]);
-    const csv = '\uFEFF' + [headers, ...rows].map(r => r.join(',')).join('\n');
-    this.downloadFile(csv, 'attendance_export.csv', 'text/csv;charset=utf-8');
-    this.toast('تم تصدير البيانات بنجاح', 'success');
-    this.addActivity('تصدير بيانات', 'تم تصدير سجل الحضور كملف CSV');
-  },
-
-  // ===== عرض سجل الأنشطة =====
-  renderActivities() {
-    const activities = this.getData('activities').sort((a, b) => b.timestamp - a.timestamp);
-    const countEl = document.getElementById('activitiesCount');
-    const listEl = document.getElementById('activitiesList');
-
-    countEl.textContent = `${activities.length} نشاط مسجل`;
-
-    if (activities.length === 0) {
-      listEl.innerHTML = `
-        <div style="text-align:center;padding:60px;color:var(--muted);">
-          <i class="fas fa-stream" style="font-size:40px;margin-bottom:12px;display:block;opacity:0.2;"></i>
-          لا توجد أنشطة مسجلة بعد
-        </div>`;
-      return;
-    }
-
-    const typeIcons = {
-      'تسجيل دخول': 'fa-sign-in-alt',
-      'تسجيل حضور': 'fa-play-circle',
-      'تسجيل انصراف': 'fa-stop-circle',
-      'إضافة متطوع': 'fa-user-plus',
-      'تعديل متطوع': 'fa-user-edit',
-      'حذف متطوع': 'fa-user-minus',
-      'تصدير بيانات': 'fa-file-export',
-      'تعديل إعدادات': 'fa-cog',
-      'إعادة تعيين': 'fa-redo',
-    };
-    const typeColors = {
-      'تسجيل دخول': '#0ea5e9',
-      'تسجيل حضور': '#10b981',
-      'تسجيل انصراف': '#f59e0b',
-      'إضافة متطوع': '#8b5cf6',
-      'تعديل متطوع': '#0ea5e9',
-      'حذف متطوع': '#f43f5e',
-      'تصدير بيانات': '#06b6d4',
-      'تعديل إعدادات': '#64748b',
-      'إعادة تعيين': '#f43f5e',
-    };
-
-    listEl.innerHTML = activities.map(a => {
-      const icon = typeIcons[a.type] || 'fa-info-circle';
-      const color = typeColors[a.type] || '#64748b';
-      const time = new Date(a.timestamp).toLocaleString('ar-EG', {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-      return `
-        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);display:flex;align-items:center;gap:14px;transition:all 0.2s;" onmouseover="this.style.borderColor='${color}'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="width:40px;height:40px;background:${color}15;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <i class="fas ${icon}" style="color:${color};font-size:15px;"></i>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <p style="margin:0 0 2px;font-weight:600;font-size:14px;">${a.type}</p>
-            <p style="margin:0;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.description}</p>
-          </div>
-          <span style="font-size:12px;color:var(--muted);white-space:nowrap;direction:ltr;">${time}</span>
-        </div>`;
-    }).join('');
-  },
-
-  // ===== مسح الأنشطة =====
-  clearActivities() {
-    const html = `
-      <div style="text-align:center;padding:16px 0;">
-        <div style="width:64px;height:64px;background:#fffbeb;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-          <i class="fas fa-broom" style="color:#d97706;font-size:28px;"></i>
-        </div>
-        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;">مسح سجل الأنشطة</h3>
-        <p style="color:var(--muted);margin:0 0 24px;">سيتم حذف جميع الأنشطة المسجلة. هذا الإجراء لا يمكن التراجع عنه.</p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <button onclick="App.setData('activities',[]);App.closeModal();App.renderActivities();App.toast('تم مسح الأنشطة','success');" class="btn-sm" style="background:#d97706;color:#fff;padding:10px 28px;">نعم، امسح الكل</button>
-          <button onclick="App.closeModal()" class="btn-sm" style="background:#f1f5f9;color:#64748b;padding:10px 24px;">إلغاء</button>
-        </div>
-      </div>
-    `;
-    this.openModal(html);
-  },
-
-  // ===== الإعدادات =====
-  loadSettingsUI() {
-    const settings = this.getSettings();
-    const el1 = document.getElementById('setWorkStart');
-    const el2 = document.getElementById('setWorkEnd');
-    const el3 = document.getElementById('setLateThreshold');
-    if (el1) el1.value = settings.workStart;
-    if (el2) el2.value = settings.workEnd;
-    if (el3) el3.value = settings.lateThreshold;
-  },
-
-  saveSettings() {
-    const settings = {
-      workStart: document.getElementById('setWorkStart').value || '08:00',
-      workEnd: document.getElementById('setWorkEnd').value || '16:00',
-      lateThreshold: parseInt(document.getElementById('setLateThreshold').value) || 15
-    };
-    localStorage.setItem('mersal_settings', JSON.stringify(settings));
-    this.addActivity('تعديل إعدادات', `تم تحديث إعدادات ساعات العمل: ${settings.workStart} - ${settings.workEnd}`);
-    this.toast('تم حفظ الإعدادات بنجاح', 'success');
-  },
-
-  // ===== تصدير كل البيانات =====
-  exportAllData() {
-    const data = {
-      volunteers: this.getData('volunteers'),
-      attendance: this.getData('attendance'),
-      activities: this.getData('activities'),
-      settings: this.getSettings(),
-      exportDate: new Date().toISOString()
-    };
-    const json = JSON.stringify(data, null, 2);
-    this.downloadFile(json, 'mersal_full_backup.json', 'application/json');
-    this.toast('تم تصدير نسخة احتياطية كاملة', 'success');
-    this.addActivity('تصدير بيانات', 'تم تصدير نسخة احتياطية كاملة من البيانات');
-  },
-
-  // ===== إعادة تعيين البيانات =====
-  resetAllData() {
-    const html = `
-      <div style="text-align:center;padding:16px 0;">
-        <div style="width:64px;height:64px;background:#fef2f2;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-          <i class="fas fa-skull-crossbones" style="color:#dc2626;font-size:28px;"></i>
-        </div>
-        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:#dc2626;">تحذير: إعادة تعيين كاملة</h3>
-        <p style="color:var(--muted);margin:0 0 8px;">سيتم حذف <strong>جميع</strong> البيانات وإعادة النظام للوضع الافتراضي.</p>
-        <p style="color:#dc2626;font-size:13px;margin:0 0 24px;">هذا الإجراء لا يمكن التراجع عنه!</p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <button onclick="App.confirmReset()" class="btn-sm" style="background:#dc2626;color:#fff;padding:10px 28px;">نعم، أحذف كل شيء</button>
-          <button onclick="App.closeModal()" class="btn-sm" style="background:#f1f5f9;color:#64748b;padding:10px 24px;">إلغاء</button>
-        </div>
-      </div>
-    `;
-    this.openModal(html);
-  },
-
-  confirmReset() {
-    ['mersal_volunteers', 'mersal_attendance', 'mersal_activities', 'mersal_settings', 'mersal_session', 'mersal_active_sessions'].forEach(k => localStorage.removeItem(k));
-    this.closeModal();
-    this.toast('تم إعادة تعيين النظام بنجاح', 'success');
-    this.logout();
-  },
-
-  // ===== إضافة نشاط =====
-  addActivity(type, description) {
-    const activities = this.getData('activities');
-    activities.push({
-      id: Date.now() + Math.random(),
-      type,
-      description,
-      timestamp: Date.now()
+    // ===== اختصارات لوحة المفاتيح =====
+    document.addEventListener('keydown', function(e) {
+      // Enter في أي مكان = تركيز على النموذج
+      if (e.key === 'Enter' && document.activeElement !== userInput && document.activeElement !== passInput) {
+        userInput.focus();
+      }
     });
-    // الاحتفاظ بآخر 500 نشاط فقط
-    if (activities.length > 500) activities.splice(0, activities.length - 500);
-    this.setData('activities', activities);
-  },
 
-  // ===== المودال =====
-  openModal(html) {
-    document.getElementById('modalBox').innerHTML = html;
-    document.getElementById('modalOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-  },
-  closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-  },
-
-  // ===== التنبيهات =====
-  toast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle', info: 'fa-info-circle' };
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3500);
-  },
-
-  // ===== أدوات مساعدة =====
-  formatDuration(minutes) {
-    if (!minutes || minutes <= 0) return '00:00';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0) return `${h} س ${String(m).padStart(2,'0')} د`;
-    return `${String(m).padStart(2,'0')} د`;
-  },
-
-  formatDateAr(dateStr) {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch { return dateStr; }
-  },
-
-  statusBadge(status) {
-    const map = {
-      normal: { text: 'عادي', class: 'badge-success' },
-      late: { text: 'متأخر', class: 'badge-danger' },
-      early: { text: 'انصراف مبكر', class: 'badge-warning' },
-    };
-    const s = map[status] || { text: status, class: 'badge-info' };
-    return `<span class="badge ${s.class}">${s.text}</span>`;
-  },
-
-  downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  },
-
-  checkResponsive() {
-    const toggle = document.getElementById('menuToggle');
-    if (toggle) toggle.style.display = window.innerWidth <= 768 ? 'block' : 'none';
-  },
-};
-
-// ===== بدء التطبيق =====
-document.addEventListener('DOMContentLoaded', () => App.init());
-</script>
+    // ===== التركيز التلقائي =====
+    window.addEventListener('load', function() {
+      setTimeout(() => userInput.focus(), 300);
+    });
+  </script>
 </body>
 </html>
