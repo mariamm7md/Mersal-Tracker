@@ -8,54 +8,69 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #2563eb; --primary-light: #dbeafe; --primary-dark: #1e40af;
-            --bg: #f8fafc; --bg-card: #ffffff; --text: #1e293b; --muted: #64748b; --border: #e2e8f0";
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --radius: 10px;
+            --primary: #2563eb; --primary-light: #eff6ff; --primary-dark: #1e40af;
+            --bg: #f8fafc; --bg-card: #ffffff; --text: #1e293b"; --muted: #64748b"; --border: #e2e8f0";
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --radius: 12px;
         }
         [data-theme="dark"] {
-            --bg: #0f172a; --bg-card: #1e293b; --text: #f1f5f9"; --muted: #94a3b8"; --border: #334155";
-            --primary-light: #1e3a8a;
+            --bg: #0f172a"; --bg-card: #1e293b"; --text: #f1f5f9"; --muted: #94a3b8"; --border: #334155";
+            --shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; outline: none; }
+        body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
         
-        /* --- Layout --- */
-        .container { width: 100%; display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background: var(--bg-card); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        /* Layout */
+        .container { width: 100%; display: flex; }
+        .sidebar { width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; height: 100vh; }
         
-        /* --- Auth --- */
-        .auth-box { background: var(--bg-card); padding: 40px; border-radius: 15px; width: 400px; box-shadow: var(--shadow); text-align: center; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; color: var(--muted); }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-        
-        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; }
+        /* Components */
+        .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--shadow); }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-danger { background: #ef4444; color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: var(--muted); }
+        .input-group input, .input-group select, .input-group textarea { 
+            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); transition: 0.2s;
+        }
+        .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 
-        /* --- Components --- */
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--shadow); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .stat-box { background: var(--primary); color: white; padding: 20px; border-radius: 12px; }
-        .stat-box.success { background: #059669; }
-        .stat-box.warning { background: #d97706; }
+        /* Auth */
+        .auth-view { width: 100%; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .auth-box { width: 100%; max-width: 400px; padding: 40px; background: var(--bg-card); border-radius: 20px; box-shadow: var(--shadow); }
+        .auth-logo { font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 5px; text-align: center; }
+        .auth-sub { text-align: center; color: var(--muted); margin-bottom: 30px; font-size: 14px; }
+
+        /* Nav */
+        .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; margin-bottom: 5px; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .nav-item:hover { background: var(--primary-light); color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; }
         
-        .nav-item { padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
-        .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); }
-        
+        /* Tables */
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; }
         
-        /* Modals */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; width: 400px; }
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; width: 500px; max-width: 90%; position: relative; }
+        .modal-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
 
+        /* Charts */
+        .chart-container { position: relative; height: 250px; width: 100%; }
+
+        /* Utilities */
         .hidden { display: none !important; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 50px; display: none; }
-        .show { display: block; }
+        .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 25px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); display: none; z-index: 200; }
+        .show { display: block; animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
     </style>
 </head>
 <body>
@@ -64,33 +79,52 @@
 <div id="toast" class="toast"></div>
 
 <!-- AUTH VIEW -->
-<div id="auth-view" style="width:100%; display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #eff6ff, #fff);">
+<div id="auth-view" class="auth-view">
     <div class="auth-box">
-        <h1 style="color:var(--primary); margin-bottom: 20px;">Mersal</h1>
+        <div class="auth-logo">Mersal</div>
+        <div class="auth-sub">Volunteer Management System</div>
+        
+        <!-- Login Form -->
         <div id="login-form">
-            <div class="input-group"><label>Email / Phone</label><input type="text" id="login-id"></div>
-            <div class="input-group"><label>Password</label><input type="password" id="login-pass"></div>
-            <button class="btn btn-primary" onclick="login()">Login</button>
-            <div style="margin-top:15px; display:flex; justify-content:space-between;">
-                <a onclick="toggleAuth('reg')" style="font-size:12px; cursor:pointer; color:var(--primary)">Sign Up</a>
-                <a onclick="toggleAuth('admin')" style="font-size:12px; cursor:pointer; color:var(--muted)">Admin</a>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Email or Phone</label>
+                    <input type="text" id="login-id" placeholder="Enter your ID" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-pass" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Login</button>
+            </form>
+            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+                <a onclick="toggleAuth('register')" style="cursor:pointer; font-size:13px; color:var(--primary);">Create Account</a>
+                <a onclick="toggleAuth('admin')" style="cursor:pointer; font-size:13px; color:var(--muted);">Admin Portal</a>
             </div>
         </div>
-        
-        <div id="reg-form" class="hidden">
-            <h3 style="margin-bottom:15px;">New Account</h3>
-            <div class="input-group"><label>Name</label><input type="text" id="r-name"></div>
-            <div class="input-group"><label>Email</label><input type="email" id="r-email"></div>
-            <div class="input-group"><label>Phone</label><input type="tel" id="r-phone"></div>
-            <div class="input-group"><label>Password</label><input type="password" id="r-pass"></div>
-            <button class="btn btn-primary" onclick="register()">Register</button>
+
+        <!-- Register Form -->
+        <div id="register-form" class="hidden">
+            <h3 style="margin-bottom: 15px; text-align:center;">New Volunteer</h3>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group"><label>Name</label><input type="text" id="r-name" required></div>
+                <div class="input-group"><label>Email</label><input type="email" id="r-email" required></div>
+                <div class="input-group"><label>Phone</label><input type="tel" id="r-phone"></div>
+                <div class="input-group"><label>Password</label><input type="password" id="r-pass" required></div>
+                <button type="submit" class="btn btn-success" style="width:100%">Register</button>
+            </form>
+            <p style="margin-top:15px; text-align:center; font-size:13px;">Have an account? <a onclick="toggleAuth('login')" style="cursor:pointer; color:var(--primary);">Login</a></p>
         </div>
 
+        <!-- Admin Form -->
         <div id="admin-form" class="hidden">
-            <h3 style="margin-bottom:15px; color:var(--primary);">Admin Access</h3>
-            <div class="input-group"><label>ID</label><input type="text" id="a-id"></div>
-            <div class="input-group"><label>Password</label><input type="password" id="a-pass"></div>
-            <button class="btn btn-primary" onclick="login(true)">Enter</button>
+            <h3 style="margin-bottom: 15px; text-align:center; color:var(--primary);">Admin Access</h3>
+            <form onsubmit="handleLogin(event, true)">
+                <div class="input-group"><label>Admin ID</label><input type="text" id="a-id" required></div>
+                <div class="input-group"><label>Password</label><input type="password" id="a-pass" required></div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Enter</button>
+            </form>
+            <p style="margin-top:15px; text-align:center; font-size:13px;"><a onclick="toggleAuth('login')" style="cursor:pointer; color:var(--muted);">Back to Login</a></p>
         </div>
     </div>
 </div>
@@ -98,45 +132,51 @@
 <!-- USER DASHBOARD -->
 <div id="user-dash" class="container hidden">
     <div class="sidebar">
-        <h2 style="text-align:center; margin-bottom:20px;">Mersal</h2>
-        <div class="nav-item active" onclick="show('u-home')">Dashboard</div>
-        <div class="nav-item" onclick="show('u-history')">History</div>
-        <div class="nav-item" onclick="openModal('edit-profile')">Profile</div>
+        <h2 style="text-align:center; margin-bottom:30px; color:var(--primary);">Mersal</h2>
+        <div class="nav-item active" onclick="showSection('u-home')">Dashboard</div>
+        <div class="nav-item" onclick="showSection('u-history')">My History</div>
+        <div class="nav-item" onclick="openModal('profile-modal')">Profile</div>
         <div style="margin-top:auto;">
             <div class="nav-item" onclick="toggleTheme()">Theme</div>
             <div class="nav-item" onclick="logout()" style="color:#ef4444;">Logout</div>
         </div>
     </div>
     <div class="main">
+        <!-- Home -->
         <div id="u-home">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <div>
-                    <h2 id="u-name">User</h2>
+                    <h2 id="u-greet">Welcome</h2>
                     <p style="font-size:12px; color:var(--muted);" id="u-points">Points: 0</p>
                 </div>
-                <div>
-                    <button class="btn btn-danger" style="width:auto; padding:10px 20px;" onclick="openModal('apology-modal')">Apology</button>
-                </div>
+                <button onclick="openModal('apology-modal')" class="btn btn-outline" style="border-color:var(--danger); color:var(--danger);">Apology</button>
             </div>
 
+            <!-- Clock In/Out -->
             <div class="card" style="text-align:center;">
-                <p style="font-size:12px; color:var(--muted);">STATUS</p>
-                <h1 id="u-status" style="font-size:30px; color:var(--primary); margin:10px 0;">INACTIVE</h1>
+                <div id="clock-status" style="font-size:13px; color:var(--muted); margin-bottom:5px;">Status</div>
+                <h1 id="clock-timer" style="font-size:40px; color:var(--primary); margin:10px 0;">00:00:00</h1>
+                
                 <div class="input-group" style="max-width:300px; margin:0 auto;">
-                    <select id="u-activity" class="input-group input">
-                        <option>Loading...</option>
-                    </select>
+                    <label>Select Activity</label>
+                    <select id="u-activity" class="input-group input"></select>
                 </div>
-                <button id="clock-btn" onclick="toggleClock()" class="btn btn-primary" style="margin-top:15px; background:#10b981;">Clock In</button>
+                
+                <button id="clock-btn" onclick="toggleClock()" class="btn btn-success" style="margin-top:15px;">Clock In</button>
             </div>
 
+            <!-- Upcoming Activities -->
             <h3 style="margin-bottom:10px;">Upcoming Activities</h3>
-            <div id="upcoming-list"></div>
+            <div id="u-upcoming"></div>
         </div>
-        
+
+        <!-- History -->
         <div id="u-history" class="hidden">
-            <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3>Attendance History</h3>
+                <button onclick="openModal('manual-modal')" class="btn btn-primary" style="width:auto;">Add Manual Entry</button>
+            </div>
+            <div class="card">
                 <table id="u-history-table"></table>
             </div>
         </div>
@@ -145,58 +185,46 @@
 
 <!-- ADMIN DASHBOARD -->
 <div id="admin-dash" class="container hidden">
-    <div class="sidebar" style="background:#1e293b; color:white;">
-        <h2 style="text-align:center; margin-bottom:20px; color:#60a5fa;">Admin Panel</h2>
-        <div class="nav-item active" style="color:white;" onclick="show('a-home')">Overview</div>
-        <div class="nav-item" style="color:white;" onclick="show('a-users')">Users</div>
-        <div class="nav-item" style="color:white;" onclick="show('a-acts')">Activities</div>
-        <div class="nav-item" style="color:white;" onclick="show('a-logs')">Logs</div>
+    <div class="sidebar" style="background:#111827; color:#fff;">
+        <h2 style="text-align:center; margin-bottom:30px; color:#60a5fa;">Admin Panel</h2>
+        <div class="nav-item active" style="color:#fff;" onclick="showSection('a-home')">Overview</div>
+        <div class="nav-item" style="color:#fff;" onclick="showSection('a-users')">Users</div>
+        <div class="nav-item" style="color:#fff;" onclick="showSection('a-acts')">Activities</div>
+        <div class="nav-item" style="color:#fff;" onclick="showSection('a-logs')">Logs</div>
         <div style="margin-top:auto;">
             <a href="/api/export" class="btn btn-primary" style="width:100%; margin-bottom:10px;">Export Excel</a>
-            <div class="nav-item" style="color:white;" onclick="logout()">Logout</div>
+            <div class="nav-item" style="color:#94a3b8;" onclick="logout()">Logout</div>
         </div>
     </div>
     <div class="main">
+        <!-- Home -->
         <div id="a-home">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2>Dashboard</h2>
-                <button onclick="toggleTheme()" class="btn btn-outline" style="width:auto;">Dark/Light</button>
-            </div>
-
             <div class="stats-grid">
-                <div class="stat-box"><h3 id="stat-users">0</h3><p>Volunteers</p></div>
-                <div class="stat-box success"><h3 id="stat-hours">0</h3><p>Hours</p></div>
-                <div class="stat-box warning"><h3 id="stat-active">0</h3><p>Active</p></div>
+                <div class="card" style="background:var(--primary); color:white;"><h2 id="stat-users">0</h2><p>Volunteers</p></div>
+                <div class="card" style="background:#10b981; color:white;"><h2 id="stat-hours">0</h2><p>Hours</p></div>
+                <div class="card" style="background:#f59e0b; color:white;"><h2 id="stat-active">0</h2><p>Active</p></div>
             </div>
-
             <div class="card">
-                <h3>Attendance Distribution</h3>
-                <canvas id="chart-pie" height="200"></canvas>
+                <h3>Activity Distribution</h3>
+                <div class="chart-container"><canvas id="chart-main"></canvas></div>
             </div>
         </div>
 
+        <!-- Users -->
         <div id="a-users" class="hidden">
-            <h3 style="margin-bottom:10px;">Manage Users</h3>
             <div class="card">
-                <table id="users-table">
-                    <thead><tr><th>Name</th><th>Contact</th><th>Points</th><th>Action</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <h3>Manage Users</h3>
+                <table id="users-table"></table>
             </div>
         </div>
 
+        <!-- Activities -->
         <div id="a-acts" class="hidden">
-            <h3 style="margin-bottom:10px;">Activities</h3>
-            <div class="card">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <input type="text" id="new-act-name" placeholder="Name" class="input-group input">
-                    <input type="text" id="new-act-sch" placeholder="Schedule (Sun, Mon)" class="input-group input">
-                </div>
-                <button onclick="addActivity()" class="btn btn-primary" style="width:auto; margin-top:10px;">Add Activity</button>
-            </div>
-            <div id="acts-list"></div>
+            <button onclick="openModal('act-modal')" class="btn btn-primary" style="width:auto; margin-bottom:15px;">Add Activity</button>
+            <div id="a-acts-list"></div>
         </div>
 
+        <!-- Logs -->
         <div id="a-logs" class="hidden">
             <div class="card">
                 <h3>Audit Logs</h3>
@@ -207,63 +235,119 @@
 </div>
 
 <!-- MODALS -->
-<div id="feedback-modal" class="modal">
+<!-- Manual Entry -->
+<div id="manual-modal" class="modal">
     <div class="modal-content">
-        <h3>Session Summary</h3>
-        <p style="margin:10px 0;">You worked for <b id="session-time">0</b> hours.</p>
-        <textarea id="feedback-txt" class="input-group input" placeholder="Feedback (Optional)"></textarea>
-        <button class="btn btn-danger" onclick="checkout()">End Session</button>
+        <button class="modal-close" onclick="closeModal('manual-modal')">&times;</button>
+        <h3>Add Manual Entry</h3>
+        <div class="input-group"><label>Date</label><input type="date" id="m-date"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="input-group"><label>Start</label><input type="time" id="m-start"></div>
+            <div class="input-group"><label>End</label><input type="time" id="m-end"></div>
+        </div>
+        <div class="input-group"><label>Activity</label><select id="m-act" class="input-group input"></select></div>
+        <button class="btn btn-success" onclick="submitManual()">Save</button>
     </div>
 </div>
 
-<div id="apology-modal" class="modal">
+<!-- Edit Record -->
+<div id="edit-modal" class="modal">
     <div class="modal-content">
-        <h3>Submit Apology</h3>
-        <div class="input-group"><label>Date</label><input type="date" id="apology-date"></div>
-        <div class="input-group"><label>Activity</label><select id="apology-act" class="input-group input"></select></div>
-        <div class="input-group"><label>Reason</label><textarea id="apology-reason" class="input-group input"></textarea></div>
-        <button class="btn btn-danger" onclick="submitApology()">Submit</button>
+        <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+        <h3>Edit Record</h3>
+        <input type="hidden" id="edit-id">
+        <div class="input-group"><label>Date</label><input type="date" id="edit-date"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="input-group"><label>Start</label><input type="time" id="edit-start"></div>
+            <div class="input-group"><label>End</label><input type="time" id="edit-end"></div>
+        </div>
+        <div class="input-group"><label>Activity</label><select id="edit-act" class="input-group input"></select></div>
+        <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
     </div>
 </div>
 
-<div id="edit-profile" class="modal">
+<!-- Profile -->
+<div id="profile-modal" class="modal">
     <div class="modal-content">
-        <h3>Edit Profile</h3>
-        <div class="input-group"><label>Name</label><input type="text" id="edit-name"></div>
-        <div class="input-group"><label>Avatar URL</label><input type="text" id="edit-av" placeholder="Paste Image URL"></div>
+        <button class="modal-close" onclick="closeModal('profile-modal')">&times;</button>
+        <h3>Profile Settings</h3>
+        <div class="input-group"><label>Name</label><input type="text" id="p-name"></div>
+        <div class="input-group"><label>Avatar URL</label><input type="text" id="p-av" placeholder="Paste image URL"></div>
         <button class="btn btn-primary" onclick="saveProfile()">Save</button>
     </div>
 </div>
 
+<!-- Apology -->
+<div id="apology-modal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('apology-modal')">&times;</button>
+        <h3>Submit Apology</h3>
+        <div class="input-group"><label>Date</label><input type="date" id="ap-date"></div>
+        <div class="input-group"><label>Activity</label><select id="ap-act" class="input-group input"></select></div>
+        <div class="input-group"><label>Reason</label><textarea id="ap-reason" rows="3" class="input-group input"></textarea></div>
+        <button class="btn btn-danger" onclick="submitApology()">Submit</button>
+    </div>
+</div>
+
+<!-- Activity Add/Edit -->
+<div id="act-modal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('act-modal')">&times;</button>
+        <h3 id="act-title">Add Activity</h3>
+        <input type="hidden" id="act-id">
+        <div class="input-group"><label>Name</label><input type="text" id="act-name"></div>
+        <div class="input-group"><label>Color</label><input type="color" id="act-color" value="#3b82f6"></div>
+        <div class="input-group"><label>Days (e.g. Sun, Mon)</label><input type="text" id="act-days" placeholder="Sun, Mon, Tue"></div>
+        <div class="input-group"><label>Time</label><input type="text" id="act-time" placeholder="09:00 - 12:00"></div>
+        <button class="btn btn-success" onclick="saveActivity()">Save</button>
+    </div>
+</div>
+
+<!-- Checkout -->
+<div id="checkout-modal" class="modal">
+    <div class="modal-content">
+        <h3>Session Summary</h3>
+        <p style="margin:10px 0;">You worked for <b id="ch-hrs">0</b> hours.</p>
+        <div class="input-group"><label>Feedback (Optional)</label><textarea id="ch-fb" rows="2" class="input-group input"></textarea></div>
+        <button class="btn btn-danger" onclick="confirmCheckout()">End Session</button>
+    </div>
+</div>
+
 <script>
+    // --- Core Setup ---
     const $ = id => document.getElementById(id);
     const get = url => fetch(url).then(r => r.json());
     const post = (url, d) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}).then(r => r.json());
+    const put = (url, d) => fetch(url, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}).then(r => r.json());
+    const del = (url, d) => fetch(url, {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}).then(r => r.json());
 
-    let user = null, isAdmin = false, data = {};
+    let user = null, isAdmin = false, data = {}, timerInterval;
 
     // --- Auth ---
     function toggleAuth(id) {
-        document.querySelectorAll('.auth-box > div').forEach(e => e.classList.add('hidden'));
+        document.querySelectorAll('.auth-box > div').forEach(d => d.classList.add('hidden'));
         $(id).classList.remove('hidden');
     }
 
-    async function login(forceAdmin = false) {
+    async function handleLogin(e, forceAdmin = false) {
+        e.preventDefault();
         const id = forceAdmin ? $('a-id').value : $('login-id').value;
         const pass = forceAdmin ? $('a-pass').value : $('login-pass').value;
+        
         const res = await post('/api/login', {identifier: id, password: pass});
-        if (res.error) return showToast('Invalid credentials');
+        if (res.error) return showToast(res.error, 'danger');
         
         if (res.role === 'admin') { isAdmin = true; loadAdmin(); } 
         else { user = res; loadUser(); }
     }
 
-    async function register() {
+    async function handleRegister(e) {
+        e.preventDefault();
         const res = await post('/api/register', {
             name: $('r-name').value, email: $('r-email').value,
             phone: $('r-phone').value, password: $('r-pass').value
         });
-        if (res.error) return showToast(res.error);
+        if (res.error) return showToast(res.error, 'danger');
         user = res; loadUser();
     }
 
@@ -273,81 +357,143 @@
     async function loadUser() {
         $('auth-view').classList.add('hidden');
         $('user-dash').classList.remove('hidden');
-        $('u-name').textContent = user.name;
+        $('u-greet').textContent = `Welcome, ${user.name}`;
         $('u-points').textContent = `Points: ${user.points || 0}`;
-        
-        const acts = await get('/api/activities');
-        populateSelect(acts);
-        renderUpcoming(acts);
         refreshUser();
+        loadActivities();
     }
 
-    function populateSelect(acts) {
-        const html = acts.map(a => `<option style="color:${a.color}">${a.name}</option>`).join('');
-        $('u-activity').innerHTML = html;
-        $('apology-act').innerHTML = html;
-    }
-
-    function renderUpcoming(acts) {
-        $('upcoming-list').innerHTML = acts.map(a => `
-            <div class="card" style="border-right: 5px solid ${a.color}">
-                <h4>${a.name}</h4>
-                <p style="font-size:12px; color:var(--muted);">${a.days?.join(', ')} | ${a.time}</p>
+    async function loadActivities() {
+        const acts = await get('/api/activities');
+        const opts = acts.map(a => `<option value="${a.name}">${a.name} (${a.schedule?.time || ''})</option>`).join('');
+        // Fill all selects
+        ['u-activity', 'm-act', 'ap-act', 'edit-act'].forEach(id => { if($(id)) $(id).innerHTML = opts; });
+        
+        // Render Upcoming
+        $('u-upcoming').innerHTML = acts.map(a => `
+            <div class="card" style="border-left: 5px solid ${a.color}">
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <h4>${a.name}</h4>
+                        <p style="font-size:12px; color:var(--muted);">${a.schedule?.days?.join(', ')} | ${a.schedule?.time}</p>
+                    </div>
+                    <span style="background:${a.color}; height:10px; width:10px; border-radius:50%;"></span>
+                </div>
             </div>
         `).join('');
     }
 
     async function refreshUser() {
         const logs = await get('/api/attendance/' + user.id);
-        const active = logs.find(l => !l.checkOut && l.status === 'present');
+        const active = logs.find(l => !l.checkOut);
         
         if (active) {
-            $('u-status').textContent = 'ACTIVE';
-            $('u-status').style.color = 'green';
-            $('clock-btn').textContent = 'Clock Out';
-            $('clock-btn').style.background = '#ef4444';
+            $('clock-status').textContent = "Currently Active";
+            $('clock-timer').textContent = formatDiff(Date.now() - active.checkInTime);
+            $('clock-btn').textContent = "Clock Out";
+            $('clock-btn').className = "btn btn-danger";
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => $('clock-timer').textContent = formatDiff(Date.now() - active.checkInTime), 1000);
         } else {
-            $('u-status').textContent = 'INACTIVE';
-            $('u-status').style.color = 'var(--primary)';
-            $('clock-btn').textContent = 'Clock In';
-            $('clock-btn').style.background = '#10b981';
+            $('clock-status').textContent = "Not Checked In";
+            $('clock-timer').textContent = "00:00:00";
+            $('clock-btn').textContent = "Clock In";
+            $('clock-btn').className = "btn btn-success";
+            clearInterval(timerInterval);
         }
 
         $('u-history-table').innerHTML = logs.map(l => `
-            <tr style="color:${l.status === 'apologized' ? 'orange' : 'inherit'}">
+            <tr style="${l.status === 'apologized' ? 'color:orange' : ''}">
                 <td>${l.dateStr}</td>
                 <td>${l.activityName}</td>
                 <td>${l.duration || 0}h</td>
                 <td>${l.status}</td>
+                <td>
+                    ${l.status === 'present' ? `
+                        <button onclick='openEdit("${l.id}")' style="color:var(--primary); border:none; bg:none; cursor:pointer;">Edit</button>
+                        <button onclick='delRec("${l.id}")' style="color:red; border:none; bg:none; cursor:pointer;">Del</button>
+                    ` : ''}
+                </td>
             </tr>
         `).join('');
     }
 
+    function formatDiff(ms) {
+        const h = Math.floor(ms/3600000).toString().padStart(2,0);
+        const m = Math.floor((ms%3600000)/60000).toString().padStart(2,0);
+        const s = Math.floor((ms%60000)/1000).toString().padStart(2,0);
+        return `${h}:${m}:${s}`;
+    }
+
     async function toggleClock() {
-        const active = (await get('/api/attendance/' + user.id)).find(l => !l.checkOut);
+        const act = $('u-activity').value;
+        const logs = await get('/api/attendance/' + user.id);
+        const active = logs.find(l => !l.checkOut);
+        
         if (active) {
-            $('session-time').textContent = ((Date.now() - active.checkInTime)/3600000).toFixed(2);
-            openModal('feedback-modal');
+            $('ch-hrs').textContent = ((Date.now() - active.checkInTime)/3600000).toFixed(2);
+            openModal('checkout-modal');
         } else {
-            await post('/api/attendance/checkin', {volunteerId: user.id, activityName: $('u-activity').value});
+            await post('/api/attendance/checkin', {volunteerId: user.id, activityName: act});
             showToast('Started Session', 'success');
             refreshUser();
         }
     }
 
-    async function checkout() {
-        await post('/api/attendance/checkout', {volunteerId: user.id, feedback: $('feedback-txt').value});
-        closeModal('feedback-modal');
-        showToast('Session Ended', 'success');
-        user.points += 10; // Mock update
+    async function confirmCheckout() {
+        const res = await post('/api/attendance/checkout', {volunteerId: user.id, feedback: $('ch-fb').value});
+        user.points = res.newPoints || user.points;
         $('u-points').textContent = `Points: ${user.points}`;
+        closeModal('checkout-modal');
+        showToast('Session Ended', 'success');
+        refreshUser();
+    }
+
+    async function submitManual() {
+        await post('/api/attendance/manual', {
+            volunteerId: user.id, date: $('m-date').value,
+            checkIn: $('m-start').value, checkOut: $('m-end').value, activityName: $('m-act').value
+        });
+        closeModal('manual-modal');
+        showToast('Entry Added', 'success');
+        refreshUser();
+    }
+
+    function openEdit(id) {
+        const log = data.attendance.find(l => l.id === id);
+        if(!log) return;
+        $('edit-id').value = log.id;
+        $('edit-date').value = log.dateStr;
+        $('edit-start').value = log.checkIn;
+        $('edit-end').value = log.checkOut;
+        $('edit-act').value = log.activityName;
+        openModal('edit-modal');
+    }
+
+    async function saveEdit() {
+        const id = $('edit-id').value;
+        await put('/api/attendance/' + id, {
+            date: $('edit-date').value,
+            checkIn: $('edit-start').value,
+            checkOut: $('edit-end').value,
+            activityName: $('edit-act').value
+        });
+        closeModal('edit-modal');
+        showToast('Record Updated', 'success');
+        refreshUser();
+    }
+
+    async function delRec(id) {
+        if(!confirm('Delete this record?')) return;
+        await del('/api/attendance/' + id);
+        showToast('Deleted', 'danger');
         refreshUser();
     }
 
     async function submitApology() {
         await post('/api/attendance/apology', {
-            volunteerId: user.id, date: $('apology-date').value,
-            reason: $('apology-reason').value, activityName: $('apology-act').value
+            volunteerId: user.id, date: $('ap-date').value,
+            activityName: $('ap-act').value, reason: $('ap-reason').value
         });
         closeModal('apology-modal');
         showToast('Apology Sent', 'warning');
@@ -355,10 +501,11 @@
     }
 
     async function saveProfile() {
-        const res = await post('/api/user/profile', {userId: user.id, name: $('edit-name').value, avatar: $('edit-av').value});
+        const res = await post('/api/user/profile', {userId: user.id, name: $('p-name').value, avatar: $('p-av').value});
         user = res;
-        $('u-name').textContent = user.name;
-        closeModal('edit-profile');
+        $('u-greet').textContent = `Welcome, ${user.name}`;
+        closeModal('profile-modal');
+        showToast('Profile Saved');
     }
 
     // --- Admin ---
@@ -369,15 +516,15 @@
         const stats = await get('/api/admin/stats');
         $('stat-users').textContent = stats.totalUsers;
         $('stat-hours').textContent = stats.totalHours;
-        $('stat-active').textContent = stats.activeToday;
+        $('stat-active').textContent = stats.activeNow;
         
         data = await get('/api/admin/data');
         renderAdmin();
-        renderChart();
+        renderChart(stats.activityStats);
     }
 
     function renderAdmin() {
-        $('users-table').querySelector('tbody').innerHTML = data.volunteers.map(u => `
+        $('users-table').innerHTML = data.volunteers.map(u => `
             <tr>
                 <td>${u.name}</td>
                 <td>${u.email || u.phone}</td>
@@ -386,73 +533,89 @@
             </tr>
         `).join('');
 
-        $('acts-list').innerHTML = data.activities.map(a => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-right:5px solid ${a.color}">
+        $('a-acts-list').innerHTML = data.activities.map(a => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left:5px solid ${a.color}">
                 <div>
                     <h4>${a.name}</h4>
-                    <p style="font-size:12px; color:var(--muted)">${a.days?.join(',')} | ${a.time}</p>
+                    <p style="font-size:12px; color:var(--muted)">${a.schedule?.days?.join(', ')} | ${a.schedule?.time}</p>
                 </div>
-                <span style="background:${a.color}; color:white; padding:5px 10px; border-radius:20px; font-size:11px;">Active</span>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="editAct('${a.id}')" class="btn btn-outline" style="padding:5px 10px;">Edit</button>
+                </div>
             </div>
         `).join('');
 
-        $('logs-table').innerHTML = data.logs.map(l => `
+        $('logs-table').innerHTML = data.logs.slice(-10).map(l => `
             <tr><td>${new Date(l.timestamp).toLocaleString()}</td><td>${l.actor}</td><td>${l.action}</td><td>${l.details}</td></tr>
         `).join('');
     }
 
-    async function renderChart() {
-        const ctx = document.getElementById('chart-pie').getContext('2d');
-        // Process data for chart
-        const actNames = data.activities.map(a => a.name);
-        const actHours = data.activities.map(a => 
-            data.attendance.filter(att => att.activityName === a.name).reduce((s, i) => s + (i.duration || 0), 0)
-        );
-
-        new Chart(ctx, {
+    function renderChart(stats) {
+        const labels = Object.keys(stats);
+        const values = Object.values(stats);
+        new Chart($('chart-main'), {
             type: 'bar',
-            data: {
-                labels: actNames,
-                datasets: [{
-                    label: 'Hours',
-                    data: actHours,
-                    backgroundColor: data.activities.map(a => a.color || '#3b82f6')
-                }]
-            }
+            data: { labels, datasets: [{ label: 'Hours', data: values, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'] }] }
         });
     }
 
-    async function addActivity() {
-        const name = $('new-act-name').value;
-        const sch = $('new-act-sch').value;
-        if(!name) return;
-        data.activities = await post('/api/admin/activity', {name, days: sch.split(','), time: 'Flexible', adminEmail: 'admin'});
+    function editAct(id) {
+        const a = data.activities.find(x => x.id === id);
+        $('act-id').value = a.id;
+        $('act-name').value = a.name;
+        $('act-color').value = a.color;
+        $('act-days').value = a.schedule?.days?.join(', ');
+        $('act-time').value = a.schedule?.time;
+        $('act-title').textContent = 'Edit Activity';
+        openModal('act-modal');
+    }
+
+    async function saveActivity() {
+        const id = $('act-id').value;
+        const payload = {
+            name: $('act-name').value,
+            color: $('act-color').value,
+            schedule: { days: $('act-days').value.split(','), time: $('act-time').value },
+            adminEmail: 'admin'
+        };
+        
+        if (id) {
+            data.activities = await put('/api/admin/activity/' + id, payload);
+        } else {
+            data.activities = await post('/api/admin/activity', payload);
+        }
+        closeModal('act-modal');
+        $('act-id').value = '';
         renderAdmin();
-        showToast('Activity Added');
+        showToast('Saved');
     }
 
     async function delUser(id) {
-        if(confirm('Delete this user?')) {
-            await fetch('/api/admin/user', {method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({adminEmail:'admin', userId: id})});
-            loadAdmin();
-        }
+        if(!confirm('Delete user?')) return;
+        await del('/api/admin/user', {adminEmail: 'admin', userId: id});
+        loadAdmin();
     }
 
     // --- UI Helpers ---
-    function show(id) {
-        document.querySelectorAll('.main > div, .sidebar + .main > div').forEach(e => e.classList.add('hidden'));
+    function showSection(id) {
+        document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
         $(id).classList.remove('hidden');
+        if(id === 'a-home') loadAdmin(); // Refresh stats
     }
     function openModal(id) { $(id).style.display = 'flex'; }
     function closeModal(id) { $(id).style.display = 'none'; }
     function showToast(msg, type='success') {
-        const t = $('toast');
-        t.textContent = msg; t.style.background = type === 'success' ? '#10b981' : '#f59e0b'; t.classList.add('show');
+        const t = $('toast'); t.textContent = msg;
+        t.style.background = type === 'success' ? '#10b981' : (type === 'danger' ? '#ef4444' : '#f59e0b');
+        t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3000);
     }
     function toggleTheme() {
         document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? '' : 'dark');
     }
+    
+    // Init modal clear
+    $('act-modal').addEventListener('click', (e) => { if(e.target.id === 'act-modal') closeModal('act-modal'); });
 </script>
 </body>
 </html>
